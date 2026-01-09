@@ -1,25 +1,23 @@
 "use client";
 
 import React, { useRef, useState, useEffect, useMemo } from "react";
-import { Canvas, useFrame, useLoader, extend, useThree, createPortal } from "@react-three/fiber";
-import { shaderMaterial, useFBO, OrthographicCamera, Plane } from "@react-three/drei";
+import { Canvas, useFrame, useLoader, extend, useThree } from "@react-three/fiber";
+import { shaderMaterial } from "@react-three/drei";
 import * as THREE from "three";
 import { Timer, ArrowDown, Zap } from "lucide-react";
 
 // =========================================================
-// 1. SHADER DE SIMULAÇÃO (O Rastro Líquido)
+// 1. O MATERIAL LÍQUIDO (Shader)
 // =========================================================
-// Este shader roda num loop invisível. Ele pega o desenho anterior,
-// aplica um leve escurecimento (fade) e desenha a nova posição do mouse.
-const SimulationMaterial = shaderMaterial(
+const LiquidMaskMaterial = shaderMaterial(
   {
-    uTexture: new THREE.Texture(), // O quadro anterior
-    uMouse: new THREE.Vector2(-1, -1), // Posição do mouse (UV)
-    uResolution: new THREE.Vector2(0, 0),
-    uRadius: 0.08, // Tamanho do pincel
-    uDissipation: 0.96, // Velocidade que o rastro some (0.9 a 0.99)
+    uTex1: new THREE.Texture(), // Passado
+    uTex2: new THREE.Texture(), // Futuro
+    uDisp: new THREE.Texture(), // Fumaça (Distorção)
+    uMask: new THREE.Texture(), // O Rastro do Mouse (Nosso Canvas 2D)
+    uIntensity: 0.2,            // Força da distorção
   },
-  // Vertex Shader
+  // Vertex Shader (Padrão)
   `
     varying vec2 vUv;
     void main() {
@@ -27,51 +25,7 @@ const SimulationMaterial = shaderMaterial(
       gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
     }
   `,
-  // Fragment Shader
-  `
-    uniform sampler2D uTexture;
-    uniform vec2 uMouse;
-    uniform vec2 uResolution;
-    uniform float uRadius;
-    uniform float uDissipation;
-    varying vec2 vUv;
-
-    void main() {
-      // 1. Lê o pixel do frame anterior (o rastro antigo)
-      vec4 original = texture2D(uTexture, vUv);
-      
-      // 2. Calcula a distância deste pixel até o mouse
-      // Ajustamos o aspect ratio para o pincel ser redondo e não oval
-      vec2 aspect = vec2(uResolution.x / uResolution.y, 1.0);
-      float dist = distance(vUv * aspect, uMouse * aspect);
-      
-      // 3. Desenha o novo círculo do mouse (Branco puro)
-      // smoothstep cria uma borda suave
-      float intensity = 1.0 - smoothstep(0.0, uRadius, dist);
-      vec4 brush = vec4(vec3(intensity), 1.0);
-
-      // 4. Mistura o rastro antigo (escurecido) com o novo pincel
-      // max() garante que o branco do mouse sempre vença o rastro antigo
-      vec4 color = original * uDissipation;
-      color = max(color, brush);
-
-      gl_FragColor = color;
-    }
-  `
-);
-
-// =========================================================
-// 2. SHADER DE REVELAÇÃO (A Mistura Final)
-// =========================================================
-const LiquidRevealMaterial = shaderMaterial(
-  {
-    uTex1: new THREE.Texture(), // Obra Real
-    uTex2: new THREE.Texture(), // Render 3D
-    uDisp: new THREE.Texture(), // Fumaça
-    uMask: new THREE.Texture(), // O Resultado da Simulação
-    uIntensity: 0.3,
-  },
-  `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+  // Fragment Shader (A Mágica)
   `
     uniform sampler2D uTex1;
     uniform sampler2D uTex2;
@@ -81,61 +35,101 @@ const LiquidRevealMaterial = shaderMaterial(
     varying vec2 vUv;
 
     void main() {
-      vec2 uv = vUv;
+      // 1. Pega o valor da máscara (quão branco está o pixel no canvas 2D?)
+      float mask = texture2D(uMask, vUv).r;
       
-      // Lemos o valor da máscara (o rastro líquido)
-      float maskVal = texture2D(uMask, uv).r;
-      
-      // Lemos a distorção (fumaça)
-      float dispVal = texture2D(uDisp, uv).r;
+      // 2. Pega a textura de fumaça
+      float disp = texture2D(uDisp, vUv).r;
 
-      // Calculamos a distorção baseada na máscara
-      vec2 distortedUV = uv + vec2(dispVal * maskVal * uIntensity, 0.0);
+      // 3. Cria a coordenada distorcida
+      // A distorção é mais forte onde a máscara é branca
+      vec2 distortedUV = vUv + vec2(disp * mask * uIntensity, 0.0);
 
-      vec4 t1 = texture2D(uTex1, uv);
-      vec4 t2 = texture2D(uTex2, distortedUV);
+      // 4. Pega as cores
+      vec4 t1 = texture2D(uTex1, vUv);            // Imagem original
+      vec4 t2 = texture2D(uTex2, distortedUV);    // Imagem distorcida
 
-      // Mistura final
-      gl_FragColor = mix(t1, t2, maskVal);
+      // 5. Mistura as duas baseada na máscara
+      // Se mask for 0 (preto), mostra t1. Se for 1 (branco), mostra t2.
+      gl_FragColor = mix(t1, t2, mask);
     }
   `
 );
 
-extend({ SimulationMaterial, LiquidRevealMaterial });
+extend({ LiquidMaskMaterial });
 
 // =========================================================
-// CENA 3D
+// 2. HOOK: GERENCIADOR DO RASTRO (Canvas 2D)
+// =========================================================
+function useMaskCanvas() {
+  // Cria um canvas HTML na memória (invisível)
+  const [canvas] = useState(() => {
+    if (typeof document === 'undefined') return null; // Proteção para servidor
+    const c = document.createElement('canvas');
+    c.width = 128;  // Resolução baixa para performance e efeito "soft"
+    c.height = 128;
+    return c;
+  });
+
+  const [texture] = useState(() => new THREE.CanvasTexture(canvas!));
+
+  useEffect(() => {
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Preenche de preto inicialmente
+    ctx.fillStyle = 'black';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }, [canvas]);
+
+  // Função para atualizar o canvas a cada frame
+  const update = (uv: { x: number, y: number } | null) => {
+    if (!canvas || !texture) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // 1. Efeito "Fade": Desenha um retângulo preto quase transparente
+    // Isso faz o rastro branco sumir aos poucos
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.05)'; // 0.05 define a velocidade de sumir (menor = mais lento)
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // 2. Desenha o Pincel Branco se o mouse estiver na tela
+    if (uv) {
+      const x = uv.x * canvas.width;
+      const y = (1 - uv.y) * canvas.height; // Inverte Y porque canvas é top-down
+
+      // Cria um gradiente radial (bola suave)
+      const gradient = ctx.createRadialGradient(x, y, 0, x, y, 20); // 20 é o tamanho do pincel
+      gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
+      gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+
+      ctx.fillStyle = gradient;
+      ctx.beginPath();
+      ctx.arc(x, y, 20, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Avisa o Three.js que a textura mudou
+    texture.needsUpdate = true;
+  };
+
+  return { texture, update };
+}
+
+// =========================================================
+// 3. CENA 3D
 // =========================================================
 const Scene = () => {
-  const { size, gl, viewport } = useThree();
+  const { viewport } = useThree();
+  const materialRef = useRef<any>(null);
   
-  // Refs para os materiais
-  const simMatRef = useRef<any>(null);
-  const revealMatRef = useRef<any>(null);
-  const sceneCameraRef = useRef<any>(null);
+  // Usa nosso hook customizado
+  const { texture: maskTexture, update: updateMask } = useMaskCanvas();
   
-  // Cria 2 Buffers (FBOs) para fazer o "Ping-Pong"
-  // Um lê, o outro escreve, e depois eles trocam.
-  const [sceneTarget, setSceneTarget] = useState(
-    useFBO(size.width, size.height, {
-      minFilter: THREE.LinearFilter,
-      magFilter: THREE.LinearFilter,
-      format: THREE.RGBAFormat,
-      type: THREE.FloatType, // Importante para suavidade
-    })
-  );
-  
-  const [sceneTarget2, setSceneTarget2] = useState(
-    useFBO(size.width, size.height, {
-      minFilter: THREE.LinearFilter,
-      magFilter: THREE.LinearFilter,
-      format: THREE.RGBAFormat,
-      type: THREE.FloatType,
-    })
-  );
-
-  // Cena separada para a simulação
-  const bufferScene = useMemo(() => new THREE.Scene(), []);
+  // Referência para guardar a posição do mouse
+  const mouseUV = useRef<{x: number, y: number} | null>(null);
 
   // Carrega imagens
   const [tex1, tex2, disp] = useLoader(THREE.TextureLoader, [
@@ -144,76 +138,44 @@ const Scene = () => {
     "/displacement.jpg"
   ]);
 
-  // LOOP DE RENDERIZAÇÃO
-  useFrame(({ gl }) => {
-    if (!simMatRef.current || !revealMatRef.current || !sceneCameraRef.current) return;
-
-    // 1. Configura a Simulação
-    gl.setRenderTarget(sceneTarget);
-    gl.render(bufferScene, sceneCameraRef.current);
-    
-    // 2. Troca os buffers (Ping-Pong)
-    // O shader lê a textura 2 e escreve na 1
-    simMatRef.current.uTexture = sceneTarget2.texture;
-    
-    // Limpa o alvo para renderizar na tela
-    gl.setRenderTarget(null);
-
-    // 3. Atualiza o material principal com o resultado da simulação
-    revealMatRef.current.uMask = sceneTarget.texture;
-
-    // Troca as variáveis de estado para o próximo frame
-    const temp = sceneTarget;
-    setSceneTarget(sceneTarget2);
-    setSceneTarget2(temp);
+  // Loop de Animação
+  useFrame(() => {
+    // Atualiza o canvas 2D com a posição atual do mouse
+    updateMask(mouseUV.current);
   });
 
-  // Evento de movimento do mouse (Preciso e Alinhado)
   const handlePointerMove = (e: any) => {
-    // e.uv nos dá a coordenada exata (0 a 1) na imagem
-    if (simMatRef.current) {
-      simMatRef.current.uMouse.set(e.uv.x, e.uv.y);
-      simMatRef.current.uResolution.set(size.width, size.height);
-    }
+    // Salva a coordenada UV (0 a 1) de onde o mouse tocou
+    mouseUV.current = e.uv;
+  };
+
+  const handlePointerLeave = () => {
+    mouseUV.current = null;
   };
 
   return (
-    <>
-      {/* CENA DE BUFFER (Invisível, roda a lógica do rastro) */}
-      {createPortal(
-        <mesh>
-          <planeGeometry args={[2, 2]} />
-          {/* @ts-ignore */}
-          <simulationMaterial
-            ref={simMatRef}
-            // Passamos texturas vazias inicialmente
-            args={[null, new THREE.Vector2(0, 0), new THREE.Vector2(0, 0), 0.1, 0.98]}
-          />
-        </mesh>,
-        bufferScene
-      )}
-      <OrthographicCamera ref={sceneCameraRef} args={[-1, 1, 1, -1, 0, 1]} />
-
-      {/* CENA PRINCIPAL (Visível) */}
-      {/* O plano ocupa a tela toda (viewport) */}
-      <mesh onPointerMove={handlePointerMove}>
-        <planeGeometry args={[viewport.width, viewport.height]} />
-        {/* @ts-ignore */}
-        <liquidRevealMaterial
-          ref={revealMatRef}
-          uTex1={tex1}
-          uTex2={tex2}
-          uDisp={disp}
-          uIntensity={0.2}
-          toneMapped={false}
-        />
-      </mesh>
-    </>
+    <mesh 
+      onPointerMove={handlePointerMove}
+      onPointerLeave={handlePointerLeave}
+    >
+      {/* O plano ocupa a tela toda */}
+      <planeGeometry args={[viewport.width, viewport.height]} />
+      {/* @ts-ignore */}
+      <liquidMaskMaterial
+        ref={materialRef}
+        uTex1={tex1}
+        uTex2={tex2}
+        uDisp={disp}
+        uMask={maskTexture} // Passamos nosso canvas dinâmico aqui
+        uIntensity={0.3}    // Força do efeito líquido
+        toneMapped={false}  // Cores reais
+      />
+    </mesh>
   );
 };
 
 // =========================================================
-// LAYOUT DA PÁGINA
+// 4. LAYOUT DA PÁGINA
 // =========================================================
 const VulpLiquidPage = () => {
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
@@ -239,8 +201,9 @@ const VulpLiquidPage = () => {
   return (
     <div className="min-h-screen bg-[#050505] text-white selection:bg-purple-600 font-sans">
       
+      {/* HERO SECTION 3D */}
       <section className="relative h-screen w-full overflow-hidden bg-black">
-        <div className="absolute inset-0 z-0">
+        <div className="absolute inset-0 z-0 cursor-crosshair">
           <Canvas dpr={[1, 2]}>
             <React.Suspense fallback={null}>
               <Scene />
@@ -248,7 +211,7 @@ const VulpLiquidPage = () => {
           </Canvas>
         </div>
 
-        {/* Interface Overlay */}
+        {/* Textos Sobrepostos */}
         <div className="absolute inset-0 z-10 flex flex-col items-center justify-center pointer-events-none">
             <div className="text-center px-4 mix-blend-difference">
                 <span className="text-purple-300 font-bold tracking-[0.5em] text-xs md:text-sm uppercase mb-6 inline-block animate-pulse border border-purple-500/50 px-3 py-1 rounded-full">
@@ -258,7 +221,7 @@ const VulpLiquidPage = () => {
                     O FUTURO <br /> JÁ COMEÇOU
                 </h1>
                 <p className="text-gray-200 text-sm md:text-lg font-medium tracking-wide">
-                    Use o cursor para pintar o futuro
+                    Mova o mouse para revelar a transformação
                 </p>
             </div>
         </div>
@@ -271,7 +234,7 @@ const VulpLiquidPage = () => {
         </div>
       </section>
 
-      {/* Footer / Contagem Regressiva */}
+      {/* CONTAGEM REGRESSIVA */}
       <section className="min-h-screen bg-black relative flex flex-col items-center justify-center py-24 px-6 border-t border-white/10 z-20">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-purple-800/20 blur-[120px] rounded-full pointer-events-none"></div>
 
