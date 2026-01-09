@@ -7,7 +7,7 @@ import * as THREE from "three";
 import { Timer, ArrowDown, Zap } from "lucide-react";
 
 // =========================================================
-// 1. O MATERIAL LÍQUIDO (Shader)
+// 1. O MATERIAL (SHADER) - AGORA COM P&B E SEM DISTORÇÃO
 // =========================================================
 const LiquidMaskMaterial = shaderMaterial(
   {
@@ -15,7 +15,7 @@ const LiquidMaskMaterial = shaderMaterial(
     uTex2: new THREE.Texture(),
     uDisp: new THREE.Texture(),
     uMask: new THREE.Texture(),
-    uIntensity: 0.15,
+    uIntensity: 0.2, 
   },
   // Vertex Shader
   `
@@ -25,7 +25,7 @@ const LiquidMaskMaterial = shaderMaterial(
       gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
     }
   `,
-  // Fragment Shader
+  // Fragment Shader (A Mágica Visual)
   `
     uniform sampler2D uTex1;
     uniform sampler2D uTex2;
@@ -35,21 +35,29 @@ const LiquidMaskMaterial = shaderMaterial(
     varying vec2 vUv;
 
     void main() {
-      // Lemos o canal vermelho da máscara (que é branco onde pintamos)
+      // Lê a máscara (Rastro do mouse)
       float mask = texture2D(uMask, vUv).r;
+      
+      // Lê a fumaça para criar a borda orgânica
       float disp = texture2D(uDisp, vUv).r;
 
-      // Suaviza a distorção nas bordas
-      float smoothDisp = smoothstep(0.2, 0.8, disp);
+      // --- MUDANÇA 1: IMAGENS ---
+      vec4 t1 = texture2D(uTex1, vUv); // Obra (Passado)
+      vec4 t2 = texture2D(uTex2, vUv); // Render (Futuro) -> SEM DISTORÇÃO NAS UVs
 
-      // Calcula a distorção (mais forte onde a máscara é branca)
-      vec2 distortedUV = vUv + vec2(smoothDisp * mask * uIntensity, 0.0);
+      // --- MUDANÇA 2: FILTRO DARK & P&B NA OBRA ---
+      // Converte t1 para escala de cinza
+      float gray = dot(t1.rgb, vec3(0.299, 0.587, 0.114));
+      // Escurece a imagem (multiplica por 0.3 para ficar bem dark)
+      vec3 darkBW = vec3(gray) * 0.3;
+      t1 = vec4(darkBW, 1.0);
 
-      vec4 t1 = texture2D(uTex1, vUv);
-      vec4 t2 = texture2D(uTex2, distortedUV);
+      // --- MUDANÇA 3: MISTURA LÍQUIDA ---
+      // A distorção acontece apenas no "fator de mistura" (a borda), não na imagem.
+      // Isso cria uma borda ondulada, mas revela uma imagem reta.
+      float edge = disp * uIntensity;
+      float mixFactor = smoothstep(0.1 - edge, 0.9 + edge, mask);
 
-      // Mistura suave entre as imagens
-      float mixFactor = smoothstep(0.05, 0.8, mask);
       gl_FragColor = mix(t1, t2, mixFactor);
     }
   `
@@ -58,13 +66,12 @@ const LiquidMaskMaterial = shaderMaterial(
 extend({ LiquidMaskMaterial });
 
 // =========================================================
-// 2. HOOK: GERENCIADOR DO RASTRO (Estável e Suave)
+// 2. HOOK: RASTRO DO MOUSE (MANTIDO SUAVE)
 // =========================================================
 function useMaskCanvas() {
   const [canvas] = useState(() => {
     if (typeof document === 'undefined') return null;
     const c = document.createElement('canvas');
-    // Resolução HD para nitidez
     c.width = 1280; 
     c.height = 720;
     return c;
@@ -85,7 +92,6 @@ function useMaskCanvas() {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
   }, [canvas]);
 
-  // Função para desenhar uma "bolha" de luz suave
   const drawSoftCircle = (ctx: CanvasRenderingContext2D, x: number, y: number, radius: number, opacity: number) => {
       const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
       gradient.addColorStop(0, `rgba(255, 255, 255, ${opacity})`);
@@ -102,33 +108,21 @@ function useMaskCanvas() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // 1. Efeito Rastro (Fade Out)
-    // Usa uma opacidade baixa (0.05) para o rastro desaparecer suavemente
+    // Fade out mais lento para o rastro durar mais
     ctx.globalCompositeOperation = 'source-over';
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.05)'; 
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.04)'; 
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // 2. Desenha o Pincel "Nuvem" (Sem tremedeira)
     if (uv) {
-      // 'lighter' faz as formas se somarem suavemente
       ctx.globalCompositeOperation = 'lighter'; 
-      
       const x = uv.x * canvas.width;
       const y = (1 - uv.y) * canvas.height;
-      const baseSize = canvas.width * 0.08; // Tamanho do pincel
+      const baseSize = canvas.width * 0.08; 
 
-      // Desenhamos 3 círculos fixos sobrepostos para criar uma forma orgânica mas ESTÁVEL
-      
-      // Centro (Forte)
       drawSoftCircle(ctx, x, y, baseSize, 0.6);
-      
-      // Satélite 1 (Deslocado um pouco para a esquerda/cima)
       drawSoftCircle(ctx, x - baseSize * 0.3, y - baseSize * 0.2, baseSize * 0.7, 0.3);
-      
-      // Satélite 2 (Deslocado um pouco para a direita/baixo)
       drawSoftCircle(ctx, x + baseSize * 0.3, y + baseSize * 0.2, baseSize * 0.7, 0.3);
     }
-
     texture.needsUpdate = true;
   };
 
@@ -172,7 +166,7 @@ const Scene = () => {
         uTex2={tex2}
         uDisp={disp}
         uMask={maskTexture}
-        uIntensity={0.15}
+        uIntensity={0.2} // Ajustado para borda suave
         toneMapped={false}
       />
     </mesh>
@@ -180,7 +174,7 @@ const Scene = () => {
 };
 
 // =========================================================
-// 4. LAYOUT DA PÁGINA
+// 4. LAYOUT DA PÁGINA (LIMPO E ROXO)
 // =========================================================
 const VulpLiquidPage = () => {
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
@@ -216,26 +210,18 @@ const VulpLiquidPage = () => {
           </Canvas>
         </div>
 
-        {/* Interface Overlay */}
+        {/* --- TEXTOS (INTERFACE LIMPA) --- */}
         <div className="absolute inset-0 z-10 flex flex-col items-center justify-center pointer-events-none">
-            <div className="text-center px-4 mix-blend-difference">
-                <span className="text-purple-300 font-bold tracking-[0.5em] text-xs md:text-sm uppercase mb-6 inline-block animate-pulse border border-purple-500/50 px-3 py-1 rounded-full">
-                    Breve Lançamento
-                </span>
-                <h1 className="text-6xl md:text-9xl font-black tracking-tighter text-white drop-shadow-2xl leading-[0.9] mb-6">
+            <div className="text-center px-4">
+                {/* Título Roxo, Sem Caixa, Sem Instruções */}
+                <h1 className="text-6xl md:text-9xl font-black tracking-tighter text-purple-600 drop-shadow-[0_0_30px_rgba(147,51,234,0.5)] leading-[0.9] mix-blend-screen">
                     O FUTURO <br /> JÁ COMEÇOU
                 </h1>
-                <p className="text-gray-200 text-sm md:text-lg font-medium tracking-wide">
-                    Mova o mouse para revelar a transformação
-                </p>
             </div>
         </div>
 
-        <div className="absolute bottom-10 z-20 w-full flex justify-center animate-bounce opacity-70 pointer-events-none">
-            <div className="flex flex-col items-center gap-2">
-                <span className="text-[10px] tracking-widest uppercase text-white shadow-black drop-shadow-md">Inauguração</span>
-                <ArrowDown size={20} className="text-white drop-shadow-md" />
-            </div>
+        <div className="absolute bottom-10 z-20 w-full flex justify-center animate-bounce opacity-50 pointer-events-none">
+            <ArrowDown size={24} className="text-purple-500 drop-shadow-md" />
         </div>
       </section>
 
