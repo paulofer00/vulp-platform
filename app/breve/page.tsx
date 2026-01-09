@@ -2,21 +2,20 @@
 
 import React, { useRef, useState, useEffect } from "react";
 import { Canvas, useFrame, useLoader, extend } from "@react-three/fiber";
-import { shaderMaterial, useTexture } from "@react-three/drei";
+import { shaderMaterial } from "@react-three/drei";
 import * as THREE from "three";
 import { Timer, ArrowDown, Zap } from "lucide-react";
 
 // --- 1. O SHADER (A MÁGICA MATEMÁTICA) ---
-// Isso roda direto na placa de vídeo para criar o líquido
 const LiquidTransitionMaterial = shaderMaterial(
   {
     uTime: 0,
-    uHover: 0, // Vai de 0 a 1
+    uHover: 0,
     uTex1: new THREE.Texture(),
     uTex2: new THREE.Texture(),
-    uDisp: new THREE.Texture(), // A imagem de "fumaça"
+    uDisp: new THREE.Texture(),
   },
-  // Vertex Shader (Geometria)
+  // Vertex Shader
   `
     varying vec2 vUv;
     void main() {
@@ -24,7 +23,7 @@ const LiquidTransitionMaterial = shaderMaterial(
       gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
     }
   `,
-  // Fragment Shader (Cores e Distorção)
+  // Fragment Shader
   `
     uniform float uHover;
     uniform float uTime;
@@ -35,57 +34,43 @@ const LiquidTransitionMaterial = shaderMaterial(
 
     void main() {
       vec2 uv = vUv;
-      
-      // Lógica da Distorção Líquida
       vec4 disp = texture2D(uDisp, uv);
-      float dispFactor = disp.r; // Usamos o canal vermelho da imagem de fumaça
-
-      // Calcula a distorção baseada no movimento do mouse (uHover)
+      float dispFactor = disp.r;
       vec2 distortedPosition1 = vec2(uv.x + dispFactor * (uHover * 0.3), uv.y);
       vec2 distortedPosition2 = vec2(uv.x - (1.0 - dispFactor) * ((1.0 - uHover) * 0.3), uv.y);
-
-      // Pega as cores das duas imagens já distorcidas
       vec4 _texture1 = texture2D(uTex1, distortedPosition1);
       vec4 _texture2 = texture2D(uTex2, distortedPosition2);
-
-      // Mistura final suave
       vec4 finalTexture = mix(_texture1, _texture2, uHover);
-
       gl_FragColor = finalTexture;
     }
   `
 );
 
-// Registra o material para o React entender
 extend({ LiquidTransitionMaterial });
 
 // --- 2. O COMPONENTE DA CENA 3D ---
 const Scene = ({ isHovering }: { isHovering: boolean }) => {
-  const meshRef = useRef<any>();
+  // CORREÇÃO AQUI: Adicionei o 'null' dentro do parênteses
+  const meshRef = useRef<any>(null);
   
-  // Carrega as texturas (imagens)
-  // ATENÇÃO: Se der erro de carregamento, verifique os nomes na pasta public
   const [tex1, tex2, disp] = useLoader(THREE.TextureLoader, [
-    "/vulp-real.jpg",   // Imagem 1 (Passado)
-    "/vulp-render.jpg", // Imagem 2 (Futuro)
-    "/displacement.jpg" // A imagem de fumaça/mapa
+    "/vulp-real.jpg",
+    "/vulp-render.jpg",
+    "/displacement.jpg"
   ]);
 
   useFrame((state, delta) => {
     if (meshRef.current) {
-      // Animação suave (Lerp) do valor uHover entre 0 e 1
-      // Se isHovering for true, vai pra 1. Se false, vai pra 0.
       meshRef.current.uHover = THREE.MathUtils.lerp(
         meshRef.current.uHover,
         isHovering ? 1 : 0,
-        delta * 2.5 // Velocidade da transição (aumente para ser mais rápido)
+        delta * 2.5
       );
     }
   });
 
   return (
     <mesh>
-      {/* Cria um plano que ocupa a tela toda (viewport) */}
       <planeGeometry args={[16, 9]} /> 
       {/* @ts-ignore */}
       <liquidTransitionMaterial
@@ -104,7 +89,6 @@ const VulpLiquidPage = () => {
   const [isHovering, setIsHovering] = useState(false);
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
 
-  // Contador (Mantido igual)
   useEffect(() => {
     const targetDate = new Date('2025-05-31T00:00:00').getTime();
     const interval = setInterval(() => {
@@ -125,14 +109,11 @@ const VulpLiquidPage = () => {
 
   return (
     <div className="min-h-screen bg-[#050505] text-white selection:bg-purple-600 font-sans">
-      
-      {/* SEÇÃO HERO WEBGL */}
       <section 
         className="relative h-screen w-full overflow-hidden bg-black"
         onMouseEnter={() => setIsHovering(true)}
         onMouseLeave={() => setIsHovering(false)}
       >
-        {/* O Canvas 3D (Onde o efeito acontece) */}
         <div className="absolute inset-0 z-0">
           <Canvas camera={{ position: [0, 0, 5], fov: 50 }}>
             <React.Suspense fallback={null}>
@@ -141,7 +122,6 @@ const VulpLiquidPage = () => {
           </Canvas>
         </div>
 
-        {/* Interface Sobreposta (HTML/CSS normal por cima do 3D) */}
         <div className="absolute inset-0 z-10 flex flex-col items-center justify-center pointer-events-none">
             <div className="text-center px-4 mix-blend-difference">
                 <span className="text-purple-300 font-bold tracking-[0.5em] text-xs md:text-sm uppercase mb-6 inline-block animate-pulse border border-purple-500/50 px-3 py-1 rounded-full">
@@ -164,7 +144,6 @@ const VulpLiquidPage = () => {
         </div>
       </section>
 
-      {/* SEÇÃO CONTAGEM REGRESSIVA */}
       <section className="min-h-screen bg-black relative flex flex-col items-center justify-center py-24 px-6 border-t border-white/10 z-20">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-purple-800/20 blur-[120px] rounded-full pointer-events-none"></div>
 
