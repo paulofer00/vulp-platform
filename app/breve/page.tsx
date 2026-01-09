@@ -9,7 +9,7 @@ import { motion, useScroll, useTransform } from 'framer-motion';
 import Link from 'next/link';
 
 // =========================================================
-// PARTE 1: WEBGL (Fundo Líquido - Código Blindado)
+// PARTE 1: WEBGL (Fundo Líquido)
 // =========================================================
 
 const LiquidMaskMaterial = shaderMaterial(
@@ -126,29 +126,24 @@ const Scene = () => {
 };
 
 // =========================================================
-// PARTE 2: PÁGINA (Layout Empilhado e Corrigido)
+// PARTE 2: PÁGINA COM SCROLL
 // =========================================================
 
 const VulpMergedPage = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({ target: containerRef, offset: ["start start", "end end"] });
 
-  // --- ANIMAÇÕES SINCRONIZADAS ---
-  // Fundo (Background)
+  // Animações
   const bgScale = useTransform(scrollYProgress, [0, 0.5], [1, 0.8]);
-  const bgOpacity = useTransform(scrollYProgress, [0, 0.3], [1, 0]); // Some mais rápido para focar no conteúdo
+  const bgOpacity = useTransform(scrollYProgress, [0, 0.3], [1, 0]);
   const bgFilter = useTransform(scrollYProgress, [0, 0.4], ["blur(0px)", "blur(15px)"]);
   
-  // Texto "O FUTURO..." (Some ao rolar)
   const textOpacity = useTransform(scrollYProgress, [0, 0.2], [1, 0]);
   const textScale = useTransform(scrollYProgress, [0, 0.2], [1, 0.8]);
 
-  // Container Principal (Raposa + Conteúdo)
-  // Começa invisível e baixo (100px), sobe para o centro e aparece
   const mainContentOpacity = useTransform(scrollYProgress, [0.2, 0.5], [0, 1]);
   const mainContentY = useTransform(scrollYProgress, [0.2, 0.5], [100, 0]);
   
-  // Desenho da Raposa (O Path se desenha)
   const logoPathProgress = useTransform(scrollYProgress, [0.3, 0.6], [0, 1]);
 
   // Contador
@@ -172,13 +167,11 @@ const VulpMergedPage = () => {
   }, []);
 
   return (
-    // Aumentei para 300vh para dar bastante espaço de scroll suave
     <div ref={containerRef} className="h-[300vh] bg-[#050505] relative font-sans selection:bg-purple-600">
       
-      {/* STICKY CONTAINER: A janela onde tudo acontece */}
       <div className="sticky top-0 h-screen w-full overflow-hidden flex items-center justify-center">
 
-        {/* --- CAMADA 0: FUNDO LÍQUIDO (WebGL) --- */}
+        {/* WEBGL BACKGROUND */}
         <motion.div 
             style={{ scale: bgScale, opacity: bgOpacity, filter: bgFilter, transformOrigin: "center center" }}
             className="absolute inset-0 z-0"
@@ -190,7 +183,8 @@ const VulpMergedPage = () => {
             </Canvas>
         </motion.div>
 
-        {/* --- CAMADA 1: TEXTO INICIAL (Some com scroll) --- */}
+        {/* --- CORREÇÃO 1: pointer-events-none --- */}
+        {/* O texto agora é "fantasma" para o mouse, permitindo clicar no canvas atrás */}
         <motion.div 
             style={{ opacity: textOpacity, scale: textScale }}
             className="absolute inset-0 z-10 flex flex-col items-center justify-center pointer-events-none"
@@ -204,36 +198,46 @@ const VulpMergedPage = () => {
         </motion.div>
 
 
-        {/* --- CAMADA 2: CONTEÚDO PRINCIPAL (Aparece com scroll) --- */}
-        {/* Usamos Flex Column para garantir que o contador fique EMBAIXO da raposa */}
+        {/* CONTEÚDO PRINCIPAL (Raposa + Contador) */}
+        {/* pointer-events-none aqui também, para garantir que nada bloqueie */}
         <motion.div 
             style={{ opacity: mainContentOpacity, y: mainContentY }}
-            className="relative z-20 flex flex-col items-center justify-center w-full max-w-4xl px-4 gap-12" // gap-12 separa raposa do contador
+            className="relative z-20 flex flex-col items-center justify-center w-full max-w-4xl px-4 gap-12 pointer-events-none"
         >
             
-            {/* 1. RAPOSA (Topo) */}
+            {/* LOGO DA RAPOSA (Completa com 2 partes) */}
             <div className="relative w-48 h-48 md:w-64 md:h-64 flex-shrink-0">
-                {/* ViewBox 0 0 100 100 para o seu novo SVG quadrado */}
                 <svg viewBox="0 0 100 100" className="w-full h-full overflow-visible drop-shadow-[0_0_25px_rgba(168,85,247,0.6)]">
                     <defs>
                         <linearGradient id="purpleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stopColor="#d8b4fe" /> {/* Roxo claro */}
-                            <stop offset="100%" stopColor="#7c3aed" /> {/* Roxo escuro */}
+                            <stop offset="0%" stopColor="#d8b4fe" /> 
+                            <stop offset="100%" stopColor="#7c3aed" /> 
                         </linearGradient>
                     </defs>
 
+                    {/* PARTE 1: Cabeça */}
                     <motion.path
-                        // SEU NOVO CÓDIGO AQUI
                         d="M64.84,36.74c.55,1.94.41,4.09-.56,6.03-1.5,3.02-4.57,4.73-7.73,4.66h0s0,0,0,0c.72,1.18,1.78,2.18,3.11,2.85,1.23.61,2.55.86,3.83.79h0s0,0,0,0c1.27-.07,2.57.18,3.78.79,2.48,1.23,4,3.64,4.21,6.22,3.59-7.79.67-17-6.65-21.33Z"
                         fill="transparent"
                         stroke="url(#purpleGrad)"
-                        strokeWidth="1.5" // Linha mais fina para desenho delicado
+                        strokeWidth="1.5"
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         style={{ pathLength: logoPathProgress }}
                     />
                     
-                    {/* Brilho extra atrás da raposa */}
+                    {/* PARTE 2: Corpo (Adicionada Agora) */}
+                    <motion.path
+                        d="M59.16,62.28c-4.29-2.13-6.53-6.74-5.86-11.23h0c.02-.11.03-.23.04-.34,0-.04,0-.08.01-.11.03-.23.04-.47.06-.7,0-.05,0-.11,0-.16.01-.24.02-.47.03-.71,0-.02,0-.04,0-.06,0-.22,0-.44,0-.66,0-.05,0-.1,0-.16,0-.23-.02-.46-.04-.69,0-.05,0-.1-.01-.14-.02-.21-.04-.42-.07-.63,0-.03,0-.07-.01-.1-.03-.23-.07-.45-.11-.68,0-.05-.02-.11-.03-.16-.04-.23-.09-.45-.14-.68,0-.03-.01-.05-.02-.08-.05-.21-.1-.41-.16-.62-.01-.05-.03-.1-.04-.15-.06-.22-.13-.43-.2-.65-.02-.05-.03-.1-.05-.15-.07-.2-.14-.39-.21-.59-.01-.03-.02-.06-.03-.09-.08-.21-.17-.42-.26-.63-.02-.05-.05-.11-.07-.16-.09-.21-.19-.41-.29-.62-.02-.03-.03-.06-.05-.09-.09-.18-.19-.37-.29-.55-.03-.05-.05-.09-.08-.14-.11-.2-.23-.39-.35-.58-.03-.05-.06-.09-.09-.14-.11-.18-.23-.35-.35-.53-.02-.02-.03-.05-.05-.07-.13-.19-.27-.37-.41-.55-.04-.05-.07-.09-.11-.14-.14-.18-.29-.36-.43-.53-.03-.03-.06-.06-.08-.09-.13-.15-.27-.31-.41-.46-.04-.04-.07-.08-.11-.12-.16-.17-.32-.33-.48-.49-.04-.04-.09-.08-.13-.12-.05-.05-.11-.1-.16-.16h0s0,0,0,0c-1.12-1.03-2.41-1.93-3.84-2.64-5.77-2.87-12.41-2.06-17.26,1.52,1.8.08,3.61.53,5.32,1.38,5.04,2.51,7.81,7.78,7.36,13.07,0,.02,0,.05,0,.07-.02.25-.03.51-.03.76,0,.04,0,.08,0,.11,0,.3,0,.59.01.88,0,.07,0,.14.01.22.01.22.03.44.05.66,0,.1.02.2.03.3.02.19.04.38.07.57.02.11.03.22.05.33.03.18.06.36.1.54.02.11.04.22.07.32.04.18.08.36.13.55.03.1.05.2.08.3.06.2.12.4.18.6.02.08.05.16.07.24.09.28.19.55.3.82,0,.02.01.03.02.05.1.25.21.5.32.75.04.09.08.17.12.25.08.18.17.36.26.53.05.1.1.19.15.29.09.16.18.32.27.48.06.1.12.2.18.29.09.15.19.31.29.46.06.09.12.19.19.28.11.16.22.31.33.46.06.08.12.17.18.25.14.18.28.36.43.54.04.05.08.1.12.15.19.22.39.44.59.66.05.05.1.1.16.16.15.16.31.32.47.47.02.02.04.04.06.06,0,0,0,0,0,0,1.15,1.08,2.48,2.01,3.97,2.75,6.85,3.41,14.92,1.67,19.81-3.74-2.91,1.42-6.42,1.53-9.54-.02Z"
+                        fill="transparent"
+                        stroke="url(#purpleGrad)"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        style={{ pathLength: logoPathProgress }}
+                    />
+
+                    {/* Brilho */}
                     <motion.div 
                         style={{ opacity: logoPathProgress }}
                         className="absolute inset-0 bg-purple-500/20 blur-[50px] -z-10 rounded-full"
@@ -241,7 +245,7 @@ const VulpMergedPage = () => {
                 </svg>
             </div>
 
-            {/* 2. CONTADOR E BOTÃO (Embaixo) */}
+            {/* CONTADOR E BOTÃO */}
             <div className="flex flex-col items-center w-full">
                 <div className="grid grid-cols-4 gap-3 md:gap-8 mb-10">
                     <TimeBox value={timeLeft.days} label="DIAS" />
@@ -250,10 +254,12 @@ const VulpMergedPage = () => {
                     <TimeBox value={timeLeft.seconds} label="SEGUNDOS" />
                 </div>
 
+                {/* CORREÇÃO 2: pointer-events-auto */}
+                {/* O Botão PRECISA ser clicável, então reativamos os eventos nele */}
                 <Link 
                     href="https://wa.me/5593991174787" 
                     target="_blank"
-                    className="inline-flex items-center gap-3 bg-white text-black font-bold text-lg px-10 py-4 rounded-full hover:bg-purple-600 hover:text-white transition-all duration-300 shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:shadow-[0_0_40px_rgba(147,51,234,0.6)] hover:scale-105"
+                    className="pointer-events-auto inline-flex items-center gap-3 bg-white text-black font-bold text-lg px-10 py-4 rounded-full hover:bg-purple-600 hover:text-white transition-all duration-300 shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:shadow-[0_0_40px_rgba(147,51,234,0.6)] hover:scale-105"
                 >
                     <Zap size={22} fill="currentColor" />
                     ENTRAR NA LISTA VIP
