@@ -1,19 +1,58 @@
 "use client";
 
-import React, { useRef, useState, useEffect } from "react";
-import { Canvas, useFrame, useLoader, extend } from "@react-three/fiber";
-import { shaderMaterial } from "@react-three/drei";
+import React, { useRef, useState, useEffect, useMemo } from "react";
+import { Canvas, useFrame, useLoader, extend, useThree } from "@react-three/fiber";
+import { shaderMaterial, useFBO, OrthographicCamera, Plane } from "@react-three/drei";
 import * as THREE from "three";
 import { Timer, ArrowDown, Zap } from "lucide-react";
 
-// --- 1. O SHADER (A MÁGICA MATEMÁTICA) ---
-const LiquidTransitionMaterial = shaderMaterial(
+// ==========================================
+// SHADER 1: O PINCEL (Brush Material)
+// Cria uma bola branca suave onde o mouse passa
+// ==========================================
+const BrushMaterial = shaderMaterial(
   {
-    uTime: 0,
-    uHover: 0,
-    uTex1: new THREE.Texture(),
-    uTex2: new THREE.Texture(),
-    uDisp: new THREE.Texture(),
+    uCenter: new THREE.Vector2(0.5, 0.5), // Posição do mouse
+    uRadius: 0.1, // Tamanho do pincel
+    uStrength: 0.5, // Intensidade
+  },
+  // Vertex Shader (Padrão)
+  `
+    varying vec2 vUv;
+    void main() {
+      vUv = uv;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    }
+  `,
+  // Fragment Shader (Cria o gradiente radial branco)
+  `
+    uniform vec2 uCenter;
+    uniform float uRadius;
+    uniform float uStrength;
+    varying vec2 vUv;
+
+    void main() {
+      // Calcula a distância do pixel atual até o centro do mouse
+      float dist = distance(vUv, uCenter);
+      // Cria um círculo suave: 1 no centro, 0 na borda
+      float alpha = smoothstep(uRadius, uRadius * 0.2, dist);
+      // Cor final: branco com a transparência calculada
+      gl_FragColor = vec4(vec3(1.0), alpha * uStrength);
+    }
+  `
+);
+
+// ==========================================
+// SHADER 2: A REVELAÇÃO LÍQUIDA (Reveal Material)
+// Usa o rastro do pincel para misturar as imagens
+// ==========================================
+const RevealMaterial = shaderMaterial(
+  {
+    uTex1: new THREE.Texture(), // Imagem Passado
+    uTex2: new THREE.Texture(), // Imagem Futuro
+    uDisp: new THREE.Texture(), // Textura de Fumaça (Displacement)
+    uMask: new THREE.Texture(), // O Rastro do Mouse (FBO)
+    uIntensity: 0.3, // Intensidade da distorção
   },
   // Vertex Shader
   `
@@ -23,72 +62,161 @@ const LiquidTransitionMaterial = shaderMaterial(
       gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
     }
   `,
-  // Fragment Shader
+  // Fragment Shader (A mágica acontece aqui)
   `
-    uniform float uHover;
-    uniform float uTime;
     uniform sampler2D uTex1;
     uniform sampler2D uTex2;
     uniform sampler2D uDisp;
+    uniform sampler2D uMask;
+    uniform float uIntensity;
     varying vec2 vUv;
 
     void main() {
       vec2 uv = vUv;
-      vec4 disp = texture2D(uDisp, uv);
-      float dispFactor = disp.r;
-      vec2 distortedPosition1 = vec2(uv.x + dispFactor * (uHover * 0.3), uv.y);
-      vec2 distortedPosition2 = vec2(uv.x - (1.0 - dispFactor) * ((1.0 - uHover) * 0.3), uv.y);
-      vec4 _texture1 = texture2D(uTex1, distortedPosition1);
-      vec4 _texture2 = texture2D(uTex2, distortedPosition2);
-      vec4 finalTexture = mix(_texture1, _texture2, uHover);
-      gl_FragColor = finalTexture;
+      
+      // 1. Ler o rastro do mouse (quão branco está este pixel?)
+      float maskValue = texture2D(uMask, uv).r;
+      
+      // 2. Ler a textura de fumaça para distorção
+      float dispFactor = texture2D(uDisp, uv).r;
+
+      // 3. Calcular a distorção baseada no rastro e na fumaça
+      // A distorção só acontece onde o 'maskValue' é alto
+      vec2 distortedUV = uv + vec2(dispFactor * maskValue * uIntensity, 0.0);
+
+      // 4. Pegar as cores das duas imagens (a segunda já distorcida)
+      vec4 tex1 = texture2D(uTex1, uv);
+      vec4 tex2 = texture2D(uTex2, distortedUV);
+
+      // 5. Misturar as duas imagens baseado no rastro (maskValue)
+      // Se maskValue é 1 (mouse passou), mostra tex2. Se 0, tex1.
+      gl_FragColor = mix(tex1, tex2, maskValue);
     }
   `
 );
 
-extend({ LiquidTransitionMaterial });
+// Registrar os materiais no React Three Fiber
+extend({ BrushMaterial, RevealMaterial });
 
-// --- 2. O COMPONENTE DA CENA 3D ---
-const Scene = ({ isHovering }: { isHovering: boolean }) => {
-  // CORREÇÃO AQUI: Adicionei o 'null' dentro do parênteses
-  const meshRef = useRef<any>(null);
+// ==========================================
+// COMPONENTE DA CENA 3D
+// ==========================================
+const Scene = () => {
+  const { size, viewport } = useThree();
+  const brushMeshRef = useRef<any>(null);
+  const revealMeshRef = useRef<any>(null);
   
+  // --- CONFIGURAÇÃO DO FBO (A tela invisível para o rastro) ---
+  // Criamos um buffer com o dobro do tamanho da tela para nitidez
+  const renderTarget = useFBO(size.width * 2, size.height * 2, {
+    minFilter: THREE.LinearFilter,
+    magFilter: THREE.LinearFilter,
+    format: THREE.RGBAFormat,
+    stencilBuffer: false,
+    depthBuffer: false,
+  });
+
+  // Uma câmera separada só para renderizar o pincel na tela invisível
+  const fboCameraRef = useRef<THREE.OrthographicCamera>(null);
+  // Uma cena separada só para os objetos do rastro
+  const fboScene = useMemo(() => new THREE.Scene(), []);
+
+  // Carrega as texturas
   const [tex1, tex2, disp] = useLoader(THREE.TextureLoader, [
     "/vulp-real.jpg",
     "/vulp-render.jpg",
     "/displacement.jpg"
   ]);
 
-  useFrame((state, delta) => {
-    if (meshRef.current) {
-      meshRef.current.uHover = THREE.MathUtils.lerp(
-        meshRef.current.uHover,
-        isHovering ? 1 : 0,
-        delta * 2.5
-      );
-    }
+  // Configura as texturas para repetir (melhora o efeito líquido)
+  [tex1, tex2, disp].forEach(t => {
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
   });
 
+  // --- O LOOP DE RENDERIZAÇÃO (Roda a cada frame) ---
+  useFrame(({ gl, mouse }) => {
+    if (!brushMeshRef.current || !fboCameraRef.current || !revealMeshRef.current) return;
+
+    // --- PASSO 1: Atualizar a posição do pincel ---
+    // Converte a posição do mouse (-1 a 1) para UV (0 a 1)
+    const currentMouseUV = new THREE.Vector2(
+      (mouse.x + 1) / 2,
+      (mouse.y + 1) / 2
+    );
+    brushMeshRef.current.material.uniforms.uCenter.value.lerp(currentMouseUV, 0.2); // Movimento suave
+
+    // --- PASSO 2: Renderizar o rastro na tela invisível (FBO) ---
+    gl.setRenderTarget(renderTarget);
+    // NÃO limpamos o buffer antigo. Em vez disso, desenhamos um quadrado preto
+    // semi-transparente por cima de tudo para fazer o rastro sumir aos poucos.
+    // Isso é o que cria o efeito de "secar" o líquido.
+    gl.render(fboScene, fboCameraRef.current); 
+    
+    // --- PASSO 3: Voltar para a tela principal ---
+    gl.setRenderTarget(null);
+    // Passar a textura do rastro (FBO) para o shader principal
+    revealMeshRef.current.material.uniforms.uMask.value = renderTarget.texture;
+  });
+
+  // Função para capturar o movimento do mouse sobre o plano 3D
+  const handlePointerMove = (e: any) => {
+    // 'e.uv' nos dá a coordenada exata onde o mouse tocou na imagem (de 0 a 1)
+    if (brushMeshRef.current) {
+      // Atualizamos o alvo do pincel instantaneamente para onde o mouse está
+      brushMeshRef.current.material.uniforms.uCenter.value.copy(e.uv);
+    }
+  };
+
   return (
-    <mesh>
-      <planeGeometry args={[16, 9]} /> 
-      {/* @ts-ignore */}
-      <liquidTransitionMaterial
-        ref={meshRef}
-        uTex1={tex1}
-        uTex2={tex2}
-        uDisp={disp}
-        toneMapped={false}
-      />
-    </mesh>
+    <>
+      {/* --- CENA INVISÍVEL (FBO) --- */}
+      {/* Esta câmera e objetos não aparecem na tela principal */}
+      <OrthographicCamera ref={fboCameraRef} args={[-1, 1, 1, -1, 0, 1]} />
+      {createPortal(
+        <mesh>
+           <planeGeometry args={[2, 2]} />
+           {/* O "Desvanecedor": um plano preto 95% transparente que roda todo frame */}
+           <meshBasicMaterial color="black" transparent opacity={0.05} />
+           {/* O Pincel: a bola branca que segue o mouse */}
+           <mesh ref={brushMeshRef} position={[0, 0, 0.01]}>
+             <planeGeometry args={[2, 2]} />
+             {/* @ts-ignore */}
+             <brushMaterial uRadius={0.15} uStrength={1.0} transparent />
+           </mesh>
+        </mesh>,
+        fboScene
+      )}
+
+      {/* --- CENA PRINCIPAL (Visível) --- */}
+      <mesh ref={revealMeshRef} onPointerMove={handlePointerMove}>
+        {/* Plano que ocupa a tela toda */}
+        <planeGeometry args={[viewport.width, viewport.height]} />
+        {/* O Material que mistura tudo */}
+        {/* @ts-ignore */}
+        <revealMaterial
+          uTex1={tex1}
+          uTex2={tex2}
+          uDisp={disp}
+          // uMask será preenchido pelo FBO no useFrame
+          uIntensity={0.3}
+          toneMapped={false}
+        />
+      </mesh>
+    </>
   );
 };
 
-// --- 3. A PÁGINA COMPLETA ---
+// Helper do R3F para renderizar em outra cena
+import { createPortal } from "@react-three/fiber";
+
+
+// ==========================================
+// O COMPONENTE DA PÁGINA (Layout HTML)
+// ==========================================
 const VulpLiquidPage = () => {
-  const [isHovering, setIsHovering] = useState(false);
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
 
+  // Contador (Lógica mantida)
   useEffect(() => {
     const targetDate = new Date('2025-05-31T00:00:00').getTime();
     const interval = setInterval(() => {
@@ -109,19 +237,20 @@ const VulpLiquidPage = () => {
 
   return (
     <div className="min-h-screen bg-[#050505] text-white selection:bg-purple-600 font-sans">
-      <section 
-        className="relative h-screen w-full overflow-hidden bg-black"
-        onMouseEnter={() => setIsHovering(true)}
-        onMouseLeave={() => setIsHovering(false)}
-      >
-        <div className="absolute inset-0 z-0">
-          <Canvas camera={{ position: [0, 0, 5], fov: 50 }}>
+      
+      {/* SEÇÃO HERO WEBGL */}
+      <section className="relative h-screen w-full overflow-hidden bg-black">
+        {/* O Canvas 3D */}
+        <div className="absolute inset-0 z-0 cursor-crosshair">
+          {/* dpr={Math.min(window.devicePixelRatio, 2)} ajuda na performance em telas retina */}
+          <Canvas camera={{ position: [0, 0, 1] }} dpr={[1, 2]}>
             <React.Suspense fallback={null}>
-              <Scene isHovering={isHovering} />
+              <Scene />
             </React.Suspense>
           </Canvas>
         </div>
 
+        {/* Interface Sobreposta (Pointer events none para o mouse passar pro Canvas) */}
         <div className="absolute inset-0 z-10 flex flex-col items-center justify-center pointer-events-none">
             <div className="text-center px-4 mix-blend-difference">
                 <span className="text-purple-300 font-bold tracking-[0.5em] text-xs md:text-sm uppercase mb-6 inline-block animate-pulse border border-purple-500/50 px-3 py-1 rounded-full">
@@ -131,7 +260,7 @@ const VulpLiquidPage = () => {
                     O FUTURO <br /> JÁ COMEÇOU
                 </h1>
                 <p className="text-gray-200 text-sm md:text-lg font-medium tracking-wide">
-                    Passe o mouse para visualizar a transformação
+                    Mova o mouse para revelar a transformação
                 </p>
             </div>
         </div>
@@ -144,6 +273,7 @@ const VulpLiquidPage = () => {
         </div>
       </section>
 
+      {/* SEÇÃO CONTAGEM REGRESSIVA */}
       <section className="min-h-screen bg-black relative flex flex-col items-center justify-center py-24 px-6 border-t border-white/10 z-20">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-purple-800/20 blur-[120px] rounded-full pointer-events-none"></div>
 
