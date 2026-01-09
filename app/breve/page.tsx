@@ -7,7 +7,7 @@ import * as THREE from "three";
 import { Timer, ArrowDown, Zap } from "lucide-react";
 
 // =========================================================
-// 1. O MATERIAL LÍQUIDO (Shader) - Sem alterações aqui
+// 1. O MATERIAL LÍQUIDO (Shader)
 // =========================================================
 const LiquidMaskMaterial = shaderMaterial(
   {
@@ -35,18 +35,20 @@ const LiquidMaskMaterial = shaderMaterial(
     varying vec2 vUv;
 
     void main() {
-      vec4 maskColor = texture2D(uMask, vUv);
-      float mask = maskColor.r;
+      // Lemos o canal vermelho da máscara (que é branco onde pintamos)
+      float mask = texture2D(uMask, vUv).r;
       float disp = texture2D(uDisp, vUv).r;
-      // Usamos smoothstep no disp para deixar a distorção mais orgânica nas bordas
+
+      // Suaviza a distorção nas bordas
       float smoothDisp = smoothstep(0.2, 0.8, disp);
 
+      // Calcula a distorção (mais forte onde a máscara é branca)
       vec2 distortedUV = vUv + vec2(smoothDisp * mask * uIntensity, 0.0);
 
       vec4 t1 = texture2D(uTex1, vUv);
       vec4 t2 = texture2D(uTex2, distortedUV);
 
-      // Smoothstep na máscara para deixar a revelação menos "dura"
+      // Mistura suave entre as imagens
       float mixFactor = smoothstep(0.05, 0.8, mask);
       gl_FragColor = mix(t1, t2, mixFactor);
     }
@@ -56,14 +58,13 @@ const LiquidMaskMaterial = shaderMaterial(
 extend({ LiquidMaskMaterial });
 
 // =========================================================
-// 2. HOOK: GERENCIADOR DO RASTRO (Canvas 2D HD & Orgânico)
+// 2. HOOK: GERENCIADOR DO RASTRO (Estável e Suave)
 // =========================================================
 function useMaskCanvas() {
   const [canvas] = useState(() => {
     if (typeof document === 'undefined') return null;
     const c = document.createElement('canvas');
-    // --- MUDANÇA 1: RESOLUÇÃO HD ---
-    // Aumentamos para 1280x720 para garantir nitidez na revelação
+    // Resolução HD para nitidez
     c.width = 1280; 
     c.height = 720;
     return c;
@@ -71,7 +72,6 @@ function useMaskCanvas() {
 
   const [texture] = useState(() => {
     const t = new THREE.CanvasTexture(canvas!);
-    // LinearFilter ajuda a suavizar os aglomerados do pincel
     t.minFilter = THREE.LinearFilter;
     t.magFilter = THREE.LinearFilter;
     return t;
@@ -85,16 +85,15 @@ function useMaskCanvas() {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
   }, [canvas]);
 
-  // Função auxiliar para desenhar um "blob" suave
-  const drawBlob = (ctx: CanvasRenderingContext2D, x: number, y: number, size: number, opacity: number) => {
-      const gradient = ctx.createRadialGradient(x, y, 0, x, y, size);
+  // Função para desenhar uma "bolha" de luz suave
+  const drawSoftCircle = (ctx: CanvasRenderingContext2D, x: number, y: number, radius: number, opacity: number) => {
+      const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
       gradient.addColorStop(0, `rgba(255, 255, 255, ${opacity})`);
       gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
-
+      
       ctx.fillStyle = gradient;
       ctx.beginPath();
-      // Usamos elipses levemente aleatórias para não ficar um círculo perfeito
-      ctx.ellipse(x, y, size * (0.8 + Math.random() * 0.4), size * (0.8 + Math.random() * 0.4), Math.random() * Math.PI, 0, Math.PI * 2);
+      ctx.arc(x, y, radius, 0, Math.PI * 2);
       ctx.fill();
   }
 
@@ -103,35 +102,31 @@ function useMaskCanvas() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Fade out (rastro sumindo) - Ajustei para 0.06 para um rastro ligeiramente mais longo
+    // 1. Efeito Rastro (Fade Out)
+    // Usa uma opacidade baixa (0.05) para o rastro desaparecer suavemente
     ctx.globalCompositeOperation = 'source-over';
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.06)';
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.05)'; 
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // --- MUDANÇA 2: PINCEL ORGÂNICO "NUVEM" ---
+    // 2. Desenha o Pincel "Nuvem" (Sem tremedeira)
     if (uv) {
-      // Usamos 'lighter' para que os blobs se somem e fiquem brancos brilhantes no centro
+      // 'lighter' faz as formas se somarem suavemente
       ctx.globalCompositeOperation = 'lighter'; 
       
       const x = uv.x * canvas.width;
       const y = (1 - uv.y) * canvas.height;
-      const baseSize = canvas.width * 0.05; // Tamanho base do aglomerado
+      const baseSize = canvas.width * 0.08; // Tamanho do pincel
 
-      // Desenhamos um núcleo forte no centro
-      drawBlob(ctx, x, y, baseSize * 0.8, 0.8);
-
-      // Desenhamos vários blobs menores e aleatórios ao redor para criar a forma abstrata/ondas
-      const numBlobs = 5;
-      for (let i = 0; i < numBlobs; i++) {
-          const angle = Math.random() * Math.PI * 2;
-          // Offset aleatório do centro
-          const offsetX = Math.cos(angle) * (baseSize * Math.random() * 1.5);
-          const offsetY = Math.sin(angle) * (baseSize * Math.random() * 1.5);
-          // Tamanho aleatório
-          const randomSize = baseSize * (0.3 + Math.random() * 0.7);
-          
-          drawBlob(ctx, x + offsetX, y + offsetY, randomSize, 0.3);
-      }
+      // Desenhamos 3 círculos fixos sobrepostos para criar uma forma orgânica mas ESTÁVEL
+      
+      // Centro (Forte)
+      drawSoftCircle(ctx, x, y, baseSize, 0.6);
+      
+      // Satélite 1 (Deslocado um pouco para a esquerda/cima)
+      drawSoftCircle(ctx, x - baseSize * 0.3, y - baseSize * 0.2, baseSize * 0.7, 0.3);
+      
+      // Satélite 2 (Deslocado um pouco para a direita/baixo)
+      drawSoftCircle(ctx, x + baseSize * 0.3, y + baseSize * 0.2, baseSize * 0.7, 0.3);
     }
 
     texture.needsUpdate = true;
@@ -141,7 +136,7 @@ function useMaskCanvas() {
 }
 
 // =========================================================
-// 3. CENA 3D (Sem alterações significativas)
+// 3. CENA 3D
 // =========================================================
 const Scene = () => {
   const { viewport } = useThree();
@@ -214,7 +209,6 @@ const VulpLiquidPage = () => {
       {/* HERO SECTION 3D */}
       <section className="relative h-screen w-full overflow-hidden bg-black">
         <div className="absolute inset-0 z-0 cursor-crosshair">
-          {/* Usamos dpr alto para garantir nitidez em telas retina */}
           <Canvas dpr={[1, 2]} gl={{ antialias: true }}>
             <React.Suspense fallback={null}>
               <Scene />
@@ -222,7 +216,7 @@ const VulpLiquidPage = () => {
           </Canvas>
         </div>
 
-        {/* Textos Sobrepostos */}
+        {/* Interface Overlay */}
         <div className="absolute inset-0 z-10 flex flex-col items-center justify-center pointer-events-none">
             <div className="text-center px-4 mix-blend-difference">
                 <span className="text-purple-300 font-bold tracking-[0.5em] text-xs md:text-sm uppercase mb-6 inline-block animate-pulse border border-purple-500/50 px-3 py-1 rounded-full">
@@ -245,7 +239,7 @@ const VulpLiquidPage = () => {
         </div>
       </section>
 
-      {/* CONTAGEM REGRESSIVA (O resto do código é idêntico) */}
+      {/* CONTAGEM REGRESSIVA */}
       <section className="min-h-screen bg-black relative flex flex-col items-center justify-center py-24 px-6 border-t border-white/10 z-20">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-purple-800/20 blur-[120px] rounded-full pointer-events-none"></div>
 
