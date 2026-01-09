@@ -9,7 +9,7 @@ import { motion, useScroll, useTransform } from 'framer-motion';
 import Link from 'next/link';
 
 // =========================================================
-// PARTE 1: WEBGL (Fundo Líquido)
+// PARTE 1: WEBGL (Shader & Canvas)
 // =========================================================
 
 const LiquidMaskMaterial = shaderMaterial(
@@ -49,37 +49,54 @@ const LiquidMaskMaterial = shaderMaterial(
 );
 extend({ LiquidMaskMaterial });
 
+// Hook corrigido para lidar com redimensionamento de tela (evita bugs nos cantos)
 function useMaskCanvas() {
-  const [canvas] = useState(() => {
-    if (typeof document === 'undefined') return null;
-    const c = document.createElement('canvas');
-    c.width = 1280; c.height = 720;
-    return c;
-  });
-  const [texture] = useState(() => {
-    const t = new THREE.CanvasTexture(canvas!);
+  const [canvasElement, setCanvasElement] = useState<HTMLCanvasElement | null>(null);
+
+  const texture = useMemo(() => {
+    if (!canvasElement) return null;
+    const t = new THREE.CanvasTexture(canvasElement);
     t.minFilter = THREE.LinearFilter;
     t.magFilter = THREE.LinearFilter;
     return t;
-  });
+  }, [canvasElement]);
+
   useEffect(() => {
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if(ctx) { ctx.fillStyle = 'black'; ctx.fillRect(0,0,canvas.width,canvas.height); }
-  }, [canvas]);
+    if (typeof window === 'undefined') return;
+    const c = document.createElement('canvas');
+    // Força o canvas a ter o tamanho real da janela para não bugar a mascara
+    c.width = window.innerWidth;
+    c.height = window.innerHeight;
+    
+    const ctx = c.getContext('2d');
+    if(ctx) { ctx.fillStyle = 'black'; ctx.fillRect(0,0,c.width,c.height); }
+    
+    setCanvasElement(c);
+
+    // Atualiza se a tela mudar de tamanho
+    const handleResize = () => {
+        c.width = window.innerWidth;
+        c.height = window.innerHeight;
+    }
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const update = (uv: {x:number, y:number} | null) => {
-    if(!canvas || !texture) return;
-    const ctx = canvas.getContext('2d');
+    if(!canvasElement || !texture) return;
+    const ctx = canvasElement.getContext('2d');
     if(!ctx) return;
+    
     ctx.globalCompositeOperation = 'source-over';
     ctx.fillStyle = 'rgba(0, 0, 0, 0.04)'; 
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillRect(0, 0, canvasElement.width, canvasElement.height);
+    
     if (uv) {
       ctx.globalCompositeOperation = 'lighter'; 
-      const x = uv.x * canvas.width;
-      const y = (1 - uv.y) * canvas.height;
-      const baseSize = canvas.width * 0.08; 
+      const x = uv.x * canvasElement.width;
+      const y = (1 - uv.y) * canvasElement.height;
+      const baseSize = canvasElement.width * 0.08; 
+      
       const draw = (ox:number, oy:number, r:number, op:number) => {
           const g = ctx.createRadialGradient(ox, oy, 0, ox, oy, r);
           g.addColorStop(0, `rgba(255, 255, 255, ${op})`);
@@ -108,13 +125,13 @@ const Scene = () => {
     <mesh onPointerMove={(e:any) => mouseUV.current = e.uv} onPointerLeave={() => mouseUV.current = null}>
       <planeGeometry args={[viewport.width, viewport.height]} />
       {/* @ts-ignore */}
-      <liquidMaskMaterial ref={materialRef} uTex1={tex1} uTex2={tex2} uDisp={disp} uMask={texture} uIntensity={0.2} toneMapped={false} />
+      <liquidMaskMaterial ref={materialRef} uTex1={tex1} uTex2={tex2} uDisp={disp} uMask={texture || new THREE.Texture()} uIntensity={0.2} toneMapped={false} />
     </mesh>
   );
 };
 
 // =========================================================
-// PARTE 2: PÁGINA COM SCROLL
+// PARTE 2: PÁGINA (Layout Centralizado)
 // =========================================================
 
 const VulpMergedPage = () => {
@@ -153,21 +170,22 @@ const VulpMergedPage = () => {
   return (
     <div ref={containerRef} className="h-[200vh] bg-[#050505] relative font-sans selection:bg-purple-600">
       
-      <div className="sticky top-0 h-screen w-full overflow-hidden flex flex-col items-center justify-center">
+      {/* STICKY CONTAINER: Forçamos justify-center e items-center para nada sair do lugar */}
+      <div className="sticky top-0 h-screen w-full overflow-hidden flex flex-col items-center justify-center text-center">
 
         {/* WEBGL BACKGROUND */}
         <motion.div 
-            style={{ scale: bgScale, opacity: bgOpacity, filter: bgFilter }}
-            className="absolute inset-0 z-0"
+            style={{ scale: bgScale, opacity: bgOpacity, filter: bgFilter, transformOrigin: "center center" }}
+            className="absolute inset-0 z-0 origin-center" // origin-center EVITA O PULO PRO LADO
         >
-            <Canvas dpr={[1, 2]} gl={{ antialias: true }}>
+            <Canvas dpr={[1, 2]} gl={{ antialias: true }} className="w-full h-full">
                 <React.Suspense fallback={null}>
                     <Scene />
                 </React.Suspense>
             </Canvas>
             
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <h1 className="text-6xl md:text-9xl font-black tracking-tighter text-purple-600 drop-shadow-[0_0_30px_rgba(147,51,234,0.5)] leading-[0.9] mix-blend-screen opacity-80">
+                <h1 className="text-6xl md:text-9xl font-black tracking-tighter text-purple-600 drop-shadow-[0_0_30px_rgba(147,51,234,0.5)] leading-[0.9] mix-blend-screen opacity-80 text-center">
                     O FUTURO <br /> JÁ COMEÇOU
                 </h1>
             </div>
@@ -178,13 +196,17 @@ const VulpMergedPage = () => {
         </motion.div>
 
 
-        {/* LOGO E CONTEÚDO */}
+        {/* LOGO E CONTEÚDO (Centralizados) */}
         <div className="relative z-20 flex flex-col items-center justify-center w-full px-4">
             
-            {/* LOGO DA RAPOSA (Com viewBox Ajustado) */}
-            <div className="relative w-[300px] h-[300px] md:w-[400px] md:h-[400px] mb-4">
-                {/* Ajustei o foco da câmera para os números 280-430 */}
-                <svg viewBox="280 140 150 180" className="w-full h-full overflow-visible drop-shadow-[0_0_15px_rgba(168,85,247,0.5)]">
+            {/* LOGO DA RAPOSA: Viewbox ajustado para mostrar o corpo inteiro */}
+            <div className="relative w-[300px] h-[300px] md:w-[400px] md:h-[400px] mb-4 flex justify-center">
+                {/* AJUSTE FINAL VIEWBOX: 
+                   O path começa em 344 e vai até ~400. 
+                   ViewBox: 290 (x) 30 (y) 120 (width) 220 (height) 
+                   Isso enquadra o desenho perfeitamente.
+                */}
+                <svg viewBox="290 30 120 220" className="w-full h-full overflow-visible drop-shadow-[0_0_15px_rgba(168,85,247,0.5)]">
                     <defs>
                         <linearGradient id="purpleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
                             <stop offset="0%" stopColor="#9333ea" />
@@ -192,12 +214,11 @@ const VulpMergedPage = () => {
                         </linearGradient>
                     </defs>
 
-                    {/* SEU NOVO CÓDIGO AQUI */}
                     <motion.path
                         d="M344.24,169.34c3.52,12.39,2.62,26.07-3.56,38.51-9.57,19.25-29.16,30.22-49.32,29.73h.01s0,0,0,0c4.61,7.55,11.34,13.94,19.85,18.17,7.86,3.91,16.28,5.49,24.46,5.01h0s0,0,0,0c8.08-.42,16.38,1.17,24.14,5.03,15.85,7.88,25.51,23.24,26.85,39.68,22.91-49.72,4.25-108.53-42.43-136.15Z"
                         fill="transparent"
                         stroke="url(#purpleGrad)"
-                        strokeWidth="2"
+                        strokeWidth="3"
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         style={{ pathLength: logoProgress, opacity: logoProgress }}
@@ -205,18 +226,20 @@ const VulpMergedPage = () => {
                 </svg>
             </div>
 
-            {/* CONTEÚDO (Subido com margem negativa) */}
+            {/* CONTEÚDO SUBIDO E CENTRALIZADO */}
             <motion.div 
                 style={{ opacity: contentOpacity, y: contentY }}
-                className="text-center w-full max-w-4xl -mt-16"
+                className="flex flex-col items-center justify-center w-full max-w-4xl -mt-10"
             >
-                <div className="grid grid-cols-4 gap-2 md:gap-6 mb-10 justify-center mx-auto max-w-2xl">
+                {/* CONTADOR */}
+                <div className="grid grid-cols-4 gap-2 md:gap-6 mb-10 justify-center mx-auto">
                     <TimeBox value={timeLeft.days} label="DIAS" />
                     <TimeBox value={timeLeft.hours} label="HORAS" />
                     <TimeBox value={timeLeft.minutes} label="MINUTOS" />
                     <TimeBox value={timeLeft.seconds} label="SEGUNDOS" />
                 </div>
 
+                {/* BOTÃO VIP */}
                 <Link 
                     href="https://wa.me/5593991174787" 
                     target="_blank"
@@ -235,7 +258,7 @@ const VulpMergedPage = () => {
 };
 
 const TimeBox = ({ value, label }: { value: number, label: string }) => (
-    <div className="bg-white/5 border border-white/10 p-3 md:p-6 rounded-xl backdrop-blur-md min-w-[70px]">
+    <div className="bg-white/5 border border-white/10 p-3 md:p-6 rounded-xl backdrop-blur-md min-w-[70px] flex flex-col items-center justify-center">
         <div className="text-2xl md:text-5xl font-black text-white tabular-nums tracking-tighter mb-1">
             {value < 10 ? `0${value}` : value}
         </div>
