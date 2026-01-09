@@ -9,7 +9,7 @@ import { motion, useScroll, useTransform } from 'framer-motion';
 import Link from 'next/link';
 
 // =========================================================
-// PARTE 1: WEBGL (Shader & Canvas)
+// PARTE 1: WEBGL (Fundo Líquido - Código Blindado)
 // =========================================================
 
 const LiquidMaskMaterial = shaderMaterial(
@@ -49,7 +49,6 @@ const LiquidMaskMaterial = shaderMaterial(
 );
 extend({ LiquidMaskMaterial });
 
-// Hook corrigido para lidar com redimensionamento de tela (evita bugs nos cantos)
 function useMaskCanvas() {
   const [canvasElement, setCanvasElement] = useState<HTMLCanvasElement | null>(null);
 
@@ -64,16 +63,12 @@ function useMaskCanvas() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const c = document.createElement('canvas');
-    // Força o canvas a ter o tamanho real da janela para não bugar a mascara
     c.width = window.innerWidth;
     c.height = window.innerHeight;
-    
     const ctx = c.getContext('2d');
     if(ctx) { ctx.fillStyle = 'black'; ctx.fillRect(0,0,c.width,c.height); }
-    
     setCanvasElement(c);
 
-    // Atualiza se a tela mudar de tamanho
     const handleResize = () => {
         c.width = window.innerWidth;
         c.height = window.innerHeight;
@@ -95,7 +90,7 @@ function useMaskCanvas() {
       ctx.globalCompositeOperation = 'lighter'; 
       const x = uv.x * canvasElement.width;
       const y = (1 - uv.y) * canvasElement.height;
-      const baseSize = canvasElement.width * 0.08; 
+      const baseSize = Math.max(canvasElement.width, canvasElement.height) * 0.08; 
       
       const draw = (ox:number, oy:number, r:number, op:number) => {
           const g = ctx.createRadialGradient(ox, oy, 0, ox, oy, r);
@@ -131,21 +126,30 @@ const Scene = () => {
 };
 
 // =========================================================
-// PARTE 2: PÁGINA (Layout Centralizado)
+// PARTE 2: PÁGINA (Layout Empilhado e Corrigido)
 // =========================================================
 
 const VulpMergedPage = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({ target: containerRef, offset: ["start start", "end end"] });
 
-  // Animações
+  // --- ANIMAÇÕES SINCRONIZADAS ---
+  // Fundo (Background)
   const bgScale = useTransform(scrollYProgress, [0, 0.5], [1, 0.8]);
-  const bgOpacity = useTransform(scrollYProgress, [0, 0.4], [1, 0]);
-  const bgFilter = useTransform(scrollYProgress, [0, 0.4], ["blur(0px)", "blur(10px)"]);
+  const bgOpacity = useTransform(scrollYProgress, [0, 0.3], [1, 0]); // Some mais rápido para focar no conteúdo
+  const bgFilter = useTransform(scrollYProgress, [0, 0.4], ["blur(0px)", "blur(15px)"]);
   
-  const logoProgress = useTransform(scrollYProgress, [0.1, 0.5], [0, 1]);
-  const contentOpacity = useTransform(scrollYProgress, [0.3, 0.6], [0, 1]);
-  const contentY = useTransform(scrollYProgress, [0.3, 0.6], [100, 0]);
+  // Texto "O FUTURO..." (Some ao rolar)
+  const textOpacity = useTransform(scrollYProgress, [0, 0.2], [1, 0]);
+  const textScale = useTransform(scrollYProgress, [0, 0.2], [1, 0.8]);
+
+  // Container Principal (Raposa + Conteúdo)
+  // Começa invisível e baixo (100px), sobe para o centro e aparece
+  const mainContentOpacity = useTransform(scrollYProgress, [0.2, 0.5], [0, 1]);
+  const mainContentY = useTransform(scrollYProgress, [0.2, 0.5], [100, 0]);
+  
+  // Desenho da Raposa (O Path se desenha)
+  const logoPathProgress = useTransform(scrollYProgress, [0.3, 0.6], [0, 1]);
 
   // Contador
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
@@ -168,89 +172,95 @@ const VulpMergedPage = () => {
   }, []);
 
   return (
-    <div ref={containerRef} className="h-[200vh] bg-[#050505] relative font-sans selection:bg-purple-600">
+    // Aumentei para 300vh para dar bastante espaço de scroll suave
+    <div ref={containerRef} className="h-[300vh] bg-[#050505] relative font-sans selection:bg-purple-600">
       
-      {/* STICKY CONTAINER: Forçamos justify-center e items-center para nada sair do lugar */}
-      <div className="sticky top-0 h-screen w-full overflow-hidden flex flex-col items-center justify-center text-center">
+      {/* STICKY CONTAINER: A janela onde tudo acontece */}
+      <div className="sticky top-0 h-screen w-full overflow-hidden flex items-center justify-center">
 
-        {/* WEBGL BACKGROUND */}
+        {/* --- CAMADA 0: FUNDO LÍQUIDO (WebGL) --- */}
         <motion.div 
             style={{ scale: bgScale, opacity: bgOpacity, filter: bgFilter, transformOrigin: "center center" }}
-            className="absolute inset-0 z-0 origin-center" // origin-center EVITA O PULO PRO LADO
+            className="absolute inset-0 z-0"
         >
             <Canvas dpr={[1, 2]} gl={{ antialias: true }} className="w-full h-full">
                 <React.Suspense fallback={null}>
                     <Scene />
                 </React.Suspense>
             </Canvas>
-            
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <h1 className="text-6xl md:text-9xl font-black tracking-tighter text-purple-600 drop-shadow-[0_0_30px_rgba(147,51,234,0.5)] leading-[0.9] mix-blend-screen opacity-80 text-center">
-                    O FUTURO <br /> JÁ COMEÇOU
-                </h1>
-            </div>
-            
-            <div className="absolute bottom-10 w-full flex justify-center animate-bounce opacity-80 pointer-events-none text-white">
-                <ArrowDown size={24} className="drop-shadow-md" />
+        </motion.div>
+
+        {/* --- CAMADA 1: TEXTO INICIAL (Some com scroll) --- */}
+        <motion.div 
+            style={{ opacity: textOpacity, scale: textScale }}
+            className="absolute inset-0 z-10 flex flex-col items-center justify-center pointer-events-none"
+        >
+            <h1 className="text-6xl md:text-9xl font-black tracking-tighter text-purple-600 drop-shadow-[0_0_30px_rgba(147,51,234,0.5)] leading-[0.9] mix-blend-screen opacity-80 text-center">
+                O FUTURO <br /> JÁ COMEÇOU
+            </h1>
+            <div className="absolute bottom-10 animate-bounce text-white/50">
+                <ArrowDown size={30} />
             </div>
         </motion.div>
 
 
-        {/* LOGO E CONTEÚDO (Centralizados) */}
-        <div className="relative z-20 flex flex-col items-center justify-center w-full px-4">
+        {/* --- CAMADA 2: CONTEÚDO PRINCIPAL (Aparece com scroll) --- */}
+        {/* Usamos Flex Column para garantir que o contador fique EMBAIXO da raposa */}
+        <motion.div 
+            style={{ opacity: mainContentOpacity, y: mainContentY }}
+            className="relative z-20 flex flex-col items-center justify-center w-full max-w-4xl px-4 gap-12" // gap-12 separa raposa do contador
+        >
             
-            {/* LOGO DA RAPOSA: Viewbox ajustado para mostrar o corpo inteiro */}
-            <div className="relative w-[300px] h-[300px] md:w-[400px] md:h-[400px] mb-4 flex justify-center">
-                {/* AJUSTE FINAL VIEWBOX: 
-                   O path começa em 344 e vai até ~400. 
-                   ViewBox: 290 (x) 30 (y) 120 (width) 220 (height) 
-                   Isso enquadra o desenho perfeitamente.
-                */}
-                <svg viewBox="290 30 120 220" className="w-full h-full overflow-visible drop-shadow-[0_0_15px_rgba(168,85,247,0.5)]">
+            {/* 1. RAPOSA (Topo) */}
+            <div className="relative w-48 h-48 md:w-64 md:h-64 flex-shrink-0">
+                {/* ViewBox 0 0 100 100 para o seu novo SVG quadrado */}
+                <svg viewBox="0 0 100 100" className="w-full h-full overflow-visible drop-shadow-[0_0_25px_rgba(168,85,247,0.6)]">
                     <defs>
                         <linearGradient id="purpleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stopColor="#9333ea" />
-                            <stop offset="100%" stopColor="#a855f7" />
+                            <stop offset="0%" stopColor="#d8b4fe" /> {/* Roxo claro */}
+                            <stop offset="100%" stopColor="#7c3aed" /> {/* Roxo escuro */}
                         </linearGradient>
                     </defs>
 
                     <motion.path
-                        d="M344.24,169.34c3.52,12.39,2.62,26.07-3.56,38.51-9.57,19.25-29.16,30.22-49.32,29.73h.01s0,0,0,0c4.61,7.55,11.34,13.94,19.85,18.17,7.86,3.91,16.28,5.49,24.46,5.01h0s0,0,0,0c8.08-.42,16.38,1.17,24.14,5.03,15.85,7.88,25.51,23.24,26.85,39.68,22.91-49.72,4.25-108.53-42.43-136.15Z"
+                        // SEU NOVO CÓDIGO AQUI
+                        d="M64.84,36.74c.55,1.94.41,4.09-.56,6.03-1.5,3.02-4.57,4.73-7.73,4.66h0s0,0,0,0c.72,1.18,1.78,2.18,3.11,2.85,1.23.61,2.55.86,3.83.79h0s0,0,0,0c1.27-.07,2.57.18,3.78.79,2.48,1.23,4,3.64,4.21,6.22,3.59-7.79.67-17-6.65-21.33Z"
                         fill="transparent"
                         stroke="url(#purpleGrad)"
-                        strokeWidth="3"
+                        strokeWidth="1.5" // Linha mais fina para desenho delicado
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        style={{ pathLength: logoProgress, opacity: logoProgress }}
+                        style={{ pathLength: logoPathProgress }}
+                    />
+                    
+                    {/* Brilho extra atrás da raposa */}
+                    <motion.div 
+                        style={{ opacity: logoPathProgress }}
+                        className="absolute inset-0 bg-purple-500/20 blur-[50px] -z-10 rounded-full"
                     />
                 </svg>
             </div>
 
-            {/* CONTEÚDO SUBIDO E CENTRALIZADO */}
-            <motion.div 
-                style={{ opacity: contentOpacity, y: contentY }}
-                className="flex flex-col items-center justify-center w-full max-w-4xl -mt-10"
-            >
-                {/* CONTADOR */}
-                <div className="grid grid-cols-4 gap-2 md:gap-6 mb-10 justify-center mx-auto">
+            {/* 2. CONTADOR E BOTÃO (Embaixo) */}
+            <div className="flex flex-col items-center w-full">
+                <div className="grid grid-cols-4 gap-3 md:gap-8 mb-10">
                     <TimeBox value={timeLeft.days} label="DIAS" />
                     <TimeBox value={timeLeft.hours} label="HORAS" />
                     <TimeBox value={timeLeft.minutes} label="MINUTOS" />
                     <TimeBox value={timeLeft.seconds} label="SEGUNDOS" />
                 </div>
 
-                {/* BOTÃO VIP */}
                 <Link 
                     href="https://wa.me/5593991174787" 
                     target="_blank"
-                    className="inline-flex items-center gap-3 bg-white text-black font-bold text-base md:text-lg px-8 py-4 rounded-full hover:bg-purple-600 hover:text-white transition-all duration-300 shadow-[0_0_20px_rgba(255,255,255,0.3)] hover:shadow-[0_0_40px_rgba(147,51,234,0.6)] hover:scale-105"
+                    className="inline-flex items-center gap-3 bg-white text-black font-bold text-lg px-10 py-4 rounded-full hover:bg-purple-600 hover:text-white transition-all duration-300 shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:shadow-[0_0_40px_rgba(147,51,234,0.6)] hover:scale-105"
                 >
-                    <Zap size={20} fill="currentColor" />
+                    <Zap size={22} fill="currentColor" />
                     ENTRAR NA LISTA VIP
                 </Link>
+            </div>
 
-            </motion.div>
-        </div>
+        </motion.div>
 
       </div>
     </div>
@@ -258,11 +268,11 @@ const VulpMergedPage = () => {
 };
 
 const TimeBox = ({ value, label }: { value: number, label: string }) => (
-    <div className="bg-white/5 border border-white/10 p-3 md:p-6 rounded-xl backdrop-blur-md min-w-[70px] flex flex-col items-center justify-center">
-        <div className="text-2xl md:text-5xl font-black text-white tabular-nums tracking-tighter mb-1">
+    <div className="bg-white/5 border border-white/10 p-4 md:p-6 rounded-2xl backdrop-blur-md min-w-[80px] flex flex-col items-center">
+        <div className="text-3xl md:text-6xl font-black text-white tabular-nums tracking-tighter mb-2">
             {value < 10 ? `0${value}` : value}
         </div>
-        <span className="text-purple-400 text-[8px] md:text-[10px] font-bold tracking-[0.2em] uppercase block">
+        <span className="text-purple-400 text-[10px] md:text-xs font-bold tracking-[0.3em] uppercase">
             {label}
         </span>
     </div>
