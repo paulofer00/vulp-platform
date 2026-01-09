@@ -1,15 +1,15 @@
 "use client";
+
 import React, { useState } from 'react';
 import { Play, MessageSquare, Award, User, Search, Bell, Zap, BookOpen, ChevronRight, BarChart3 } from 'lucide-react';
 
 const VulpPlatform = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
 
-  // Cores baseadas na identidade visual VULP
   const colors = {
-    bg: "bg-[#050505]", // Preto profundo
-    card: "bg-[#121212]", // Cinza muito escuro
-    primary: "bg-purple-700", // O Roxo Vulp
+    bg: "bg-[#050505]",
+    card: "bg-[#121212]",
+    primary: "bg-purple-700",
     primaryHover: "hover:bg-purple-600",
     textMain: "text-white",
     textSec: "text-gray-400"
@@ -18,21 +18,14 @@ const VulpPlatform = () => {
   return (
     <div className={`min-h-screen ${colors.bg} ${colors.textMain} font-sans selection:bg-purple-500 selection:text-white flex overflow-hidden`}>
       
-      {/* SIDEBAR DE NAVEGAÇÃO */}
+      {/* SIDEBAR */}
       <aside className="w-20 lg:w-64 border-r border-gray-800 flex flex-col justify-between p-4 transition-all duration-300">
         <div>
-          {/* Logo VULP Minimalista */}
-          {/* NOVO CÓDIGO COM A LOGO REAL */}
-<div className="mb-12 px-2 flex justify-center lg:justify-start">
-    <img
-      src="/logo-vulp-white.png"
-      alt="VULP Academy"
-      // No mobile (h-10) fica menor, no desktop (lg:h-14) fica maior e imponente
-      className="h-10 lg:h-14 w-auto object-contain"
-    />
-</div>
+          <div className="mb-12 px-2 flex justify-center lg:justify-start">
+             {/* Logo VULP */}
+             <img src="/logo-vulp-white.png" alt="VULP" className="h-10 lg:h-14 w-auto object-contain" />
+          </div>
 
-          {/* Menu */}
           <nav className="space-y-6">
             <NavItem icon={<Zap size={20} />} label="Dashboard" active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} />
             <NavItem icon={<BookOpen size={20} />} label="Meus Cursos" active={activeTab === 'courses'} onClick={() => setActiveTab('courses')} />
@@ -41,7 +34,6 @@ const VulpPlatform = () => {
           </nav>
         </div>
 
-        {/* User Profile Mini */}
         <div className="flex items-center gap-3 p-2 rounded-xl hover:bg-white/5 cursor-pointer transition">
           <div className="w-10 h-10 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 flex items-center justify-center border-2 border-black">
             <User size={18} />
@@ -53,9 +45,8 @@ const VulpPlatform = () => {
         </div>
       </aside>
 
-      {/* ÁREA PRINCIPAL */}
+      {/* MAIN */}
       <main className="flex-1 overflow-y-auto p-4 lg:p-8 relative">
-        {/* Header Superior */}
         <header className="flex justify-between items-center mb-10">
           <div>
             <h1 className="text-3xl font-bold mb-1">Bem-vindo, Empreendedor.</h1>
@@ -78,28 +69,23 @@ const VulpPlatform = () => {
           </div>
         </header>
 
-        {/* HERO SECTION - Curso em Destaque (Estilo Netflix/Gaming) */}
+        {/* HERO */}
         <section className="mb-12 relative group cursor-pointer">
           <div className="absolute inset-0 bg-gradient-to-r from-purple-900/90 to-transparent rounded-2xl z-10"></div>
-          <img 
-            src="/api/placeholder/1200/400" 
-            alt="Marketing Hero" 
-            className="w-full h-80 object-cover rounded-2xl opacity-60 group-hover:scale-[1.01] transition duration-500"
-          />
+          {/* Placeholder image */}
+          <div className="w-full h-80 bg-gray-800 rounded-2xl"></div> 
           <div className="absolute bottom-0 left-0 p-8 z-20 max-w-2xl">
             <span className="bg-purple-600 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider mb-3 inline-block">Novo Módulo</span>
             <h2 className="text-4xl font-black mb-3 leading-tight">Dominando o Branding Digital</h2>
-            <p className="text-gray-300 mb-6 line-clamp-2">Aprenda a criar marcas que não apenas vendem, mas criam legados. Estratégias avançadas de posicionamento para o mercado atual.</p>
-            <button className="bg-white text-black font-bold py-3 px-8 rounded-full flex items-center gap-2 hover:bg-gray-200 transition shadow-[0_0_20px_rgba(255,255,255,0.3)]">
+            <p className="text-gray-300 mb-6 line-clamp-2">Aprenda a criar marcas que não apenas vendem, mas criam legados.</p>
+            <button className="bg-white text-black font-bold py-3 px-8 rounded-full flex items-center gap-2 hover:bg-gray-200 transition">
               <Play size={18} fill="black" /> Continuar Assistindo
             </button>
           </div>
         </section>
 
-        {/* GRID DE CONTEÚDO */}
+        {/* GRID */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
-          {/* Coluna da Esquerda - Cursos */}
           <div className="lg:col-span-2 space-y-8">
             <div className="flex justify-between items-end">
               <h3 className="text-xl font-bold flex items-center gap-2"><Award className="text-purple-500"/> Trilhas de Conhecimento</h3>
@@ -107,37 +93,15 @@ const VulpPlatform = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <CourseCard 
-                title="Gestão de Tráfego 2.0" 
-                progress={75} 
-                category="Marketing"
-                imageColor="bg-blue-900"
-              />
-              <CourseCard 
-                title="Copywriting Persuasivo" 
-                progress={30} 
-                category="Vendas"
-                imageColor="bg-indigo-900"
-              />
-              <CourseCard 
-                title="Finanças para Startups" 
-                progress={0} 
-                category="Gestão"
-                imageColor="bg-emerald-900"
-              />
-               <CourseCard 
-                title="Liderança Ágil" 
-                progress={10} 
-                category="Soft Skills"
-                imageColor="bg-orange-900"
-              />
+              <CourseCard title="Gestão de Tráfego 2.0" progress={75} category="Marketing" imageColor="bg-blue-900"/>
+              <CourseCard title="Copywriting Persuasivo" progress={30} category="Vendas" imageColor="bg-indigo-900"/>
+              <CourseCard title="Finanças para Startups" progress={0} category="Gestão" imageColor="bg-emerald-900"/>
+              <CourseCard title="Liderança Ágil" progress={10} category="Soft Skills" imageColor="bg-orange-900"/>
             </div>
           </div>
 
-          {/* Coluna da Direita - Gamificação & Comunidade */}
           <div className="space-y-8">
-            
-            {/* Widget de Ranking/Gamificação */}
+            {/* Gamification */}
             <div className="bg-[#121212] border border-gray-800 p-6 rounded-2xl relative overflow-hidden">
                <div className="absolute top-0 right-0 w-24 h-24 bg-purple-600 blur-[60px] opacity-40"></div>
                <h3 className="font-bold mb-4 text-lg">Seu Nível VULP</h3>
@@ -153,7 +117,7 @@ const VulpPlatform = () => {
                </div>
             </div>
 
-            {/* Widget de Forum */}
+            {/* Forum */}
             <div className="bg-[#121212] border border-gray-800 p-6 rounded-2xl">
               <h3 className="font-bold mb-4 text-lg flex justify-between">
                 Discussões Recentes 
@@ -164,11 +128,7 @@ const VulpPlatform = () => {
                 <ForumItem title="Dúvida sobre a aula de Branding" author="João P." time="15 min atrás" />
                 <ForumItem title="Networking em São Paulo?" author="Carlos D." time="1h atrás" />
               </div>
-              <button className="w-full mt-4 py-2 border border-purple-900 text-purple-400 rounded-lg text-sm hover:bg-purple-900/20 transition">
-                Entrar no Fórum
-              </button>
             </div>
-
           </div>
         </div>
       </main>
@@ -176,8 +136,16 @@ const VulpPlatform = () => {
   );
 };
 
-// Componentes Auxiliares para modularidade
-const NavItem = ({ icon, label, active, onClick }) => (
+// TIPAGEM DOS COMPONENTES (A CORREÇÃO ESTÁ AQUI)
+
+interface NavItemProps {
+  icon: React.ReactElement; // Define que icon deve ser um elemento React
+  label: string;
+  active: boolean;
+  onClick: () => void;
+}
+
+const NavItem = ({ icon, label, active, onClick }: NavItemProps) => (
   <button 
     onClick={onClick}
     className={`flex items-center gap-4 w-full p-3 rounded-xl transition-all duration-300 group
@@ -190,7 +158,14 @@ const NavItem = ({ icon, label, active, onClick }) => (
   </button>
 );
 
-const CourseCard = ({ title, progress, category, imageColor }) => (
+interface CourseCardProps {
+  title: string;
+  progress: number;
+  category: string;
+  imageColor: string;
+}
+
+const CourseCard = ({ title, progress, category, imageColor }: CourseCardProps) => (
   <div className="bg-[#121212] border border-gray-800 rounded-xl overflow-hidden hover:border-purple-500/50 hover:transform hover:-translate-y-1 transition-all duration-300 group cursor-pointer">
     <div className={`h-32 ${imageColor} relative`}>
       <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition"></div>
@@ -219,7 +194,13 @@ const CourseCard = ({ title, progress, category, imageColor }) => (
   </div>
 );
 
-const ForumItem = ({ title, author, time }) => (
+interface ForumItemProps {
+  title: string;
+  author: string;
+  time: string;
+}
+
+const ForumItem = ({ title, author, time }: ForumItemProps) => (
   <div className="flex items-start gap-3 border-b border-gray-800 pb-3 last:border-0 last:pb-0">
     <div className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center text-xs font-bold">
       {author.charAt(0)}
