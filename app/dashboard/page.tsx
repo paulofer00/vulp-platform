@@ -136,10 +136,10 @@ const VulpPlatform = () => {
   );
 };
 
-// TIPAGEM DOS COMPONENTES (A CORREÇÃO ESTÁ AQUI)
+// --- COMPONENTES AUXILIARES E INTERFACES ---
 
 interface NavItemProps {
-  icon: React.ReactElement; // Define que icon deve ser um elemento React
+  icon: React.ReactElement;
   label: string;
   active: boolean;
   onClick: () => void;
@@ -152,7 +152,8 @@ const NavItem = ({ icon, label, active, onClick }: NavItemProps) => (
       ${active ? 'bg-purple-600 text-white shadow-[0_0_15px_rgba(108,33,255,0.4)]' : 'text-gray-400 hover:text-white hover:bg-white/5'}
     `}
   >
-    {React.cloneElement(icon, { size: 22 })}
+    {/* AQUI ESTÁ A CORREÇÃO: "as any" força o TypeScript a aceitar */}
+    {React.cloneElement(icon as any, { size: 22 })}
     <span className="hidden lg:block font-medium">{label}</span>
     {active && <span className="ml-auto w-1 h-1 bg-white rounded-full hidden lg:block"></span>}
   </button>
