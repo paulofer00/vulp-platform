@@ -1,11 +1,42 @@
-import { ArrowRight, CheckCircle2, Play, Trophy, Users, Zap } from "lucide-react";
+"use client";
+
+import { ArrowRight, CheckCircle2, Loader2, Play, Trophy, Users, Zap } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
 
 export default function Home() {
+  const [email, setEmail] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+
+  async function handleJoinWaitlist(e: React.FormEvent) {
+    e.preventDefault();
+    if (!email) return;
+
+    setIsLoading(true);
+
+    try {
+      const res = await fetch("/api/leads", {
+        method: "POST",
+        body: JSON.stringify({ email }),
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (res.ok) {
+        setIsSuccess(true);
+        setEmail("");
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
   return (
     <div className="min-h-screen bg-[#050505] text-white selection:bg-purple-500/30 selection:text-purple-200">
       
-      {/* --- NAVBAR FLUTUANTE --- */}
+      {/* --- NAVBAR --- */}
       <nav className="fixed top-0 w-full z-50 border-b border-white/5 bg-[#050505]/80 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="font-bold text-xl tracking-tighter">VULP<span className="text-purple-600">.</span></div>
@@ -14,40 +45,62 @@ export default function Home() {
             <a href="#trilhas" className="hover:text-white transition-colors">Trilhas</a>
             <Link href="/vitrine" className="hover:text-white transition-colors">Talentos</Link>
           </div>
-          <button className="bg-white text-black px-5 py-2 rounded-full text-xs font-bold hover:bg-gray-200 transition-colors">
-            Entrar na Plataforma
+          <button className="bg-white/10 text-white px-5 py-2 rounded-full text-xs font-bold border border-white/10 cursor-not-allowed opacity-50">
+            Área do Aluno (Em breve)
           </button>
         </div>
       </nav>
 
-      {/* --- HERO SECTION --- */}
+      {/* --- HERO SECTION COM CAPTURA --- */}
       <section className="relative pt-32 pb-20 md:pt-48 md:pb-32 px-6 overflow-hidden">
-        {/* Glow Effect de Fundo */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-purple-600/10 blur-[120px] rounded-full pointer-events-none -z-10" />
 
         <div className="max-w-4xl mx-auto text-center space-y-8">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-purple-500/20 bg-purple-500/5 text-purple-300 text-[10px] font-bold uppercase tracking-widest">
-            <Zap size={12} /> Nova Turma Aberta
+            <Zap size={12} /> Lista de Espera Aberta
           </div>
           
           <h1 className="text-5xl md:text-7xl font-bold tracking-tighter leading-[1.1]">
             Domine o Digital. <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-200 to-gray-500">
-              Conquiste sua Liberdade.
+              Garanta sua Vaga.
             </span>
           </h1>
           
           <p className="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto leading-relaxed">
-            A VULP não é apenas uma escola. É um ecossistema que conecta educação prática com oportunidades reais de trabalho.
+            Cadastre-se gratuitamente para ser avisado em primeira mão quando abrirmos a nova turma da VULP.
           </p>
 
-          <div className="flex flex-col md:flex-row items-center justify-center gap-4 pt-4">
-            <button className="w-full md:w-auto px-8 py-4 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-bold flex items-center justify-center gap-2 transition-all">
-              Quero ser Aluno VULP <ArrowRight size={18} />
-            </button>
-            <Link href="/vitrine" className="w-full md:w-auto px-8 py-4 border border-white/10 hover:bg-white/5 rounded-lg font-bold flex items-center justify-center gap-2 transition-all text-gray-300">
-              Ver Vitrine de Talentos
-            </Link>
+          {/* FORMULÁRIO DE CAPTURA */}
+          <div className="max-w-md mx-auto pt-4">
+            {isSuccess ? (
+              <div className="bg-green-500/10 border border-green-500/20 text-green-400 px-6 py-4 rounded-xl flex items-center justify-center gap-3 animate-in fade-in slide-in-from-bottom-2">
+                <CheckCircle2 size={24} />
+                <div className="text-left">
+                  <p className="font-bold">Sucesso!</p>
+                  <p className="text-xs opacity-80">Você está na lista VIP. Fique de olho no e-mail.</p>
+                </div>
+              </div>
+            ) : (
+              <form onSubmit={handleJoinWaitlist} className="flex flex-col sm:flex-row gap-3">
+                <input 
+                  type="email" 
+                  placeholder="Seu melhor e-mail" 
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="flex-1 bg-white/5 border border-white/10 rounded-lg px-4 py-4 text-white placeholder:text-gray-500 focus:outline-none focus:border-purple-500 transition-colors"
+                />
+                <button 
+                  disabled={isLoading}
+                  type="submit" 
+                  className="bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-8 py-4 rounded-lg font-bold transition-all flex items-center justify-center gap-2"
+                >
+                  {isLoading ? <Loader2 className="animate-spin" /> : "Entrar na Lista"} <ArrowRight size={18} />
+                </button>
+              </form>
+            )}
+            <p className="text-xs text-gray-600 mt-3">Junte-se a mais de 2.000 interessados.</p>
           </div>
 
           <div className="pt-8 flex items-center justify-center gap-6 text-sm text-gray-500 font-medium">
@@ -57,11 +110,11 @@ export default function Home() {
         </div>
       </section>
 
-      {/* --- ESTATÍSTICAS (PROVA SOCIAL) --- */}
+      {/* --- ESTATÍSTICAS --- */}
       <section className="border-y border-white/5 bg-white/[0.02]">
         <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 divide-x divide-white/5">
           {[
-            { label: "Alunos Ativos", value: "+2.000" },
+            { label: "Alunos na Espera", value: "+2.000" },
             { label: "Empresas Parceiras", value: "+150" },
             { label: "Contratações", value: "98%" },
             { label: "Aulas Gravadas", value: "+400" },
@@ -74,6 +127,10 @@ export default function Home() {
         </div>
       </section>
 
+      {/* --- O RESTO DO SITE (VITRINE E TRILHAS) MANTÉM IGUAL AO ANTERIOR --- */}
+      {/* ... (O restante do código de Vitrine e Trilhas continua igual, só mantive o começo que mudou) ... */}
+      {/* Para facilitar, pode copiar o resto do código anterior a partir da section "O DIFERENCIAL" e colar abaixo */}
+      
       {/* --- O DIFERENCIAL (VITRINE) --- */}
       <section className="py-24 px-6 relative">
         <div className="max-w-6xl mx-auto bg-gradient-to-b from-[#0A0A0A] to-black border border-white/10 rounded-3xl p-8 md:p-20 relative overflow-hidden">
