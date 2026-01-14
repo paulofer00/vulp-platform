@@ -3,12 +3,18 @@ import { Briefcase, LayoutDashboard, LogOut, Plus, Search, Trophy, Users } from 
 import Link from "next/link";
 
 export default async function CompanyDashboard() {
-  // Nota: Aqui futuramente faremos o fetch real dos alunos
-  
+  // 1. BUSCAR DADOS REAIS DO BANCO
+  // Trazemos os alunos ordenados por Pontos (XP) para destacar os melhores
+  const { data: students } = await supabase
+    .from("students")
+    .select("*")
+    .order('points', { ascending: false })
+    .limit(6); // Traz apenas os top 6 para o resumo inicial
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans flex">
       
-      {/* --- SIDEBAR (Branca com detalhes Roxos) --- */}
+      {/* --- SIDEBAR --- */}
       <aside className="fixed left-0 top-0 h-full w-64 bg-white border-r border-slate-200 flex flex-col z-20">
         <div className="p-8">
             <div className="font-bold text-2xl tracking-tighter text-slate-900">
@@ -52,9 +58,9 @@ export default async function CompanyDashboard() {
         {/* Cards de Métricas */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
             {[
-                { label: "Vagas Abertas", value: "03", icon: <Briefcase size={24} className="text-purple-600"/> },
-                { label: "Candidatos", value: "12", icon: <Users size={24} className="text-purple-600"/> },
-                { label: "Talentos Salvos", value: "05", icon: <Trophy size={24} className="text-purple-600"/> },
+                { label: "Vagas Abertas", value: "0", icon: <Briefcase size={24} className="text-purple-600"/> },
+                { label: "Candidatos", value: "0", icon: <Users size={24} className="text-purple-600"/> },
+                { label: "Talentos na Base", value: students?.length || 0, icon: <Trophy size={24} className="text-purple-600"/> },
             ].map((stat, i) => (
                 <div key={i} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
                     <div className="flex justify-between items-start mb-4">
@@ -81,44 +87,54 @@ export default async function CompanyDashboard() {
             </button>
         </div>
 
-        {/* Lista de Talentos (Exemplo Visual) */}
+        {/* Lista de Talentos Reais */}
         <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-bold text-slate-900">Talentos em Destaque</h2>
             <Link href="/vitrine" className="text-sm font-bold text-purple-600 hover:text-purple-700">Ver todos</Link>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Card Exemplo - Light Mode */}
-            {[1, 2, 3].map((item) => (
-                <div key={item} className="bg-white p-6 rounded-2xl border border-slate-200 hover:border-purple-200 hover:shadow-xl hover:shadow-purple-100/50 transition-all cursor-pointer group">
-                    <div className="flex items-center gap-4 mb-4">
-                        <div className="w-14 h-14 rounded-full bg-slate-100 overflow-hidden flex items-center justify-center text-slate-400 font-bold text-xl">
-                           {item === 1 ? 'A' : item === 2 ? 'C' : 'B'}
+            {students && students.length > 0 ? (
+              students.map((student) => (
+                <Link key={student.id} href={`/talento/${student.id}`}>
+                    <div className="h-full bg-white p-6 rounded-2xl border border-slate-200 hover:border-purple-200 hover:shadow-xl hover:shadow-purple-100/50 transition-all cursor-pointer group flex flex-col">
+                        <div className="flex items-center gap-4 mb-4">
+                            <div className="w-14 h-14 rounded-full bg-slate-100 overflow-hidden flex items-center justify-center text-purple-600 font-bold text-xl border-2 border-slate-100 group-hover:border-purple-100">
+                                {student.avatar_url ? (
+                                    <img src={student.avatar_url} alt={student.full_name} className="w-full h-full object-cover" />
+                                ) : (
+                                    student.full_name.charAt(0)
+                                )}
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-lg text-slate-900 group-hover:text-purple-600 transition-colors line-clamp-1">
+                                    {student.full_name}
+                                </h3>
+                                <p className="text-sm text-slate-500 font-medium line-clamp-1">
+                                    Talento VULP
+                                </p>
+                            </div>
                         </div>
-                        <div>
-                            <h3 className="font-bold text-lg text-slate-900 group-hover:text-purple-600 transition-colors">
-                                {item === 1 ? 'Ana Silva' : item === 2 ? 'Carlos Souza' : 'Beatriz Lima'}
-                            </h3>
-                            <p className="text-sm text-slate-500 font-medium">
-                                {item === 1 ? 'Gestora de Tráfego' : item === 2 ? 'Copywriter' : 'Designer'}
-                            </p>
+                        
+                        <div className="flex flex-wrap gap-2 mb-6">
+                            <span className="px-3 py-1 bg-purple-50 text-purple-700 text-xs font-bold rounded-full border border-purple-100 flex items-center gap-1">
+                                <Trophy size={12} /> {student.points} XP
+                            </span>
+                        </div>
+                        
+                        <div className="mt-auto">
+                            <button className="w-full py-3 rounded-xl border-2 border-slate-100 text-slate-600 font-bold text-sm group-hover:border-purple-600 group-hover:bg-purple-600 group-hover:text-white transition-all">
+                                Ver Perfil Completo
+                            </button>
                         </div>
                     </div>
-                    
-                    <div className="flex flex-wrap gap-2 mb-6">
-                        <span className="px-3 py-1 bg-purple-50 text-purple-700 text-xs font-bold rounded-full border border-purple-100">
-                            {item === 1 ? '1500 XP' : '800 XP'}
-                        </span>
-                        <span className="px-3 py-1 bg-slate-100 text-slate-600 text-xs font-bold rounded-full border border-slate-200">
-                            Disponível
-                        </span>
-                    </div>
-
-                    <button className="w-full py-3 rounded-xl border-2 border-slate-100 text-slate-600 font-bold text-sm group-hover:border-purple-600 group-hover:bg-purple-600 group-hover:text-white transition-all">
-                        Ver Perfil
-                    </button>
+                </Link>
+              ))
+            ) : (
+                <div className="col-span-3 text-center py-12 bg-white rounded-2xl border border-dashed border-slate-300">
+                    <p className="text-slate-500">Nenhum talento encontrado no banco de dados.</p>
                 </div>
-            ))}
+            )}
         </div>
 
       </main>
