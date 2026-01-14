@@ -1,12 +1,12 @@
 "use client";
 
-import { createClient } from "@supabase/supabase-js"; // Vamos usar direto por enquanto para simplificar
+import { createClient } from "@supabase/supabase-js";
 import { ArrowLeft, Building2, GraduationCap, Loader2, Lock, Mail } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-// Configuração rápida do cliente (depois moveremos para um hook melhor)
+// Configuração rápida (depois movemos para hook)
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -16,11 +16,25 @@ export default function LoginPage() {
   const router = useRouter();
   const [userType, setUserType] = useState<"student" | "company">("student");
   const [loading, setLoading] = useState(false);
-  
-  // Estados do formulário
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+
+  // VARIAVEIS DE TEMA (O Segredo da troca de cor)
+  const isStudent = userType === "student";
+  
+  // Cores dinâmicas baseadas na escolha
+  const theme = {
+    bg: isStudent ? "bg-[#050505]" : "bg-slate-50",
+    text: isStudent ? "text-white" : "text-slate-900",
+    cardBg: isStudent ? "bg-[#0A0A0A]" : "bg-white",
+    cardBorder: isStudent ? "border-white/10" : "border-slate-200 shadow-xl",
+    inputBg: isStudent ? "bg-white/5" : "bg-slate-100",
+    inputBorder: isStudent ? "border-white/10" : "border-slate-200",
+    inputText: isStudent ? "text-white" : "text-slate-900",
+    iconColor: isStudent ? "text-gray-500" : "text-slate-400",
+    accentColor: isStudent ? "text-purple-500" : "text-blue-600",
+  };
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -28,7 +42,6 @@ export default function LoginPage() {
     setError("");
 
     try {
-      // 1. Tentar fazer login
       const { data, error: loginError } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -36,18 +49,17 @@ export default function LoginPage() {
 
       if (loginError) throw loginError;
 
-      // 2. Verificar o tipo de usuário no banco
+      // Verificar role
       const { data: profile } = await supabase
         .from("profiles")
         .select("role")
         .eq("id", data.user.id)
         .single();
 
-      // 3. Redirecionar para o lugar certo
       if (profile?.role === "company") {
         router.push("/empresa/dashboard");
       } else {
-        router.push("/aluno/dashboard"); // Ou vitrine se ainda não tiver dashboard
+        router.push("/aluno/dashboard");
       }
 
     } catch (err: any) {
@@ -59,18 +71,15 @@ export default function LoginPage() {
   }
 
   async function handleSignUp() {
-    // Função simples de cadastro para testarmos (depois melhoramos)
     setLoading(true);
     try {
       const { error } = await supabase.auth.signUp({
         email,
         password,
-        options: {
-          data: { role: userType } // Aqui salvamos se é aluno ou empresa
-        }
+        options: { data: { role: userType } }
       });
       if (error) throw error;
-      alert("Cadastro realizado! Verifique seu email ou tente logar (se a confirmação de email estiver desligada).");
+      alert(`Conta de ${isStudent ? 'Aluno' : 'Empresa'} criada! Verifique seu email.`);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -79,41 +88,45 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white flex flex-col items-center justify-center p-6 relative overflow-hidden">
+    <div className={`min-h-screen ${theme.bg} ${theme.text} flex flex-col items-center justify-center p-6 relative overflow-hidden transition-colors duration-500 ease-in-out`}>
       
-      {/* Background Decor */}
-      <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] bg-purple-900/20 blur-[120px] rounded-full pointer-events-none" />
-      <div className="absolute bottom-[-20%] right-[-10%] w-[500px] h-[500px] bg-blue-900/10 blur-[120px] rounded-full pointer-events-none" />
+      {/* Background Decor (Muda de cor suavemente) */}
+      <div className={`absolute top-[-20%] left-[-10%] w-[600px] h-[600px] blur-[120px] rounded-full pointer-events-none transition-all duration-700 ${isStudent ? 'bg-purple-900/20' : 'bg-blue-200/40'}`} />
+      <div className={`absolute bottom-[-20%] right-[-10%] w-[500px] h-[500px] blur-[120px] rounded-full pointer-events-none transition-all duration-700 ${isStudent ? 'bg-blue-900/10' : 'bg-purple-200/40'}`} />
 
       <div className="w-full max-w-md relative z-10">
         
-        <Link href="/" className="inline-flex items-center gap-2 text-gray-500 hover:text-white mb-8 transition-colors">
+        <Link href="/" className={`inline-flex items-center gap-2 mb-8 transition-colors ${isStudent ? 'text-gray-500 hover:text-white' : 'text-slate-400 hover:text-slate-800'}`}>
           <ArrowLeft size={18} /> Voltar para Home
         </Link>
 
-        <div className="bg-[#0A0A0A] border border-white/10 rounded-3xl p-8 shadow-2xl">
+        <div className={`${theme.cardBg} border ${theme.cardBorder} rounded-3xl p-8 transition-all duration-500`}>
           
           <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold mb-2 tracking-tight">Acesse a VULP</h1>
-            <p className="text-gray-400 text-sm">Entre para gerenciar sua carreira ou contratar.</p>
+            <h1 className="text-2xl font-bold mb-2 tracking-tight">
+              {isStudent ? "Portal do Aluno" : "Portal Corporativo"}
+            </h1>
+            <p className={isStudent ? "text-gray-400 text-sm" : "text-slate-500 text-sm"}>
+              {isStudent ? "Acesse suas aulas e conquistas." : "Gerencie vagas e contrate talentos."}
+            </p>
           </div>
 
           {/* Seletor de Tipo (Abas) */}
-          <div className="grid grid-cols-2 gap-2 p-1 bg-white/5 rounded-xl mb-8">
+          <div className={`grid grid-cols-2 gap-2 p-1 rounded-xl mb-8 transition-colors duration-500 ${isStudent ? 'bg-white/5' : 'bg-slate-100'}`}>
             <button
               onClick={() => setUserType("student")}
-              className={`flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-bold transition-all ${
-                userType === "student" 
+              className={`flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-bold transition-all duration-300 ${
+                isStudent
                   ? "bg-purple-600 text-white shadow-lg" 
-                  : "text-gray-400 hover:text-white hover:bg-white/5"
+                  : "text-slate-500 hover:text-slate-800 hover:bg-white"
               }`}
             >
               <GraduationCap size={16} /> Sou Aluno
             </button>
             <button
               onClick={() => setUserType("company")}
-              className={`flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-bold transition-all ${
-                userType === "company" 
+              className={`flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-bold transition-all duration-300 ${
+                !isStudent
                   ? "bg-blue-600 text-white shadow-lg" 
                   : "text-gray-400 hover:text-white hover:bg-white/5"
               }`}
@@ -125,14 +138,14 @@ export default function LoginPage() {
           {/* Formulário */}
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
-              <label className="text-xs font-bold text-gray-500 uppercase ml-1">Email</label>
+              <label className={`text-xs font-bold uppercase ml-1 transition-colors ${isStudent ? 'text-gray-500' : 'text-slate-400'}`}>Email</label>
               <div className="relative">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+                <Mail className={`absolute left-4 top-1/2 -translate-y-1/2 ${theme.iconColor}`} size={18} />
                 <input 
                   type="email" 
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-12 pr-4 text-white focus:outline-none focus:border-purple-500 transition-colors placeholder:text-gray-600"
+                  className={`w-full ${theme.inputBg} border ${theme.inputBorder} rounded-xl py-4 pl-12 pr-4 ${theme.inputText} focus:outline-none focus:border-purple-500 transition-all placeholder:opacity-50`}
                   placeholder="seu@email.com"
                   required
                 />
@@ -140,42 +153,42 @@ export default function LoginPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-bold text-gray-500 uppercase ml-1">Senha</label>
+              <label className={`text-xs font-bold uppercase ml-1 transition-colors ${isStudent ? 'text-gray-500' : 'text-slate-400'}`}>Senha</label>
               <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+                <Lock className={`absolute left-4 top-1/2 -translate-y-1/2 ${theme.iconColor}`} size={18} />
                 <input 
                   type="password" 
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-12 pr-4 text-white focus:outline-none focus:border-purple-500 transition-colors placeholder:text-gray-600"
+                  className={`w-full ${theme.inputBg} border ${theme.inputBorder} rounded-xl py-4 pl-12 pr-4 ${theme.inputText} focus:outline-none focus:border-purple-500 transition-all placeholder:opacity-50`}
                   placeholder="••••••••"
                   required
                 />
               </div>
             </div>
 
-            {error && <p className="text-red-400 text-xs text-center">{error}</p>}
+            {error && <p className="text-red-500 text-xs text-center font-bold">{error}</p>}
 
             <button 
               type="submit" 
               disabled={loading}
-              className={`w-full py-4 rounded-xl font-bold text-white transition-all flex items-center justify-center gap-2 ${
-                userType === "student" ? "bg-purple-600 hover:bg-purple-700" : "bg-blue-600 hover:bg-blue-700"
+              className={`w-full py-4 rounded-xl font-bold text-white transition-all flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] ${
+                isStudent ? "bg-purple-600 hover:bg-purple-700" : "bg-blue-600 hover:bg-blue-700"
               }`}
             >
-              {loading ? <Loader2 className="animate-spin" /> : "Entrar na Plataforma"}
+              {loading ? <Loader2 className="animate-spin" /> : "Acessar Plataforma"}
             </button>
           </form>
 
-          {/* Botão de Cadastro Rápido (para teste) */}
+          {/* Botão de Cadastro Rápido */}
           <div className="mt-6 text-center">
-            <p className="text-gray-500 text-sm mb-2">Ainda não tem conta?</p>
+            <p className={`text-sm mb-2 ${isStudent ? 'text-gray-500' : 'text-slate-400'}`}>Ainda não tem conta?</p>
             <button 
               onClick={handleSignUp}
               type="button"
-              className="text-white text-sm hover:underline"
+              className={`text-sm hover:underline font-medium ${isStudent ? 'text-white' : 'text-slate-900'}`}
             >
-              Criar conta de {userType === "student" ? "Aluno" : "Empresa"} agora
+              Criar conta de {isStudent ? "Aluno" : "Empresa"} agora
             </button>
           </div>
 
