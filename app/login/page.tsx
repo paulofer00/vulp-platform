@@ -6,7 +6,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-// Configuração rápida (depois movemos para hook)
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -20,10 +19,9 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
-  // VARIAVEIS DE TEMA (O Segredo da troca de cor)
   const isStudent = userType === "student";
   
-  // Cores dinâmicas baseadas na escolha
+  // TEMA: Fundo muda, mas o Roxo (Brand) permanece nos detalhes
   const theme = {
     bg: isStudent ? "bg-[#050505]" : "bg-slate-50",
     text: isStudent ? "text-white" : "text-slate-900",
@@ -33,7 +31,6 @@ export default function LoginPage() {
     inputBorder: isStudent ? "border-white/10" : "border-slate-200",
     inputText: isStudent ? "text-white" : "text-slate-900",
     iconColor: isStudent ? "text-gray-500" : "text-slate-400",
-    accentColor: isStudent ? "text-purple-500" : "text-blue-600",
   };
 
   async function handleLogin(e: React.FormEvent) {
@@ -49,7 +46,6 @@ export default function LoginPage() {
 
       if (loginError) throw loginError;
 
-      // Verificar role
       const { data: profile } = await supabase
         .from("profiles")
         .select("role")
@@ -64,7 +60,6 @@ export default function LoginPage() {
 
     } catch (err: any) {
       setError("Email ou senha incorretos.");
-      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -73,13 +68,25 @@ export default function LoginPage() {
   async function handleSignUp() {
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: { data: { role: userType } }
       });
+      
       if (error) throw error;
-      alert(`Conta de ${isStudent ? 'Aluno' : 'Empresa'} criada! Verifique seu email.`);
+
+      // LOGIN AUTOMÁTICO APÓS CADASTRO
+      if (data.session) {
+        if (userType === "company") {
+            router.push("/empresa/dashboard");
+        } else {
+            router.push("/aluno/dashboard");
+        }
+      } else {
+        alert("Conta criada! Tente fazer login.");
+      }
+      
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -88,11 +95,11 @@ export default function LoginPage() {
   }
 
   return (
-    <div className={`min-h-screen ${theme.bg} ${theme.text} flex flex-col items-center justify-center p-6 relative overflow-hidden transition-colors duration-500 ease-in-out`}>
+    <div className={`min-h-screen ${theme.bg} ${theme.text} flex flex-col items-center justify-center p-6 relative overflow-hidden transition-colors duration-500`}>
       
-      {/* Background Decor (Muda de cor suavemente) */}
-      <div className={`absolute top-[-20%] left-[-10%] w-[600px] h-[600px] blur-[120px] rounded-full pointer-events-none transition-all duration-700 ${isStudent ? 'bg-purple-900/20' : 'bg-blue-200/40'}`} />
-      <div className={`absolute bottom-[-20%] right-[-10%] w-[500px] h-[500px] blur-[120px] rounded-full pointer-events-none transition-all duration-700 ${isStudent ? 'bg-blue-900/10' : 'bg-purple-200/40'}`} />
+      {/* Background Decor */}
+      <div className={`absolute top-[-20%] left-[-10%] w-[600px] h-[600px] blur-[120px] rounded-full pointer-events-none transition-colors duration-700 ${isStudent ? 'bg-purple-900/20' : 'bg-purple-200/60'}`} />
+      <div className={`absolute bottom-[-20%] right-[-10%] w-[500px] h-[500px] blur-[120px] rounded-full pointer-events-none transition-colors duration-700 ${isStudent ? 'bg-blue-900/10' : 'bg-purple-300/40'}`} />
 
       <div className="w-full max-w-md relative z-10">
         
@@ -111,13 +118,13 @@ export default function LoginPage() {
             </p>
           </div>
 
-          {/* Seletor de Tipo (Abas) */}
+          {/* Abas de Seleção */}
           <div className={`grid grid-cols-2 gap-2 p-1 rounded-xl mb-8 transition-colors duration-500 ${isStudent ? 'bg-white/5' : 'bg-slate-100'}`}>
             <button
               onClick={() => setUserType("student")}
               className={`flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-bold transition-all duration-300 ${
                 isStudent
-                  ? "bg-purple-600 text-white shadow-lg" 
+                  ? "bg-purple-600 text-white shadow-lg shadow-purple-900/20" 
                   : "text-slate-500 hover:text-slate-800 hover:bg-white"
               }`}
             >
@@ -127,7 +134,7 @@ export default function LoginPage() {
               onClick={() => setUserType("company")}
               className={`flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-bold transition-all duration-300 ${
                 !isStudent
-                  ? "bg-blue-600 text-white shadow-lg" 
+                  ? "bg-purple-600 text-white shadow-lg shadow-purple-200" 
                   : "text-gray-400 hover:text-white hover:bg-white/5"
               }`}
             >
@@ -135,7 +142,6 @@ export default function LoginPage() {
             </button>
           </div>
 
-          {/* Formulário */}
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
               <label className={`text-xs font-bold uppercase ml-1 transition-colors ${isStudent ? 'text-gray-500' : 'text-slate-400'}`}>Email</label>
@@ -169,24 +175,22 @@ export default function LoginPage() {
 
             {error && <p className="text-red-500 text-xs text-center font-bold">{error}</p>}
 
+            {/* BOTÃO PRINCIPAL: Sempre Roxo agora */}
             <button 
               type="submit" 
               disabled={loading}
-              className={`w-full py-4 rounded-xl font-bold text-white transition-all flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] ${
-                isStudent ? "bg-purple-600 hover:bg-purple-700" : "bg-blue-600 hover:bg-blue-700"
-              }`}
+              className="w-full py-4 rounded-xl font-bold text-white bg-purple-600 hover:bg-purple-700 transition-all flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-purple-900/20"
             >
               {loading ? <Loader2 className="animate-spin" /> : "Acessar Plataforma"}
             </button>
           </form>
 
-          {/* Botão de Cadastro Rápido */}
           <div className="mt-6 text-center">
             <p className={`text-sm mb-2 ${isStudent ? 'text-gray-500' : 'text-slate-400'}`}>Ainda não tem conta?</p>
             <button 
               onClick={handleSignUp}
               type="button"
-              className={`text-sm hover:underline font-medium ${isStudent ? 'text-white' : 'text-slate-900'}`}
+              className={`text-sm hover:underline font-bold ${isStudent ? 'text-white' : 'text-purple-600'}`}
             >
               Criar conta de {isStudent ? "Aluno" : "Empresa"} agora
             </button>
