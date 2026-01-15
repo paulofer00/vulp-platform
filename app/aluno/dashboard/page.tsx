@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { BookOpen, LogOut, PlayCircle, Trophy, User, Zap, Briefcase } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import UserMenu from "@/components/UserMenu";
 
 export default async function StudentDashboard() {
   const cookieStore = await cookies();
@@ -72,33 +73,36 @@ export default async function StudentDashboard() {
       </aside>
 
       {/* --- CONTEÚDO PRINCIPAL --- */}
-      <main className="flex-1 ml-64 p-8 md:p-12 relative overflow-hidden">
+      <main className="flex-1 ml-64 p-8 md:p-12 relative">
         
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-purple-900/20 blur-[120px] rounded-full pointer-events-none" />
 
-        <header className="flex justify-between items-end mb-12 relative z-10">
+        <header className="flex justify-between items-center mb-12 relative z-50">
             <div>
                 <h1 className="text-3xl font-bold tracking-tight mb-2">Olá, {studentName}.</h1>
                 <p className="text-gray-400">Continue sua jornada para o topo do ranking.</p>
             </div>
             
-            <div className="flex items-center gap-4 bg-white/5 border border-white/10 p-2 pr-6 rounded-full">
-                {/* AQUI ESTÁ A CORREÇÃO: FOTO ou INICIAL 👇 */}
-                <div className="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center font-bold text-white uppercase overflow-hidden border border-white/10">
-                    {student?.avatar_url ? (
-                        <img src={student.avatar_url} alt={studentName} className="w-full h-full object-cover" />
-                    ) : (
-                        studentName.charAt(0)
-                    )}
+            <div className="flex items-center gap-6">
+                
+                {/* Bloco de XP (Deixei menorzinho e mais discreto) */}
+                <div className="hidden md:block text-right">
+                    <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-1">Nível Atual</p>
+                    <div className="flex items-center justify-end gap-1 text-yellow-400 font-bold">
+                        <Zap size={16} fill="currentColor" /> {studentXP} XP
+                    </div>
                 </div>
-                {/* -------------------------------------- */}
 
-                <div>
-                    <p className="text-xs text-gray-400 uppercase font-bold">Nível Atual</p>
-                    <p className="text-sm font-bold text-white flex items-center gap-1">
-                        <Zap size={14} className="text-yellow-400 fill-yellow-400" /> {studentXP} XP
-                    </p>
-                </div>
+                {/* AQUI ENTRA O MENU DO USUÁRIO 👇 */}
+                <UserMenu 
+                    session={session} 
+                    profile={{
+                        role: 'student', // Já sabemos que aqui é aluno
+                        full_name: studentName,
+                        avatar_url: student?.avatar_url
+                    }} 
+                />
+
             </div>
         </header>
 

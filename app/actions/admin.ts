@@ -66,4 +66,43 @@ export async function createUserAsAdmin(formData: FormData) {
   }
 
   return { success: true }
+}   // ... (mantenha o código anterior do createUserAsAdmin aqui)
+
+// 1. BUSCAR TODOS OS USUÁRIOS
+export async function getUsersForAdmin() {
+  // Busca perfis
+  const { data: profiles, error } = await supabaseAdmin
+    .from('profiles')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error || !profiles) return [];
+
+  // Busca nomes dos alunos para complementar
+  const { data: students } = await supabaseAdmin
+    .from('students')
+    .select('id, full_name');
+
+  // Junta as informações (Map)
+  const usersWithNames = profiles.map(profile => {
+    const student = students?.find(s => s.id === profile.id);
+    return {
+      ...profile,
+      full_name: student?.full_name || 'Empresa / Admin' // Se não achar aluno, é empresa ou admin
+    };
+  });
+
+  return usersWithNames;
+}
+
+// 2. DELETAR USUÁRIO (BAN HAMMER 🚫)
+export async function deleteUserAsAdmin(userId: string) {
+  // A função admin.deleteUser remove do Authentication E do banco (cascade)
+  const { error } = await supabaseAdmin.auth.admin.deleteUser(userId);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  return { success: true };
 }
