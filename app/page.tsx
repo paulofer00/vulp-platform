@@ -8,9 +8,9 @@ export default function Home() {
       {/* NAVBAR */}
       <nav className="border-b border-white/5 bg-[#050505]/80 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-6 h-20 flex items-center justify-between">
-          <div className="font-bold text-2xl tracking-tighter cursor-pointer">
-            VULP<span className="text-purple-600">.</span>
-          </div>
+          <Link href="/" className="cursor-pointer">
+  <img src="/logo-white.png" alt="VULP" className="h-8 w-auto" />
+</Link>
           
           <div className="hidden md:flex gap-8 text-sm font-medium text-gray-400">
             <a href="#metodo" className="hover:text-white transition-colors">O Método</a>

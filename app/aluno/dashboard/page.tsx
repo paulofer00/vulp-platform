@@ -45,9 +45,10 @@ export default async function StudentDashboard() {
       {/* --- SIDEBAR --- */}
       <aside className="fixed left-0 top-0 h-full w-64 bg-[#0A0A0A] border-r border-white/5 flex flex-col z-20">
         <div className="p-8">
-            <div className="font-bold text-2xl tracking-tighter text-white">
-                VULP<span className="text-purple-600">.</span> <span className="text-xs text-purple-400 font-normal uppercase tracking-widest ml-1">Student</span>
-            </div>
+            <div className="flex items-center gap-2">
+    <img src="/logo-white.png" alt="VULP" className="h-8 w-auto" />
+    <span className="px-2 py-0.5 bg-purple-500/20 text-purple-300 text-[10px] font-bold uppercase tracking-widest rounded border border-purple-500/20">Aluno</span>
+</div>
         </div>
         
         <nav className="flex-1 px-4 space-y-2">

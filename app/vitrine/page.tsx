@@ -24,7 +24,9 @@ export default async function VitrinePage() {
     <div className="min-h-screen bg-[#050505] text-white font-sans selection:bg-purple-500/30">
       <nav className="border-b border-white/5 bg-[#050505]/80 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-6 h-20 flex items-center justify-between">
-          <Link href="/" className="font-bold text-2xl tracking-tighter">VULP<span className="text-purple-600">.</span></Link>
+          <Link href="/" className="cursor-pointer">
+  <img src="/logo-white.png" alt="VULP" className="h-8 w-auto" />
+</Link>
           <div className="flex gap-4">
              <Link href="/login" className="px-6 py-2 rounded-full border border-white/10 hover:bg-white/10 transition-colors font-bold text-sm">Sou Empresa</Link>
              <Link href="/login" className="px-6 py-2 rounded-full bg-purple-600 hover:bg-purple-700 transition-colors font-bold text-sm shadow-lg shadow-purple-900/20">Sou Aluno</Link>

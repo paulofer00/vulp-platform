@@ -65,9 +65,10 @@ export default async function CompanyDashboard() {
       {/* --- SIDEBAR --- */}
       <aside className="fixed left-0 top-0 h-full w-64 bg-white border-r border-slate-200 flex flex-col z-20">
         <div className="p-8">
-            <div className="font-bold text-2xl tracking-tighter text-slate-900">
-                VULP<span className="text-purple-600">.</span> <span className="text-xs text-slate-400 font-normal uppercase tracking-widest ml-1">Business</span>
-            </div>
+            <div className="flex items-center gap-2">
+    <img src="/logo-dark.png" alt="VULP" className="h-8 w-auto" />
+    <span className="px-2 py-0.5 bg-slate-100 text-slate-500 text-[10px] font-bold uppercase tracking-widest rounded border border-slate-200">Business</span>
+</div>
         </div>
         
         <nav className="flex-1 px-4 space-y-2">
