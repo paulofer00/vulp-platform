@@ -5,7 +5,6 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 export default async function StudentDashboard() {
-  // 1. Configurar o Cliente Supabase para Next.js 15
   const cookieStore = await cookies();
   
   const supabase = createServerClient(
@@ -20,21 +19,17 @@ export default async function StudentDashboard() {
     }
   );
 
-  // 2. Verificar quem está logado
+  // Verificar login
   const { data: { session } } = await supabase.auth.getSession();
+  if (!session) redirect("/login");
 
-  if (!session) {
-    redirect("/login");
-  }
-
-  // 3. Buscar os dados do aluno no banco
+  // Buscar dados do aluno
   const { data: student } = await supabase
     .from("students")
     .select("*, student_medals(*)")
     .eq("id", session.user.id)
     .single();
 
-  // Dados provisórios caso o perfil ainda não tenha carregado
   const studentName = student?.full_name || session.user.email?.split("@")[0] || "Aluno";
   const studentXP = student?.points || 0;
   const medalCount = student?.student_medals?.length || 0;
@@ -45,19 +40,18 @@ export default async function StudentDashboard() {
       {/* --- SIDEBAR --- */}
       <aside className="fixed left-0 top-0 h-full w-64 bg-[#0A0A0A] border-r border-white/5 flex flex-col z-20">
         <div className="p-8">
+            {/* LOGO OFICIAL */}
             <div className="flex items-center gap-2">
-    <img src="/logo-white.png" alt="VULP" className="h-8 w-auto" />
-    <span className="px-2 py-0.5 bg-purple-500/20 text-purple-300 text-[10px] font-bold uppercase tracking-widest rounded border border-purple-500/20">Aluno</span>
-</div>
+                <img src="/logo-white.png" alt="VULP" className="h-8 w-auto" />
+                <span className="px-2 py-0.5 bg-purple-500/20 text-purple-300 text-[10px] font-bold uppercase tracking-widest rounded border border-purple-500/20">Aluno</span>
+            </div>
         </div>
         
         <nav className="flex-1 px-4 space-y-2">
-          {/* Link para EDITAR Perfil */}
           <Link href="/aluno/perfil" className="flex items-center gap-3 px-4 py-3 bg-purple-600/10 text-purple-400 border border-purple-600/20 rounded-xl font-bold text-sm transition-colors shadow-[0_0_20px_rgba(147,51,234,0.1)]">
             <User size={20} /> Editar Perfil
           </Link>
           
-          {/* Link NOVO para Vagas */}
           <Link href="/aluno/vagas" className="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-white/5 hover:text-white rounded-xl font-medium text-sm transition-colors">
             <Briefcase size={20} /> Mercado de Vagas
           </Link>
@@ -89,9 +83,16 @@ export default async function StudentDashboard() {
             </div>
             
             <div className="flex items-center gap-4 bg-white/5 border border-white/10 p-2 pr-6 rounded-full">
-                <div className="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center font-bold text-white uppercase">
-                    {studentName.charAt(0)}
+                {/* AQUI ESTÁ A CORREÇÃO: FOTO ou INICIAL 👇 */}
+                <div className="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center font-bold text-white uppercase overflow-hidden border border-white/10">
+                    {student?.avatar_url ? (
+                        <img src={student.avatar_url} alt={studentName} className="w-full h-full object-cover" />
+                    ) : (
+                        studentName.charAt(0)
+                    )}
                 </div>
+                {/* -------------------------------------- */}
+
                 <div>
                     <p className="text-xs text-gray-400 uppercase font-bold">Nível Atual</p>
                     <p className="text-sm font-bold text-white flex items-center gap-1">
