@@ -1,18 +1,20 @@
 "use client";
 
-import { createClient } from "@supabase/supabase-js";
+import { createBrowserClient } from "@supabase/ssr";
 import { ArrowLeft, Building2, GraduationCap, Loader2, Lock, Mail } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
-
 export default function LoginPage() {
   const router = useRouter();
+  
+  // Cliente Supabase que sabe lidar com Cookies
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
   const [userType, setUserType] = useState<"student" | "company">("student");
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
@@ -21,7 +23,7 @@ export default function LoginPage() {
 
   const isStudent = userType === "student";
   
-  // TEMA: Fundo muda, mas o Roxo (Brand) permanece nos detalhes
+  // Tema visual dinâmico
   const theme = {
     bg: isStudent ? "bg-[#050505]" : "bg-slate-50",
     text: isStudent ? "text-white" : "text-slate-900",
@@ -39,6 +41,7 @@ export default function LoginPage() {
     setError("");
 
     try {
+      // 1. Tenta logar (verificar senha)
       const { data, error: loginError } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -46,12 +49,33 @@ export default function LoginPage() {
 
       if (loginError) throw loginError;
 
+      // 2. Verifica quem é esse usuário no Banco de Dados
       const { data: profile } = await supabase
         .from("profiles")
         .select("role")
         .eq("id", data.user.id)
         .single();
 
+      // 3. TRAVA DE SEGURANÇA (A Mágica acontece aqui) 🛡️
+      // Se estou na aba Aluno mas o usuário é Empresa:
+      if (userType === "student" && profile?.role !== "student") {
+        await supabase.auth.signOut(); // Desloga imediatamente
+        setError("Esta conta é de Empresa. Por favor, use a aba 'Sou Empresa'.");
+        setLoading(false);
+        return;
+      }
+
+      // Se estou na aba Empresa mas o usuário é Aluno:
+      if (userType === "company" && profile?.role !== "company") {
+        await supabase.auth.signOut(); // Desloga imediatamente
+        setError("Esta conta é de Aluno. Por favor, use a aba 'Sou Aluno'.");
+        setLoading(false);
+        return;
+      }
+
+      // 4. Se passou pela trava, redireciona para o lugar certo
+      router.refresh(); // Atualiza os cookies no navegador
+      
       if (profile?.role === "company") {
         router.push("/empresa/dashboard");
       } else {
@@ -59,6 +83,7 @@ export default function LoginPage() {
       }
 
     } catch (err: any) {
+      console.error(err);
       setError("Email ou senha incorretos.");
     } finally {
       setLoading(false);
@@ -67,6 +92,8 @@ export default function LoginPage() {
 
   async function handleSignUp() {
     setLoading(true);
+    setError("");
+    
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -76,14 +103,15 @@ export default function LoginPage() {
       
       if (error) throw error;
 
-      // LOGIN AUTOMÁTICO APÓS CADASTRO
       if (data.session) {
+        router.refresh();
         if (userType === "company") {
             router.push("/empresa/dashboard");
         } else {
             router.push("/aluno/dashboard");
         }
       } else {
+        // Fallback caso a sessão não venha automática
         alert("Conta criada! Tente fazer login.");
       }
       
@@ -97,7 +125,6 @@ export default function LoginPage() {
   return (
     <div className={`min-h-screen ${theme.bg} ${theme.text} flex flex-col items-center justify-center p-6 relative overflow-hidden transition-colors duration-500`}>
       
-      {/* Background Decor */}
       <div className={`absolute top-[-20%] left-[-10%] w-[600px] h-[600px] blur-[120px] rounded-full pointer-events-none transition-colors duration-700 ${isStudent ? 'bg-purple-900/20' : 'bg-purple-200/60'}`} />
       <div className={`absolute bottom-[-20%] right-[-10%] w-[500px] h-[500px] blur-[120px] rounded-full pointer-events-none transition-colors duration-700 ${isStudent ? 'bg-blue-900/10' : 'bg-purple-300/40'}`} />
 
@@ -118,10 +145,9 @@ export default function LoginPage() {
             </p>
           </div>
 
-          {/* Abas de Seleção */}
           <div className={`grid grid-cols-2 gap-2 p-1 rounded-xl mb-8 transition-colors duration-500 ${isStudent ? 'bg-white/5' : 'bg-slate-100'}`}>
             <button
-              onClick={() => setUserType("student")}
+              onClick={() => { setUserType("student"); setError(""); }}
               className={`flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-bold transition-all duration-300 ${
                 isStudent
                   ? "bg-purple-600 text-white shadow-lg shadow-purple-900/20" 
@@ -131,7 +157,7 @@ export default function LoginPage() {
               <GraduationCap size={16} /> Sou Aluno
             </button>
             <button
-              onClick={() => setUserType("company")}
+              onClick={() => { setUserType("company"); setError(""); }}
               className={`flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-bold transition-all duration-300 ${
                 !isStudent
                   ? "bg-purple-600 text-white shadow-lg shadow-purple-200" 
@@ -173,9 +199,12 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {error && <p className="text-red-500 text-xs text-center font-bold">{error}</p>}
+            {error && (
+              <div className="bg-red-500/10 border border-red-500/20 p-3 rounded-lg">
+                <p className="text-red-500 text-xs text-center font-bold">{error}</p>
+              </div>
+            )}
 
-            {/* BOTÃO PRINCIPAL: Sempre Roxo agora */}
             <button 
               type="submit" 
               disabled={loading}

@@ -1,112 +1,176 @@
-import { supabase } from "@/lib/supabase";
-import { ArrowLeft, MessageCircle, Share2, Trophy } from "lucide-react";
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
+import { BadgeCheck, Briefcase, Github, Globe, Linkedin, Mail, MapPin, Share2, Star, Trophy, User } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-// TELA DE DETALHES DO ALUNO
-export default async function StudentProfile({ params }: { params: Promise<{ id: string }> }) {
-  // Em Next.js novos, params é uma Promise
-  const { id } = await params;
+export default async function PublicProfile({ params }: { params: { id: string } }) {
+  // 1. Setup do Supabase (Apenas leitura aqui)
+  const cookieStore = await cookies();
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: { getAll() { return cookieStore.getAll() } }
+    }
+  );
 
-  // 1. Buscar dados do aluno e suas medalhas
+  // 2. Buscar dados do aluno pelo ID da URL
   const { data: student } = await supabase
     .from("students")
-    .select(`
-      *,
-      student_medals (
-        medals (
-          name,
-          image_url
-        )
-      )
-    `)
-    .eq("id", id)
+    .select("*, student_medals(*)")
+    .eq("id", params.id)
     .single();
 
+  // Se não achar o aluno, manda para página 404
   if (!student) {
-    return notFound();
+    notFound();
   }
 
+  // Dados visuais (Fallback se não tiver preenchido)
+  const avatar = student.avatar_url;
+  const initial = student.full_name.charAt(0);
+  const bio = student.bio || "Este talento ainda não adicionou uma biografia.";
+  const role = "Especialista Digital"; // Poderia vir do banco também
+  const xp = student.points || 0;
+
   return (
-    <main className="min-h-screen bg-[#050505] text-white flex flex-col items-center py-20 px-6 relative overflow-hidden">
+    <div className="min-h-screen bg-[#050505] text-white font-sans selection:bg-purple-500/30">
       
-      {/* Botão Voltar */}
-      <div className="absolute top-8 left-8 z-20">
-        <Link href="/vitrine" className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors">
-          <ArrowLeft size={20} /> Voltar para Vitrine
-        </Link>
-      </div>
-
-      {/* Background Glow */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-purple-900/10 blur-[120px] rounded-full pointer-events-none" />
-
-      {/* Cartão de Perfil Principal */}
-      <div className="relative z-10 w-full max-w-2xl bg-[#0A0A0A] border border-white/10 rounded-3xl p-8 md:p-12 shadow-[0_0_50px_rgba(0,0,0,0.5)]">
-        
-        {/* Cabeçalho */}
-        <div className="flex flex-col md:flex-row items-center gap-8 mb-8 text-center md:text-left">
-          <div className="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-purple-500/20 p-1">
-             <div className="w-full h-full rounded-full bg-gray-800 overflow-hidden">
-               {student.avatar_url ? (
-                  <img src={student.avatar_url} alt={student.full_name} className="w-full h-full object-cover" />
-               ) : (
-                  <div className="w-full h-full flex items-center justify-center text-4xl font-bold text-gray-600 bg-gray-900">
-                    {student.full_name.charAt(0)}
-                  </div>
-               )}
-             </div>
-          </div>
-          
-          <div className="flex-1">
-             <div className="flex items-center justify-center md:justify-start gap-2 mb-2">
-                <span className="px-3 py-1 rounded-full bg-yellow-500/10 text-yellow-500 text-xs font-bold border border-yellow-500/20 flex items-center gap-1">
-                  <Trophy size={12} /> {student.points} XP
-                </span>
-                <span className="px-3 py-1 rounded-full bg-purple-500/10 text-purple-400 text-xs font-bold border border-purple-500/20">
-                  Aluno Verificado
-                </span>
-             </div>
-             <h1 className="text-3xl md:text-5xl font-black tracking-tight mb-2">{student.full_name}</h1>
-             <p className="text-gray-400 text-lg leading-relaxed">{student.bio || "Sem biografia cadastrada."}</p>
-          </div>
-        </div>
-
-        {/* Botões de Ação */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
-          <Link 
-            href={`https://wa.me/${student.whatsapp}?text=Olá, vi seu perfil na VULP.`}
-            target="_blank"
-            className="flex items-center justify-center gap-3 bg-purple-600 hover:bg-purple-700 text-white py-4 rounded-xl font-bold transition-all hover:scale-[1.02]"
-          >
-            <MessageCircle /> Chamar no WhatsApp
+      {/* NAVBAR SIMPLES */}
+      <nav className="border-b border-white/5 bg-[#050505]/80 backdrop-blur-md sticky top-0 z-50">
+        <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
+          <Link href="/" className="font-bold text-xl tracking-tighter">VULP<span className="text-purple-600">.</span></Link>
+          <Link href="/login" className="text-sm font-bold text-gray-400 hover:text-white transition-colors">
+            Entrar na Plataforma
           </Link>
-          <button className="flex items-center justify-center gap-3 bg-white/5 hover:bg-white/10 text-white py-4 rounded-xl font-bold transition-all border border-white/5">
-            <Share2 /> Compartilhar Perfil
-          </button>
         </div>
+      </nav>
 
-        {/* Seção de Conquistas */}
-        <div className="border-t border-white/10 pt-8">
-          <h3 className="text-sm font-bold text-gray-500 uppercase tracking-widest mb-6">Conquistas & Certificados</h3>
+      <main className="max-w-5xl mx-auto px-6 py-12 md:py-20">
+        
+        {/* HEADER DO PERFIL */}
+        <div className="flex flex-col md:flex-row gap-8 items-start mb-16">
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {student.student_medals && student.student_medals.length > 0 ? (
-              student.student_medals.map((sm: any) => (
-                <div key={sm.medals.name} className="flex items-center gap-4 p-4 rounded-xl bg-white/5 border border-white/5">
-                  <div className="w-10 h-10 rounded-full bg-purple-900/50 flex items-center justify-center text-purple-400">
-                    <Trophy size={18} />
-                  </div>
-                  <span className="font-medium text-gray-200">{sm.medals.name}</span>
+          {/* Avatar Gigante com Brilho */}
+          <div className="relative group">
+            <div className="absolute inset-0 bg-gradient-to-tr from-purple-600 to-blue-600 blur-[40px] opacity-50 group-hover:opacity-75 transition-opacity rounded-full"></div>
+            <div className="relative w-32 h-32 md:w-40 md:h-40 rounded-full bg-[#111] border-4 border-[#1a1a1a] flex items-center justify-center overflow-hidden">
+                {avatar ? (
+                    <img src={avatar} alt={student.full_name} className="w-full h-full object-cover" />
+                ) : (
+                    <span className="text-5xl font-bold text-gray-700">{initial}</span>
+                )}
+            </div>
+            <div className="absolute bottom-2 right-2 bg-green-500 w-6 h-6 rounded-full border-4 border-[#050505]" title="Disponível para contratação"></div>
+          </div>
+
+          {/* Infos Principais */}
+          <div className="flex-1 space-y-4">
+            <div>
+                <div className="flex items-center gap-3 mb-2">
+                    <h1 className="text-4xl md:text-5xl font-bold tracking-tight">{student.full_name}</h1>
+                    <BadgeCheck className="text-blue-500 fill-blue-500/10" size={28} />
                 </div>
-              ))
-            ) : (
-              <p className="text-gray-600 text-sm italic">Este aluno ainda está iniciando sua jornada.</p>
-            )}
+                <p className="text-xl text-purple-400 font-medium">{role}</p>
+            </div>
+            
+            <div className="flex flex-wrap gap-4 text-sm text-gray-400">
+                <span className="flex items-center gap-2"><MapPin size={16}/> Brasil (Remoto)</span>
+                <span className="flex items-center gap-2 text-yellow-500"><Star size={16} fill="currentColor"/> Top 5% da Turma</span>
+            </div>
+
+            <div className="flex flex-wrap gap-3 pt-2">
+                <button className="bg-white text-black px-6 py-3 rounded-full font-bold hover:bg-gray-200 transition-colors flex items-center gap-2">
+                    <Mail size={18} /> Contratar Agora
+                </button>
+                <button className="bg-white/5 text-white px-4 py-3 rounded-full font-bold hover:bg-white/10 transition-colors border border-white/10 flex items-center gap-2">
+                    <Share2 size={18} /> Compartilhar
+                </button>
+            </div>
+          </div>
+
+          {/* Card de Nível */}
+          <div className="bg-[#0A0A0A] border border-white/10 p-6 rounded-2xl min-w-[200px] text-center">
+            <p className="text-gray-500 text-xs font-bold uppercase tracking-widest mb-2">Nível VULP</p>
+            <div className="text-4xl font-bold text-white mb-1">{xp} <span className="text-lg text-purple-500">XP</span></div>
+            <div className="w-full h-1 bg-gray-800 rounded-full overflow-hidden mt-3">
+                <div className="h-full bg-purple-600 w-[60%]"></div>
+            </div>
           </div>
         </div>
 
-      </div>
+        {/* GRID DE INFORMAÇÕES */}
+        <div className="grid md:grid-cols-3 gap-8">
+            
+            {/* Coluna da Esquerda (Bio e Skills) */}
+            <div className="md:col-span-2 space-y-8">
+                <section className="bg-[#0A0A0A] border border-white/5 p-8 rounded-3xl">
+                    <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
+                        <User className="text-purple-500" /> Sobre
+                    </h2>
+                    <p className="text-gray-400 leading-relaxed text-lg">
+                        {bio}
+                    </p>
+                </section>
 
-    </main>
+                <section>
+                    <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
+                        <Trophy className="text-yellow-500" /> Medalhas e Certificações
+                    </h2>
+                    
+                    {student.student_medals && student.student_medals.length > 0 ? (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                            {/* Aqui mapearíamos as medalhas reais */}
+                            <div className="p-4 bg-[#0A0A0A] border border-white/5 rounded-2xl flex flex-col items-center text-center gap-3 hover:border-purple-500/50 transition-colors">
+                                <div className="w-12 h-12 bg-purple-900/20 rounded-full flex items-center justify-center text-purple-400">
+                                    <Trophy size={20} />
+                                </div>
+                                <div>
+                                    <div className="font-bold text-sm">Early Adopter</div>
+                                    <div className="text-xs text-gray-500">Pioneiro VULP</div>
+                                </div>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="p-8 bg-[#0A0A0A] border border-dashed border-white/10 rounded-2xl text-center text-gray-500">
+                            Este aluno ainda não conquistou medalhas visíveis.
+                        </div>
+                    )}
+                </section>
+            </div>
+
+            {/* Coluna da Direita (Contatos e Portfólio) */}
+            <div className="space-y-6">
+                <div className="bg-[#0A0A0A] border border-white/5 p-6 rounded-2xl">
+                    <h3 className="font-bold mb-4 text-gray-200">Links e Portfólio</h3>
+                    <div className="space-y-3">
+                        <a href="#" className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-colors text-gray-400 hover:text-white">
+                            <Linkedin size={20} /> Linkedin
+                        </a>
+                        <a href="#" className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-colors text-gray-400 hover:text-white">
+                            <Github size={20} /> GitHub / Behance
+                        </a>
+                        <a href="#" className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-colors text-gray-400 hover:text-white">
+                            <Globe size={20} /> Site Pessoal
+                        </a>
+                    </div>
+                </div>
+
+                <div className="bg-gradient-to-b from-purple-900/20 to-[#0A0A0A] border border-purple-500/20 p-6 rounded-2xl">
+                    <h3 className="font-bold mb-2 text-white">Quer contratar?</h3>
+                    <p className="text-sm text-gray-400 mb-4">
+                        Entre em contato diretamente com {student.full_name.split(' ')[0]} através da plataforma VULP.
+                    </p>
+                    <button className="w-full py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-bold text-sm transition-colors">
+                        Enviar Mensagem
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+      </main>
+    </div>
   );
 }

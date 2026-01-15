@@ -1,15 +1,63 @@
-import { supabase } from "@/lib/supabase";
-import { Briefcase, LayoutDashboard, LogOut, Plus, Search, Trophy, Users } from "lucide-react";
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
+import { Briefcase, LayoutDashboard, LogOut, Plus, Search, Trophy, Users, MapPin } from "lucide-react";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 export default async function CompanyDashboard() {
-  // 1. BUSCAR DADOS REAIS DO BANCO
-  // Trazemos os alunos ordenados por Pontos (XP) para destacar os melhores
+  const cookieStore = await cookies();
+  
+  // 1. Conectar no Banco
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: { getAll() { return cookieStore.getAll() } }
+    }
+  );
+
+  // 2. Verificar Login
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) redirect("/login");
+
+  // 3. BUSCAR DADOS (MÉTRICAS REAIS) 📊
+  
+  // A. Contar Vagas Abertas desta empresa
+  const { count: openJobsCount } = await supabase
+    .from("jobs")
+    .select("*", { count: 'exact', head: true })
+    .eq("company_id", session.user.id)
+    .eq("status", "open");
+
+  // B. Contar Total de Candidatos (Soma de todas as aplicações nas vagas desta empresa)
+  // Primeiro pegamos os IDs das vagas da empresa
+  const { data: companyJobs } = await supabase
+    .from("jobs")
+    .select("id")
+    .eq("company_id", session.user.id);
+    
+  const jobIds = companyJobs?.map(job => job.id) || [];
+  
+  let candidatesCount = 0;
+  if (jobIds.length > 0) {
+      const { count } = await supabase
+        .from("applications")
+        .select("*", { count: 'exact', head: true })
+        .in("job_id", jobIds);
+      candidatesCount = count || 0;
+  }
+
+  // C. Contar Total de Talentos na Base (Para mostrar o potencial da plataforma)
+  const { count: totalStudents } = await supabase
+    .from("students")
+    .select("*", { count: 'exact', head: true });
+
+  // 4. BUSCAR LISTA DE TALENTOS (Top 6)
   const { data: students } = await supabase
     .from("students")
     .select("*")
     .order('points', { ascending: false })
-    .limit(6); // Traz apenas os top 6 para o resumo inicial
+    .limit(6);
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans flex">
@@ -44,32 +92,42 @@ export default async function CompanyDashboard() {
       {/* --- CONTEÚDO PRINCIPAL --- */}
       <main className="flex-1 ml-64 p-8 md:p-12">
         
-        {/* Header */}
         <header className="flex justify-between items-end mb-12">
             <div>
                 <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Painel do Recrutador</h1>
                 <p className="text-slate-500 mt-2">Gerencie suas vagas e encontre talentos certificados.</p>
             </div>
-            <button className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-xl font-bold text-sm flex items-center gap-2 shadow-lg shadow-purple-200 transition-all hover:-translate-y-1">
+            
+            <Link href="/empresa/vagas/nova" className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-xl font-bold text-sm flex items-center gap-2 shadow-lg shadow-purple-200 transition-all hover:-translate-y-1">
                 <Plus size={18} /> Nova Vaga
-            </button>
+            </Link>
         </header>
 
-        {/* Cards de Métricas */}
+        {/* CARDS DE MÉTRICAS REAIS 📊 */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-            {[
-                { label: "Vagas Abertas", value: "0", icon: <Briefcase size={24} className="text-purple-600"/> },
-                { label: "Candidatos", value: "0", icon: <Users size={24} className="text-purple-600"/> },
-                { label: "Talentos na Base", value: students?.length || 0, icon: <Trophy size={24} className="text-purple-600"/> },
-            ].map((stat, i) => (
-                <div key={i} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-                    <div className="flex justify-between items-start mb-4">
-                        <div className="p-3 bg-purple-50 rounded-xl">{stat.icon}</div>
-                        <span className="text-3xl font-bold text-slate-900">{stat.value}</span>
-                    </div>
-                    <p className="text-sm font-medium text-slate-500">{stat.label}</p>
+            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex justify-between items-start mb-4">
+                    <div className="p-3 bg-purple-50 rounded-xl text-purple-600"><Briefcase size={24}/></div>
+                    <span className="text-3xl font-bold text-slate-900">{openJobsCount || 0}</span>
                 </div>
-            ))}
+                <p className="text-sm font-medium text-slate-500">Vagas Abertas</p>
+            </div>
+
+            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex justify-between items-start mb-4">
+                    <div className="p-3 bg-purple-50 rounded-xl text-purple-600"><Users size={24}/></div>
+                    <span className="text-3xl font-bold text-slate-900">{candidatesCount}</span>
+                </div>
+                <p className="text-sm font-medium text-slate-500">Candidatos Totais</p>
+            </div>
+
+            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex justify-between items-start mb-4">
+                    <div className="p-3 bg-purple-50 rounded-xl text-purple-600"><Trophy size={24}/></div>
+                    <span className="text-3xl font-bold text-slate-900">{totalStudents || 0}</span>
+                </div>
+                <p className="text-sm font-medium text-slate-500">Talentos na Base</p>
+            </div>
         </div>
 
         {/* Barra de Busca */}
@@ -87,7 +145,7 @@ export default async function CompanyDashboard() {
             </button>
         </div>
 
-        {/* Lista de Talentos Reais */}
+        {/* Lista de Talentos */}
         <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-bold text-slate-900">Talentos em Destaque</h2>
             <Link href="/vitrine" className="text-sm font-bold text-purple-600 hover:text-purple-700">Ver todos</Link>
@@ -110,11 +168,15 @@ export default async function CompanyDashboard() {
                                 <h3 className="font-bold text-lg text-slate-900 group-hover:text-purple-600 transition-colors line-clamp-1">
                                     {student.full_name}
                                 </h3>
-                                <p className="text-sm text-slate-500 font-medium line-clamp-1">
-                                    Talento VULP
+                                <p className="text-sm text-slate-500 font-medium line-clamp-1 flex items-center gap-1">
+                                   <MapPin size={12}/> {student.location || "Brasil"}
                                 </p>
                             </div>
                         </div>
+                        
+                        <p className="text-sm text-slate-600 mb-4 line-clamp-2 min-h-[40px]">
+                           {student.bio || "Este talento ainda não adicionou uma bio..."}
+                        </p>
                         
                         <div className="flex flex-wrap gap-2 mb-6">
                             <span className="px-3 py-1 bg-purple-50 text-purple-700 text-xs font-bold rounded-full border border-purple-100 flex items-center gap-1">
@@ -132,7 +194,7 @@ export default async function CompanyDashboard() {
               ))
             ) : (
                 <div className="col-span-3 text-center py-12 bg-white rounded-2xl border border-dashed border-slate-300">
-                    <p className="text-slate-500">Nenhum talento encontrado no banco de dados.</p>
+                    <p className="text-slate-500 font-medium">Nenhum talento encontrado no banco de dados.</p>
                 </div>
             )}
         </div>
