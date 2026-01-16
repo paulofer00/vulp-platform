@@ -21,34 +21,31 @@ export default function UserMenu() {
 
   useEffect(() => {
     async function getUserData() {
-      // 1. Pega o usuário logado
       const { data: { user } } = await supabase.auth.getUser();
       
       if (user) {
         setEmail(user.email || "");
 
-        // 2. Busca o NOME REAL na tabela de perfis
+        // Busca os dados do perfil no banco
         const { data: profile } = await supabase
           .from("profiles")
           .select("full_name, role")
           .eq("id", user.id)
           .single();
 
-        if (profile?.full_name) {
-          setName(profile.full_name);
-          
-          // Cria as iniciais (Ex: Paulo Fernandes -> PF)
-          const names = profile.full_name.split(" ");
-          const firstInitial = names[0][0];
-          const lastInitial = names.length > 1 ? names[names.length - 1][0] : "";
-          setInitials((firstInitial + lastInitial).toUpperCase());
-          
-          setRole(profile.role);
-        } else {
-          // Fallback se não achar o perfil
-          setName(user.email?.split("@")[0] || "Usuário");
-          setInitials(user.email?.[0].toUpperCase() || "U");
-        }
+        // 1. Define o CARGO (Prioridade: Banco -> Metadata -> Student)
+        const userRole = profile?.role || user.user_metadata?.role || "student";
+        setRole(userRole);
+
+        // 2. Define o NOME (Prioridade: Banco -> Metadata -> Parte do Email)
+        const fullName = profile?.full_name || user.user_metadata?.full_name || user.email?.split("@")[0] || "Usuário";
+        setName(fullName);
+
+        // 3. Define as INICIAIS baseadas no nome escolhido
+        const names = fullName.split(" ");
+        const firstInitial = names[0][0];
+        const lastInitial = names.length > 1 ? names[names.length - 1][0] : "";
+        setInitials((firstInitial + (lastInitial || "")).toUpperCase());
       }
     }
 
@@ -61,7 +58,6 @@ export default function UserMenu() {
     router.refresh();
   }
 
-  // Se não tiver nome carregado ainda, mostra um esqueleto simples
   if (!email) return null;
 
   return (
