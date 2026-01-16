@@ -1,7 +1,7 @@
 "use client";
 
 import { createBrowserClient } from "@supabase/ssr";
-import { ArrowLeft, Camera, Loader2, Save, User, UploadCloud } from "lucide-react";
+import { ArrowLeft, Camera, Loader2, Save, User } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -15,7 +15,7 @@ export default function StudentProfile() {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState(false); // Novo estado para upload
+  const [uploading, setUploading] = useState(false);
   
   const [formData, setFormData] = useState({
     id: "",
@@ -37,22 +37,23 @@ export default function StudentProfile() {
         return;
       }
 
-      const { data: student } = await supabase
-        .from("students")
+      // CORREÇÃO: Buscando da tabela 'profiles' em vez de 'students'
+      const { data: profile } = await supabase
+        .from("profiles")
         .select("*")
         .eq("id", user.id)
         .single();
 
-      if (student) {
+      if (profile) {
         setFormData({
-            id: student.id,
-            full_name: student.full_name || "",
-            email: student.email || user.email || "",
-            bio: student.bio || "",
-            location: student.location || "",
-            linkedin_url: student.linkedin_url || "",
-            portfolio_url: student.portfolio_url || "",
-            avatar_url: student.avatar_url || ""
+            id: profile.id,
+            full_name: profile.full_name || "",
+            email: profile.email || user.email || "",
+            bio: profile.bio || "",
+            location: profile.location || "",
+            linkedin_url: profile.linkedin_url || "",
+            portfolio_url: profile.portfolio_url || "",
+            avatar_url: profile.avatar_url || ""
         });
       }
       setLoading(false);
@@ -61,7 +62,7 @@ export default function StudentProfile() {
     loadProfile();
   }, [supabase, router]);
 
-  // FUNÇÃO NOVA: Upload de Imagem 📸
+  // Função de Upload de Imagem
   async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
     if (!e.target.files || e.target.files.length === 0) {
       return;
@@ -91,7 +92,7 @@ export default function StudentProfile() {
 
     } catch (error) {
       console.error('Erro no upload:', error);
-      alert('Erro ao subir imagem via Supabase Storage.');
+      alert('Erro ao subir imagem. Verifique se o bucket "avatars" existe e é público.');
     } finally {
       setUploading(false);
     }
@@ -101,24 +102,26 @@ export default function StudentProfile() {
     e.preventDefault();
     setSaving(true);
 
+    // CORREÇÃO: Salvando na tabela 'profiles'
     const { error } = await supabase
-        .from("students")
+        .from("profiles")
         .update({
             full_name: formData.full_name,
             bio: formData.bio,
             location: formData.location,
             linkedin_url: formData.linkedin_url,
             portfolio_url: formData.portfolio_url,
-            avatar_url: formData.avatar_url // Salva a URL nova
+            avatar_url: formData.avatar_url,
+            updated_at: new Date().toISOString()
         })
         .eq("id", formData.id);
 
     if (error) {
-        alert("Erro ao salvar perfil!");
+        alert("Erro ao salvar perfil: " + error.message);
+        console.error(error);
     } else {
         alert("Perfil atualizado com sucesso!");
-        router.push("/aluno/dashboard");
-        router.refresh();
+        router.refresh(); // Atualiza os dados na tela
     }
     setSaving(false);
   }
@@ -137,12 +140,12 @@ export default function StudentProfile() {
           <h1 className="text-3xl font-bold tracking-tight">Editar Perfil</h1>
         </div>
 
-        <div className="bg-[#0A0A0A] border border-white/10 rounded-2xl p-8">
+        <div className="bg-[#0A0A0A] border border-white/10 rounded-2xl p-8 shadow-xl">
           
-          {/* MUDANÇA AQUI: Área de Upload de Foto */}
+          {/* Área de Upload de Foto */}
           <div className="flex flex-col items-center mb-8">
             <div className="relative group">
-                <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white/10 bg-white/5 flex items-center justify-center relative">
+                <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white/10 bg-white/5 flex items-center justify-center relative shadow-2xl">
                     {uploading ? (
                         <Loader2 className="animate-spin text-purple-500" size={32} />
                     ) : formData.avatar_url ? (
@@ -151,22 +154,22 @@ export default function StudentProfile() {
                         <User size={48} className="text-white/20" />
                     )}
                     
-                    {/* Camada escura ao passar o mouse */}
+                    {/* Camada interativa */}
                     <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
                         <Camera size={24} className="text-white" />
                     </div>
                 </div>
 
-                {/* Input Invisível que fica em cima da foto */}
                 <input 
                     type="file" 
                     accept="image/*"
                     onChange={handleImageUpload}
                     disabled={uploading}
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    title="Alterar foto de perfil"
                 />
             </div>
-            <p className="text-xs text-gray-500 mt-3 flex items-center gap-1">
+            <p className="text-xs text-gray-500 mt-3 flex items-center gap-1 font-medium">
                 {uploading ? "Enviando..." : "Clique na foto para alterar"}
             </p>
           </div>
@@ -174,57 +177,57 @@ export default function StudentProfile() {
           <form onSubmit={handleSave} className="space-y-6">
             
             <div className="space-y-2">
-              <label className="text-sm font-bold text-gray-400">Nome Completo</label>
+              <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Nome Completo</label>
               <input 
                 type="text" 
                 value={formData.full_name}
                 onChange={(e) => setFormData({...formData, full_name: e.target.value})}
-                className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-white focus:outline-none focus:border-purple-500 transition-colors"
+                className="w-full bg-[#151515] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500 transition-colors"
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                    <label className="text-sm font-bold text-gray-400">Localização</label>
+                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Localização</label>
                     <input 
                         type="text" 
                         placeholder="Ex: São Paulo, SP"
                         value={formData.location}
                         onChange={(e) => setFormData({...formData, location: e.target.value})}
-                        className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-white focus:outline-none focus:border-purple-500 transition-colors"
+                        className="w-full bg-[#151515] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500 transition-colors"
                     />
                 </div>
                 <div className="space-y-2">
-                    <label className="text-sm font-bold text-gray-400">LinkedIn (URL)</label>
+                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">LinkedIn (URL)</label>
                     <input 
                         type="url" 
                         placeholder="https://linkedin.com/in/..."
                         value={formData.linkedin_url}
                         onChange={(e) => setFormData({...formData, linkedin_url: e.target.value})}
-                        className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-white focus:outline-none focus:border-purple-500 transition-colors"
+                        className="w-full bg-[#151515] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500 transition-colors"
                     />
                 </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-bold text-gray-400">Mini Bio</label>
+              <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Mini Bio</label>
               <textarea 
                 rows={4}
                 value={formData.bio}
                 onChange={(e) => setFormData({...formData, bio: e.target.value})}
-                className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-white focus:outline-none focus:border-purple-500 transition-colors resize-none"
+                className="w-full bg-[#151515] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500 transition-colors resize-none"
                 placeholder="Conte um pouco sobre você..."
               />
             </div>
 
             <div className="space-y-2">
-                <label className="text-sm font-bold text-gray-400">Link do Portfólio / Site</label>
+                <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Link do Portfólio / Site</label>
                 <input 
                     type="url" 
                     placeholder="https://meuportfolio.com"
                     value={formData.portfolio_url}
                     onChange={(e) => setFormData({...formData, portfolio_url: e.target.value})}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-white focus:outline-none focus:border-purple-500 transition-colors"
+                    className="w-full bg-[#151515] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500 transition-colors"
                 />
             </div>
 
@@ -232,7 +235,7 @@ export default function StudentProfile() {
               <button 
                 type="submit" 
                 disabled={saving || uploading}
-                className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-8 rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-purple-900/20 disabled:opacity-50"
+                className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-purple-900/20 disabled:opacity-50 hover:scale-[1.02] active:scale-95"
               >
                 {saving ? <Loader2 className="animate-spin" /> : <><Save size={18} /> Salvar Alterações</>}
               </button>
