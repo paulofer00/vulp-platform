@@ -92,7 +92,7 @@ export default async function Home() {
             
             {session ? (
                 // O Menu agora vai receber a Logo da empresa em vez da letra inicial
-                <UserMenu session={session} profile={profile} />
+                <UserMenu />
             ) : (
                 <>
                     <Link href="/login" className="text-sm font-bold hover:text-purple-400 transition-colors hidden md:block">
