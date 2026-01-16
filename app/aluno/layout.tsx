@@ -41,8 +41,6 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
             </Link>
         </nav>
 
-        // ... (resto do código do layout)
-
         <div className="p-4 mt-auto border-t border-white/10">
             <form action={signOut}>
                 <button type="submit" className="w-full flex items-center gap-3 px-4 py-3 text-red-400 hover:bg-red-500/10 hover:text-red-500 rounded-xl transition-colors font-medium text-sm">
