@@ -47,10 +47,7 @@ export default function StudentDashboard() {
                     </div>
                 </div>
                 {/* Menu Suspenso */}
-                <UserMenu 
-                    session={{ user: { email: student?.email } }} 
-                    profile={{ role: 'student', full_name: student?.full_name, avatar_url: student?.avatar_url }} 
-                />
+                <UserMenu />
             </div>
         </header>
 
