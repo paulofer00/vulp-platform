@@ -56,7 +56,7 @@ export default async function Home() {
 
           {/* 2. LINKS DO CABEÇALHO (Recuperados!) */}
           <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-400">
-            <Link href="/talentos" className="hover:text-white transition-colors">Talentos</Link>
+      
             <Link href="/empresas" className="hover:text-white transition-colors">Para Empresas</Link>
             <Link href="/vitrine" className="hover:text-white transition-colors text-purple-400 font-bold">Vitrine</Link>
             <Link href="/sobre" className="hover:text-white transition-colors">Sobre</Link>

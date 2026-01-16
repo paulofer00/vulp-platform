@@ -48,7 +48,7 @@ export default async function AlunoLayout({
         <div className="p-8">
           {/* LOGO (Usando a versão WHITE para fundo escuro) */}
           <Link href="/" className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity">
-            <img src="/logo-white.svg" alt="VULP" className="h-8 w-auto" />
+            <img src="/logo-white.png" alt="VULP" className="h-8 w-auto" />
           </Link>
         </div>
 
