@@ -46,8 +46,9 @@ export default async function AlunoLayout({
       {/* SIDEBAR LATERAL FIXA */}
       <aside className="w-64 border-r border-white/5 bg-[#0A0A0A] hidden md:flex flex-col fixed h-full z-10">
         <div className="p-8">
-          <Link href="/">
-             <img src="/logo.svg" alt="VULP" className="h-6 opacity-80 hover:opacity-100 transition-opacity" />
+          {/* LOGO (Usando a versão WHITE para fundo escuro) */}
+          <Link href="/" className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity">
+            <img src="/logo-white.svg" alt="VULP" className="h-8 w-auto" />
           </Link>
         </div>
 

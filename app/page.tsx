@@ -49,14 +49,17 @@ export default async function Home() {
       <nav className="fixed w-full z-50 bg-[#050505]/80 backdrop-blur-md border-b border-white/5">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           
-          <Link href="/" className="cursor-pointer hover:opacity-80 transition-opacity">
-            <img src="/logo.svg" alt="VULP" className="h-8" />
+          {/* LOGO (Usando a versão WHITE para fundo escuro) */}
+          <Link href="/" className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity">
+            <img src="/logo-white.svg" alt="VULP" className="h-8 w-auto" />
           </Link>
 
+          {/* 2. LINKS DO CABEÇALHO (Recuperados!) */}
           <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-400">
-            <Link href="#" className="hover:text-white transition-colors">Talentos</Link>
-            <Link href="#" className="hover:text-white transition-colors">Para Empresas</Link>
-            <Link href="#" className="hover:text-white transition-colors">Sobre</Link>
+            <Link href="/talentos" className="hover:text-white transition-colors">Talentos</Link>
+            <Link href="/empresas" className="hover:text-white transition-colors">Para Empresas</Link>
+            <Link href="/vitrine" className="hover:text-white transition-colors text-purple-400 font-bold">Vitrine</Link>
+            <Link href="/sobre" className="hover:text-white transition-colors">Sobre</Link>
           </div>
 
           <div className="flex items-center gap-4">
