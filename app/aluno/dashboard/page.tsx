@@ -1,170 +1,116 @@
-import { createServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
-import { BookOpen, LogOut, PlayCircle, Trophy, User, Zap, Briefcase } from "lucide-react";
-import Link from "next/link";
-import { redirect } from "next/navigation";
-import UserMenu from "@/components/UserMenu";
+"use client";
 
-export default async function StudentDashboard() {
-  const cookieStore = await cookies();
+import { createBrowserClient } from "@supabase/ssr";
+import { Zap, PlayCircle, Trophy, BookOpen } from "lucide-react";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import UserMenu from "@/components/UserMenu"; // O menu do topo continua aqui
+
+export default function StudentDashboard() {
+  const [student, setStudent] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   
-  const supabase = createServerClient(
+  const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll();
-        },
-      },
-    }
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
-  // Verificar login
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) redirect("/login");
-
-  // Buscar dados do aluno
-  const { data: student } = await supabase
-    .from("students")
-    .select("*, student_medals(*)")
-    .eq("id", session.user.id)
-    .single();
-
-  const studentName = student?.full_name || session.user.email?.split("@")[0] || "Aluno";
-  const studentXP = student?.points || 0;
-  const medalCount = student?.student_medals?.length || 0;
+  useEffect(() => {
+    async function getProfile() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data } = await supabase.from("students").select("*").eq("id", user.id).single();
+        setStudent(data);
+      }
+      setLoading(false);
+    }
+    getProfile();
+  }, []);
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white font-sans flex">
-      
-      {/* --- SIDEBAR --- */}
-      <aside className="fixed left-0 top-0 h-full w-64 bg-[#0A0A0A] border-r border-white/5 flex flex-col z-20">
-        <div className="p-8">
-            {/* LOGO OFICIAL */}
-            <div className="flex items-center gap-2">
-                <img src="/logo-white.png" alt="VULP" className="h-8 w-auto" />
-                <span className="px-2 py-0.5 bg-purple-500/20 text-purple-300 text-[10px] font-bold uppercase tracking-widest rounded border border-purple-500/20">Aluno</span>
-            </div>
-        </div>
+    <div className="p-8 md:p-12 relative">
         
-        <nav className="flex-1 px-4 space-y-2">
-          <Link href="/aluno/perfil" className="flex items-center gap-3 px-4 py-3 bg-purple-600/10 text-purple-400 border border-purple-600/20 rounded-xl font-bold text-sm transition-colors shadow-[0_0_20px_rgba(147,51,234,0.1)]">
-            <User size={20} /> Editar Perfil
-          </Link>
-          
-          <Link href="/aluno/vagas" className="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-white/5 hover:text-white rounded-xl font-medium text-sm transition-colors">
-            <Briefcase size={20} /> Mercado de Vagas
-          </Link>
-
-          <a href="#" className="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-white/5 hover:text-white rounded-xl font-medium text-sm transition-colors">
-            <PlayCircle size={20} /> Meus Cursos
-          </a>
-          <a href="#" className="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-white/5 hover:text-white rounded-xl font-medium text-sm transition-colors">
-            <Trophy size={20} /> Conquistas
-          </a>
-        </nav>
-
-        <div className="p-8 border-t border-white/5">
-            <Link href="/" className="flex items-center gap-2 text-gray-500 hover:text-red-400 text-sm font-medium transition-colors">
-                <LogOut size={16} /> Sair
-            </Link>
-        </div>
-      </aside>
-
-      {/* --- CONTEÚDO PRINCIPAL --- */}
-      <main className="flex-1 ml-64 p-8 md:p-12 relative">
-        
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-purple-900/20 blur-[120px] rounded-full pointer-events-none" />
-
+        {/* CABEÇALHO COM MENU DO USUÁRIO */}
         <header className="flex justify-between items-center mb-12 relative z-50">
             <div>
-                <h1 className="text-3xl font-bold tracking-tight mb-2">Olá, {studentName}.</h1>
+                <h1 className="text-3xl font-bold tracking-tight mb-2">
+                    Olá, {student?.full_name?.split(" ")[0] || "Aluno"}.
+                </h1>
                 <p className="text-gray-400">Continue sua jornada para o topo do ranking.</p>
             </div>
             
             <div className="flex items-center gap-6">
-                
-                {/* Bloco de XP (Deixei menorzinho e mais discreto) */}
                 <div className="hidden md:block text-right">
                     <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-1">Nível Atual</p>
                     <div className="flex items-center justify-end gap-1 text-yellow-400 font-bold">
-                        <Zap size={16} fill="currentColor" /> {studentXP} XP
+                        <Zap size={16} fill="currentColor" /> {student?.points || 0} XP
                     </div>
                 </div>
-
-                {/* AQUI ENTRA O MENU DO USUÁRIO 👇 */}
+                {/* Menu Suspenso */}
                 <UserMenu 
-                    session={session} 
-                    profile={{
-                        role: 'student', // Já sabemos que aqui é aluno
-                        full_name: studentName,
-                        avatar_url: student?.avatar_url
-                    }} 
+                    session={{ user: { email: student?.email } }} 
+                    profile={{ role: 'student', full_name: student?.full_name, avatar_url: student?.avatar_url }} 
                 />
-
             </div>
         </header>
 
-        {/* Cards de Progresso */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12 relative z-10">
-            <div className="bg-[#0A0A0A] p-6 rounded-2xl border border-white/5 hover:border-purple-500/30 transition-all group">
-                <div className="flex justify-between items-start mb-4">
-                    <div className="p-3 bg-white/5 rounded-xl text-purple-400 group-hover:bg-purple-600 group-hover:text-white transition-colors">
-                        <PlayCircle size={24} />
-                    </div>
-                    <span className="text-2xl font-bold text-white">0/5</span>
+        {/* CARDS DE RESUMO */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+            
+            {/* Cursos */}
+            <div className="bg-[#0A0A0A] border border-white/10 p-6 rounded-2xl relative overflow-hidden group">
+                <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity">
+                    <PlayCircle size={80} />
                 </div>
-                <p className="text-sm font-medium text-gray-500">Cursos em Andamento</p>
-                <div className="w-full h-1 bg-gray-800 rounded-full mt-4 overflow-hidden">
-                    <div className="h-full bg-purple-600 w-[5%]"></div>
+                <div className="w-10 h-10 bg-purple-500/20 text-purple-400 rounded-lg flex items-center justify-center mb-4">
+                    <PlayCircle size={20} />
+                </div>
+                <h3 className="text-2xl font-bold mb-1">0/5</h3>
+                <p className="text-gray-500 text-sm">Cursos em Andamento</p>
+                <div className="w-full bg-white/5 h-1 mt-4 rounded-full">
+                    <div className="bg-purple-500 h-full w-[10%]" />
                 </div>
             </div>
 
-            <div className="bg-[#0A0A0A] p-6 rounded-2xl border border-white/5 hover:border-purple-500/30 transition-all group">
-                <div className="flex justify-between items-start mb-4">
-                    <div className="p-3 bg-white/5 rounded-xl text-yellow-400 group-hover:bg-yellow-500 group-hover:text-black transition-colors">
-                        <Trophy size={24} />
-                    </div>
-                    <span className="text-2xl font-bold text-white">{medalCount}</span>
+            {/* Medalhas */}
+            <div className="bg-[#0A0A0A] border border-white/10 p-6 rounded-2xl relative overflow-hidden group">
+                <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity">
+                    <Trophy size={80} />
                 </div>
-                <p className="text-sm font-medium text-gray-500">Medalhas Conquistadas</p>
+                <div className="w-10 h-10 bg-yellow-500/20 text-yellow-400 rounded-lg flex items-center justify-center mb-4">
+                    <Trophy size={20} />
+                </div>
+                <h3 className="text-2xl font-bold mb-1">0</h3>
+                <p className="text-gray-500 text-sm">Medalhas Conquistadas</p>
             </div>
 
-            <div className="bg-gradient-to-br from-purple-900/50 to-[#0A0A0A] p-6 rounded-2xl border border-purple-500/30 relative overflow-hidden group cursor-pointer hover:scale-[1.02] transition-transform">
-                <div className="relative z-10">
-                    <h3 className="font-bold text-lg mb-1">Acessar Vitrine</h3>
-                    <p className="text-sm text-purple-200/60 mb-4">Veja como seu perfil aparece para as empresas.</p>
-                    <Link href={`/talento/${session.user.id}`} className="inline-flex items-center gap-2 text-xs font-bold bg-white text-purple-900 px-3 py-2 rounded-lg">
-                        Ver meu Perfil Público <Zap size={12}/>
-                    </Link>
-                </div>
-                <div className="absolute right-[-20px] bottom-[-20px] opacity-20 rotate-12 group-hover:rotate-0 transition-transform duration-500">
-                    <User size={100} />
-                </div>
+            {/* Card de Ação (Empresas) - Atalho Rápido */}
+            <div className="bg-gradient-to-br from-purple-900/50 to-purple-900/10 border border-purple-500/30 p-6 rounded-2xl relative overflow-hidden flex flex-col justify-center">
+                <h3 className="text-lg font-bold mb-2">Conheça as Empresas</h3>
+                <p className="text-purple-200 text-xs mb-4">Veja quem está contratando e prepare-se.</p>
+                <Link href="/aluno/empresas" className="bg-white text-purple-900 px-4 py-2 rounded-lg font-bold text-sm text-center hover:bg-purple-100 transition-colors">
+                    Ver Vitrine de Empresas
+                </Link>
             </div>
+
         </div>
 
+        {/* SEÇÃO DE CURSOS */}
         <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
             <BookOpen size={20} className="text-purple-500" /> Meus Cursos
         </h2>
-        
-        <div className="space-y-4">
-            <div className="flex items-center gap-6 p-4 rounded-2xl bg-[#0A0A0A] border border-white/5 hover:border-white/10 transition-colors opacity-80">
-                <div className="w-16 h-16 rounded-lg bg-gray-800 flex items-center justify-center">
-                    <BookOpen className="text-gray-500" />
-                </div>
-                <div className="flex-1">
-                    <h3 className="font-bold text-lg text-gray-300">Você ainda não iniciou cursos</h3>
-                    <p className="text-sm text-gray-600">Acesse a Cademi para começar sua jornada.</p>
-                </div>
-                <Link href="https://vulp.cademi.com.br" target="_blank" className="px-6 py-3 bg-purple-600 text-white rounded-xl font-bold text-sm transition-all hover:bg-purple-700">
-                    Ir para Área de Aulas
-                </Link>
+
+        <div className="bg-[#0A0A0A] border border-white/10 rounded-2xl p-8 text-center">
+            <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mx-auto mb-4 text-gray-500">
+                <BookOpen size={32} />
             </div>
+            <h3 className="text-lg font-bold mb-2">Você ainda não iniciou cursos</h3>
+            <p className="text-gray-500 max-w-md mx-auto mb-6">Acesse a área de membros para começar sua jornada de aprendizado.</p>
+            <button className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-xl font-bold transition-colors">
+                Ir para Área de Aulas
+            </button>
         </div>
 
-      </main>
     </div>
   );
 }

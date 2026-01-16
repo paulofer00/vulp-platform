@@ -1,4 +1,4 @@
-export const dynamic = "force-dynamic"; // 👈 O SEGREDO: Obriga a página a atualizar sempre!
+export const dynamic = "force-dynamic";
 
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
@@ -9,7 +9,6 @@ import UserMenu from "@/components/UserMenu";
 export default async function Home() {
   const cookieStore = await cookies();
   
-  // 1. Conectar ao Supabase
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -18,14 +17,12 @@ export default async function Home() {
     }
   );
 
-  // 2. Verificar Sessão
   const { data: { session } } = await supabase.auth.getSession();
   
-  // 3. Buscar Dados do Perfil (Com lógica blindada)
   let profile = null;
 
   if (session) {
-      // A. Pega o Cargo na tabela profiles
+      // 1. Descobre quem é (Aluno, Empresa ou Admin)
       const { data: baseProfile } = await supabase
         .from("profiles")
         .select("role")
@@ -34,26 +31,39 @@ export default async function Home() {
       
       const role = baseProfile?.role;
       
-      // Nome Padrão (Fallback caso não ache nada)
+      // Nome Provisório (caso não ache nada no banco)
       const emailName = session.user.email?.split("@")[0] || "Usuário";
       let fullName = emailName.charAt(0).toUpperCase() + emailName.slice(1);
       let avatarUrl = null;
 
-      // B. Se for ALUNO, busca os dados reais na tabela students
+      // 2. Busca os dados na tabela correta
       if (role === 'student') {
-          const { data: studentData } = await supabase
+          const { data: student } = await supabase
             .from("students")
             .select("full_name, avatar_url")
             .eq("id", session.user.id)
             .single();
           
-          if (studentData) {
-              if (studentData.full_name) fullName = studentData.full_name;
-              if (studentData.avatar_url) avatarUrl = studentData.avatar_url;
+          if (student) {
+              if (student.full_name) fullName = student.full_name;
+              if (student.avatar_url) avatarUrl = student.avatar_url;
+          }
+
+      } else if (role === 'company') {
+          // AQUI ESTÁ A MÁGICA PARA A EMPRESA 🎩✨
+          const { data: company } = await supabase
+            .from("companies")
+            .select("name, logo_url")
+            .eq("id", session.user.id)
+            .single();
+
+          if (company) {
+              if (company.name) fullName = company.name;     // Usa o Nome Fantasia
+              if (company.logo_url) avatarUrl = company.logo_url; // Usa a Logo
           }
       }
 
-      // C. Monta o objeto final para o Menu
+      // 3. Monta o perfil para o Menu
       profile = {
           role: role,
           full_name: fullName,
@@ -68,22 +78,20 @@ export default async function Home() {
       <nav className="fixed top-0 w-full z-50 border-b border-white/5 bg-[#050505]/80 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           
-          {/* Logo */}
           <Link href="/" className="cursor-pointer">
              <img src="/logo-white.png" alt="VULP" className="h-8 w-auto" />
           </Link>
 
-          {/* Menu Central (Desktop) */}
           <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-400">
             <Link href="/vitrine" className="hover:text-white transition-colors">Talentos</Link>
-            <a href="#" className="hover:text-white transition-colors">Para Empresas</a>
+            <Link href="/empresas" className="hover:text-white transition-colors">Para Empresas</Link>
             <a href="#" className="hover:text-white transition-colors">Sobre</a>
           </div>
 
-          {/* ÁREA DE LOGIN INTELIGENTE */}
           <div className="flex items-center gap-4">
             
             {session ? (
+                // O Menu agora vai receber a Logo da empresa em vez da letra inicial
                 <UserMenu session={session} profile={profile} />
             ) : (
                 <>
