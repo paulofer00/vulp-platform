@@ -11,6 +11,7 @@ export default function UserMenu() {
   const [name, setName] = useState<string | null>(null);
   const [email, setEmail] = useState<string | null>(null);
   const [role, setRole] = useState<string | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null); // NOVO
   const [initials, setInitials] = useState("U");
   
   const router = useRouter();
@@ -26,22 +27,24 @@ export default function UserMenu() {
       if (user) {
         setEmail(user.email || "");
 
-        // Busca os dados do perfil no banco
+        // Busca NOME, ROLE e AVATAR_URL
         const { data: profile } = await supabase
           .from("profiles")
-          .select("full_name, role")
+          .select("full_name, role, avatar_url")
           .eq("id", user.id)
           .single();
 
-        // 1. Define o CARGO (Prioridade: Banco -> Metadata -> Student)
         const userRole = profile?.role || user.user_metadata?.role || "student";
         setRole(userRole);
 
-        // 2. Define o NOME (Prioridade: Banco -> Metadata -> Parte do Email)
         const fullName = profile?.full_name || user.user_metadata?.full_name || user.email?.split("@")[0] || "Usuário";
         setName(fullName);
 
-        // 3. Define as INICIAIS baseadas no nome escolhido
+        // Define a foto se existir
+        if (profile?.avatar_url) {
+            setAvatarUrl(profile.avatar_url);
+        }
+
         const names = fullName.split(" ");
         const firstInitial = names[0][0];
         const lastInitial = names.length > 1 ? names[names.length - 1][0] : "";
@@ -66,9 +69,15 @@ export default function UserMenu() {
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-3 hover:bg-white/5 p-2 rounded-full pr-4 transition-colors border border-transparent hover:border-white/10"
       >
-        <div className="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center text-white font-bold shadow-lg shadow-purple-900/20">
-          {initials}
+        {/* LÓGICA DA FOTO: Se tiver URL mostra a foto, se não, mostra as iniciais */}
+        <div className="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center text-white font-bold shadow-lg shadow-purple-900/20 overflow-hidden">
+          {avatarUrl ? (
+              <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+          ) : (
+              initials
+          )}
         </div>
+
         <div className="hidden md:block text-left">
           <p className="text-sm font-bold text-white leading-none">
             {name}
@@ -81,10 +90,7 @@ export default function UserMenu() {
 
       {isOpen && (
         <>
-          <div 
-            className="fixed inset-0 z-40" 
-            onClick={() => setIsOpen(false)} 
-          />
+          <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
           <div className="absolute right-0 mt-2 w-56 bg-[#0F0F0F] border border-white/10 rounded-xl shadow-2xl py-2 z-50 animate-in fade-in zoom-in-95 duration-200">
             <div className="px-4 py-3 border-b border-white/5 mb-2">
               <p className="text-xs text-gray-500 uppercase font-bold">Logado como</p>
