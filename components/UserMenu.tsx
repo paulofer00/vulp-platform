@@ -1,103 +1,127 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { createBrowserClient } from "@supabase/ssr";
+import { LogOut, User, LayoutDashboard } from "lucide-react";
 import Link from "next/link";
-import { LayoutDashboard, LogOut, User, ChevronDown } from "lucide-react";
-// 👇 O IMPORT DA AÇÃO QUE CRIAMOS
-import { signOut } from "@/app/actions/auth"; 
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
-interface UserMenuProps {
-  session: any;
-  profile: any;
-}
-
-export default function UserMenu({ session, profile }: UserMenuProps) {
+export default function UserMenu() {
   const [isOpen, setIsOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
+  const [name, setName] = useState<string | null>(null);
+  const [email, setEmail] = useState<string | null>(null);
+  const [role, setRole] = useState<string | null>(null);
+  const [initials, setInitials] = useState("U");
+  
+  const router = useRouter();
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
 
-  // Fecha o menu se clicar fora dele
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
+    async function getUserData() {
+      // 1. Pega o usuário logado
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user) {
+        setEmail(user.email || "");
+
+        // 2. Busca o NOME REAL na tabela de perfis
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("full_name, role")
+          .eq("id", user.id)
+          .single();
+
+        if (profile?.full_name) {
+          setName(profile.full_name);
+          
+          // Cria as iniciais (Ex: Paulo Fernandes -> PF)
+          const names = profile.full_name.split(" ");
+          const firstInitial = names[0][0];
+          const lastInitial = names.length > 1 ? names[names.length - 1][0] : "";
+          setInitials((firstInitial + lastInitial).toUpperCase());
+          
+          setRole(profile.role);
+        } else {
+          // Fallback se não achar o perfil
+          setName(user.email?.split("@")[0] || "Usuário");
+          setInitials(user.email?.[0].toUpperCase() || "U");
+        }
       }
     }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+
+    getUserData();
   }, []);
 
-  // Define para onde o botão "Meu Painel" leva
-  const dashboardLink = profile?.role === 'company' ? "/empresa/dashboard"
-                      : profile?.role === 'admin' ? "/admin"
-                      : "/aluno/dashboard";
-  
-  // Define link de perfil
-  const profileLink = profile?.role === 'company' ? "/empresa/perfil" : "/aluno/perfil";
+  async function handleSignOut() {
+    await supabase.auth.signOut();
+    router.push("/login");
+    router.refresh();
+  }
+
+  // Se não tiver nome carregado ainda, mostra um esqueleto simples
+  if (!email) return null;
 
   return (
-    <div className="relative" ref={menuRef}>
-        
-        {/* BOTÃO QUE ABRE O MENU (Trigger) */}
-        <button 
-            onClick={() => setIsOpen(!isOpen)}
-            className="flex items-center gap-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full pl-1 pr-4 py-1 transition-all group"
-        >
-            <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center text-xs font-bold text-white overflow-hidden border border-purple-500/50">
-                {profile?.avatar_url ? (
-                    <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
-                ) : (
-                    <span>{profile?.full_name?.[0]?.toUpperCase() || "U"}</span>
-                )}
+    <div className="relative">
+      <button 
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-3 hover:bg-white/5 p-2 rounded-full pr-4 transition-colors border border-transparent hover:border-white/10"
+      >
+        <div className="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center text-white font-bold shadow-lg shadow-purple-900/20">
+          {initials}
+        </div>
+        <div className="hidden md:block text-left">
+          <p className="text-sm font-bold text-white leading-none">
+            {name}
+          </p>
+          <p className="text-[10px] text-gray-400 mt-1 uppercase tracking-wider font-semibold">
+            {role === 'company' ? 'Empresa' : 'Aluno'}
+          </p>
+        </div>
+      </button>
+
+      {isOpen && (
+        <>
+          <div 
+            className="fixed inset-0 z-40" 
+            onClick={() => setIsOpen(false)} 
+          />
+          <div className="absolute right-0 mt-2 w-56 bg-[#0F0F0F] border border-white/10 rounded-xl shadow-2xl py-2 z-50 animate-in fade-in zoom-in-95 duration-200">
+            <div className="px-4 py-3 border-b border-white/5 mb-2">
+              <p className="text-xs text-gray-500 uppercase font-bold">Logado como</p>
+              <p className="text-sm text-white truncate" title={email}>{email}</p>
             </div>
-            <span className="text-sm font-medium text-white hidden md:block group-hover:text-purple-200 transition-colors">
-                {profile?.full_name?.split(" ")[0] || "Usuário"}
-            </span>
-            <ChevronDown size={14} className={`text-gray-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
-        </button>
 
-        {/* O MENU SUSPENSO (Dropdown) */}
-        {isOpen && (
-            <div className="absolute right-0 mt-2 w-60 bg-[#0F0F0F] border border-white/10 rounded-xl shadow-2xl shadow-black/80 overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-200">
+            <Link 
+              href={role === 'company' ? "/empresa/dashboard" : "/aluno/dashboard"} 
+              className="flex items-center gap-2 px-4 py-2 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors"
+              onClick={() => setIsOpen(false)}
+            >
+              <LayoutDashboard size={16} /> Meu Painel
+            </Link>
 
-                <div className="px-4 py-3 border-b border-white/5 bg-white/5">
-                    <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">Logado como</p>
-                    <p className="text-sm text-white font-medium truncate" title={session.user.email}>
-                        {session.user.email}
-                    </p>
-                </div>
+            <Link 
+              href={role === 'company' ? "/empresa/perfil" : "/aluno/perfil"} 
+              className="flex items-center gap-2 px-4 py-2 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors"
+              onClick={() => setIsOpen(false)}
+            >
+              <User size={16} /> Editar Perfil
+            </Link>
 
-                <div className="p-1">
-                    <Link 
-                        href={dashboardLink}
-                        onClick={() => setIsOpen(false)}
-                        className="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-300 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
-                    >
-                        <LayoutDashboard size={16} className="text-purple-500" /> Meu Painel
-                    </Link>
+            <div className="h-px bg-white/5 my-2" />
 
-                    <Link 
-                        href={profileLink}
-                        onClick={() => setIsOpen(false)}
-                        className="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-300 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
-                    >
-                        <User size={16} className="text-blue-500" /> Ver Perfil
-                    </Link>
-                </div>
-
-                <div className="p-1 border-t border-white/5">
-                    {/* 👇 AQUI ESTÁ A CORREÇÃO DO LOGOUT 👇 */}
-                    <form action={signOut}>
-                        <button 
-                            type="submit" 
-                            className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors text-left"
-                        >
-                            <LogOut size={16} /> Sair da Conta
-                        </button>
-                    </form>
-                </div>
-
-            </div>
-        )}
+            <button 
+              onClick={handleSignOut}
+              className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors"
+            >
+              <LogOut size={16} /> Sair da Conta
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 }
