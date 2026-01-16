@@ -32,7 +32,6 @@ export default function CompanyLayout({ children }: { children: React.ReactNode 
         </nav>
         {/* ... rodapé do sidebar ... */}
 
-        // ... (resto do código do layout)
 
         <div className="p-4 mt-auto border-t border-slate-100">
             {/* O Link virou um Form com Button */}
