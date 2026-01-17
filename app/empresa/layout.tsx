@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { LayoutDashboard, Users, Briefcase, Building2, LogOut } from "lucide-react";
+import { LayoutDashboard, Users, Briefcase, Building2, LogOut, BookOpen, Trophy, ArrowLeft } from "lucide-react";
 import { signOut } from "@/app/actions/auth"; // <--- ADICIONE ISSO NO TOPO
 
 export default function CompanyLayout({ children }: { children: React.ReactNode }) {
@@ -33,13 +33,14 @@ export default function CompanyLayout({ children }: { children: React.ReactNode 
         {/* ... rodapé do sidebar ... */}
 
 
-        <div className="p-4 mt-auto border-t border-slate-100">
-            {/* O Link virou um Form com Button */}
-            <form action={signOut}>
-                <button type="submit" className="w-full flex items-center gap-3 px-4 py-3 text-red-400 hover:bg-red-50 hover:text-red-500 rounded-xl transition-colors font-medium text-sm">
-                    <LogOut size={18} /> Sair da conta
-                </button>
-            </form>
+        {/* Link Voltar para Home (Corrigido) */}
+        <div className="p-4 mt-auto border-t border-white/5">
+            <Link 
+              href="/" 
+              className="w-full flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors font-medium text-sm"
+            >
+                <ArrowLeft size={18} /> Voltar para Home
+            </Link>
         </div>
       </aside>
 
