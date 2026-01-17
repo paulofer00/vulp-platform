@@ -35,7 +35,7 @@ export default async function VitrinePage() {
         <div className="max-w-6xl mx-auto px-6 h-20 flex items-center justify-between">
           
           <Link href="/" className="cursor-pointer hover:opacity-80 transition-opacity">
-            <img src="/logo-white.svg" alt="VULP" className="h-8 w-auto" />
+            <img src="/logo-white.png" alt="VULP" className="h-8 w-auto" />
           </Link>
 
           <div className="flex gap-4 items-center">
