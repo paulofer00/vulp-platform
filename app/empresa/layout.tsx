@@ -50,7 +50,7 @@ export default async function CompanyLayout({
             <Link href="/empresa/dashboard" className="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-purple-50 hover:text-purple-600 rounded-xl transition-colors font-medium">
                 <LayoutDashboard size={20} /> Visão Geral
             </Link>
-            <Link href="/empresa/banco-talentos" className="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-purple-50 hover:text-purple-600 rounded-xl transition-colors font-medium">
+            <Link href="/vitrine" className="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-purple-50 hover:text-purple-600 rounded-xl transition-colors font-medium">
                 <Users size={20} /> Banco de Talentos
             </Link>
             <Link href="/empresa/vagas" className="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-purple-50 hover:text-purple-600 rounded-xl transition-colors font-medium">

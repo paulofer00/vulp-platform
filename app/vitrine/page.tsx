@@ -1,7 +1,8 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-import { BadgeCheck, Briefcase, Search, Trophy, User, Zap } from "lucide-react";
+import { BadgeCheck, Trophy, User } from "lucide-react";
 import Link from "next/link";
+import UserMenu from "@/components/UserMenu"; // <--- Importamos o Menu Inteligente
 
 export default async function VitrinePage() {
   const cookieStore = await cookies();
@@ -14,22 +15,44 @@ export default async function VitrinePage() {
     }
   );
 
-  // Busca dados REAIS (sem Carlos, sem Ana)
+  // 1. Verifica se tem alguém logado (Sessão)
+  const { data: { session } } = await supabase.auth.getSession();
+
+  // 2. Busca os alunos
   const { data: students } = await supabase
-    .from("students")
+    .from("profiles") // OBS: Certifique-se que seus alunos estão na tabela 'profiles' com role='student'
     .select("*")
-    .order('points', { ascending: false });
+    .eq('role', 'student') // Filtra apenas alunos
+    // .order('points', { ascending: false }); // Descomente se tiver coluna 'points' na profiles
+    
+  // Se ainda estiver usando a tabela 'students' separada, mantenha: .from("students").select("*")
 
   return (
     <div className="min-h-screen bg-[#050505] text-white font-sans selection:bg-purple-500/30">
+      
+      {/* NAVBAR INTELIGENTE */}
       <nav className="border-b border-white/5 bg-[#050505]/80 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-6 h-20 flex items-center justify-between">
-          <Link href="/" className="cursor-pointer">
-  <img src="/logo-white.png" alt="VULP" className="h-8 w-auto" />
-</Link>
-          <div className="flex gap-4">
-             <Link href="/login" className="px-6 py-2 rounded-full border border-white/10 hover:bg-white/10 transition-colors font-bold text-sm">Sou Empresa</Link>
-             <Link href="/login" className="px-6 py-2 rounded-full bg-purple-600 hover:bg-purple-700 transition-colors font-bold text-sm shadow-lg shadow-purple-900/20">Sou Aluno</Link>
+          
+          <Link href="/" className="cursor-pointer hover:opacity-80 transition-opacity">
+            <img src="/logo-white.svg" alt="VULP" className="h-8 w-auto" />
+          </Link>
+
+          <div className="flex gap-4 items-center">
+             {session ? (
+                // SE LOGADO: Mostra o Menu do Usuário (Foto, Painel, Sair)
+                <UserMenu />
+             ) : (
+                // SE NÃO LOGADO: Mostra os botões de entrar
+                <>
+                    <Link href="/login" className="px-6 py-2 rounded-full border border-white/10 hover:bg-white/10 transition-colors font-bold text-sm">
+                        Sou Empresa
+                    </Link>
+                    <Link href="/login" className="px-6 py-2 rounded-full bg-purple-600 hover:bg-purple-700 transition-colors font-bold text-sm shadow-lg shadow-purple-900/20">
+                        Sou Aluno
+                    </Link>
+                </>
+             )}
           </div>
         </div>
       </nav>
@@ -53,16 +76,17 @@ export default async function VitrinePage() {
                                 {student.avatar_url ? (
                                     <img src={student.avatar_url} alt={student.full_name} className="w-full h-full object-cover" />
                                 ) : (
-                                    student.full_name.charAt(0)
+                                    (student.full_name || "U").charAt(0)
                                 )}
                             </div>
+                            {/* Exemplo de XP fake caso não tenha no banco ainda */}
                             <div className="px-3 py-1 bg-yellow-500/10 text-yellow-500 text-xs font-bold rounded-full border border-yellow-500/20 flex items-center gap-1">
-                                <Trophy size={12} /> {student.points} XP
+                                <Trophy size={12} /> {student.points || 0} XP
                             </div>
                         </div>
                         <div className="mb-4">
                             <h3 className="text-xl font-bold mb-1 group-hover:text-purple-400 transition-colors flex items-center gap-2">
-                                {student.full_name} <BadgeCheck size={16} className="text-blue-500/50" /> 
+                                {student.full_name || "Aluno VULP"} <BadgeCheck size={16} className="text-blue-500/50" /> 
                             </h3>
                             <p className="text-sm text-purple-300 font-medium">Talento VULP</p>
                         </div>
