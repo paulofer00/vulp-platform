@@ -2,8 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import Link from "next/link";
 import UserMenu from "@/components/UserMenu"; 
-// CORREÇÃO AQUI: Adicionamos chaves { } na importação
-import { HeroSlider } from "@/components/HeroSlider"; 
+import { ArrowRight, CheckCircle2, MessageCircle, Target, Zap, Users } from "lucide-react";
 
 export default async function Home() {
   const cookieStore = await cookies();
@@ -22,7 +21,7 @@ export default async function Home() {
               cookieStore.set(name, value, options)
             )
           } catch {
-            // Ignora erros
+            // Ignora erros de escrita em Server Component
           }
         },
       },
@@ -32,22 +31,18 @@ export default async function Home() {
   const { data: { session } } = await supabase.auth.getSession();
   
   return (
-    <main className="min-h-screen bg-[#050505] text-white selection:bg-purple-500/30">
+    <main className="min-h-screen bg-[#050505] text-white selection:bg-purple-500/30 font-sans">
       
-      {/* NAVBAR */}
-      <nav className="fixed w-full z-50 bg-[#050505]/80 backdrop-blur-md border-b border-white/5">
+      {/* --- NAVBAR LIMPA --- */}
+      <nav className="fixed w-full z-50 bg-[#050505]/90 backdrop-blur-md border-b border-white/5">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           
+          {/* LOGO */}
           <Link href="/" className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity">
             <img src="/logo-white.png" alt="VULP" className="h-8 w-auto" />
           </Link>
 
-          <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-400">
-            <Link href="/empresas" className="hover:text-white transition-colors">Para Empresas</Link>
-            <Link href="/vitrine" className="hover:text-white transition-colors text-purple-400 font-bold">Vitrine</Link>
-            <Link href="/sobre" className="hover:text-white transition-colors">Sobre</Link>
-          </div>
-
+          {/* ÁREA DO USUÁRIO */}
           <div className="flex items-center gap-4">
             {session ? (
               <UserMenu />
@@ -65,10 +60,175 @@ export default async function Home() {
         </div>
       </nav>
 
-      {/* HERO SLIDER */}
-      <section className="relative">
-        <HeroSlider />
+      {/* --- 1. SEÇÃO HERO: CLAREZA IMEDIATA --- */}
+      <section className="pt-40 pb-20 px-6 relative overflow-hidden flex flex-col items-center text-center">
+        {/* Luz de fundo sutil */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-purple-900/20 blur-[120px] rounded-full pointer-events-none" />
+        
+        <div className="relative z-10 max-w-4xl mx-auto">
+            <h1 className="text-5xl md:text-7xl font-black tracking-tighter mb-6 leading-tight">
+                UMA ESCOLA <br />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-purple-300">
+                    NADA CONVENCIONAL
+                </span>
+            </h1>
+            <p className="text-xl text-gray-400 max-w-2xl mx-auto mb-12 font-medium">
+                Uma formação 100% prática e presencial, feita para quem quer entrar no mercado de verdade, não apenas ganhar um certificado.
+            </p>
+
+            <div className="flex flex-col md:flex-row gap-4 justify-center">
+                <Link href="/marketing" className="group bg-purple-600 hover:bg-purple-700 text-white px-8 py-4 rounded-full font-bold text-lg transition-all hover:scale-105 shadow-lg shadow-purple-900/20 flex items-center justify-center gap-2">
+                    Quero trabalhar com Marketing <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                </Link>
+                <Link href="/vendas" className="group bg-white/10 hover:bg-white text-white hover:text-black border border-white/20 hover:border-white px-8 py-4 rounded-full font-bold text-lg transition-all hover:scale-105 flex items-center justify-center gap-2">
+                    Quero vender melhor <Target size={18} />
+                </Link>
+            </div>
+        </div>
       </section>
+
+      {/* --- 2. SEÇÃO: PRA QUEM É A VULP (ATUALIZADA) --- */}
+      <section className="py-20 bg-[#0A0A0A] border-y border-white/5">
+        <div className="max-w-5xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+            <div>
+                {/* ALTERAÇÃO AQUI: Título em destaque e sem o aviso amarelo */}
+                <h2 className="text-4xl md:text-5xl font-black mb-6 text-purple-500">
+                    Pra quem é a VULP?
+                </h2>
+                <h3 className="text-xl font-bold text-white mb-6">
+                    Não é para quem busca apenas um papel na parede.
+                </h3>
+                
+                <p className="text-gray-400 text-lg leading-relaxed mb-6">
+                    A VULP não é um curso tradicional onde você senta, ouve e vai embora. Aqui existe <strong>pressão, feedback real e entrega de resultado.</strong>
+                </p>
+                <p className="text-gray-400 text-lg leading-relaxed">
+                    Se você quer teoria, procure uma faculdade. Se você quer mercado, prática e um portfólio que abre portas, a VULP é o seu lugar.
+                </p>
+            </div>
+            <div className="bg-[#111] p-8 rounded-3xl border border-white/10 relative">
+                <div className="absolute -top-6 -right-6 w-24 h-24 bg-purple-600/20 blur-2xl rounded-full" />
+                <ul className="space-y-4 relative z-10">
+                    <li className="flex items-start gap-3">
+                        <CheckCircle2 className="text-purple-500 mt-1 shrink-0" />
+                        <span className="text-gray-300">Ambiente de agência real, não sala de aula.</span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                        <CheckCircle2 className="text-purple-500 mt-1 shrink-0" />
+                        <span className="text-gray-300">Mentores que vivem o que ensinam todos os dias.</span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                        <CheckCircle2 className="text-purple-500 mt-1 shrink-0" />
+                        <span className="text-gray-300">Networking com empresários que contratam.</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+      </section>
+
+      {/* --- 3. SEÇÃO: ESCOLHA SEU CAMINHO --- */}
+      <section className="py-24 px-6">
+        <div className="max-w-6xl mx-auto">
+            <h2 className="text-center text-3xl md:text-5xl font-bold mb-16">Escolha seu caminho</h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {/* CARD 1: MARKETING */}
+                <Link href="/marketing" className="group relative bg-[#0F0F0F] border border-white/10 rounded-3xl p-10 hover:border-purple-500 transition-all duration-300 overflow-hidden">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-purple-600/10 blur-[80px] rounded-full group-hover:bg-purple-600/20 transition-all" />
+                    
+                    <div className="relative z-10">
+                        <h3 className="text-3xl font-black uppercase mb-4 group-hover:text-purple-400 transition-colors">
+                            Raposa do Marketing
+                        </h3>
+                        <p className="text-gray-400 text-lg mb-8 h-20">
+                            Domine as estratégias digitais, criação de conteúdo e gestão de marcas que vendem.
+                        </p>
+                        <span className="inline-flex items-center gap-2 text-white font-bold border-b border-purple-500 pb-1 group-hover:text-purple-400 transition-colors">
+                            Conhecer a formação <ArrowRight size={16} />
+                        </span>
+                    </div>
+                </Link>
+
+                {/* CARD 2: VENDAS */}
+                <Link href="/vendas" className="group relative bg-[#0F0F0F] border border-white/10 rounded-3xl p-10 hover:border-blue-500 transition-all duration-300 overflow-hidden">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/10 blur-[80px] rounded-full group-hover:bg-blue-600/20 transition-all" />
+                    
+                    <div className="relative z-10">
+                        <h3 className="text-3xl font-black uppercase mb-4 group-hover:text-blue-400 transition-colors">
+                            O Novo Vendedor
+                        </h3>
+                        <p className="text-gray-400 text-lg mb-8 h-20">
+                            Aprenda a negociar, persuadir e fechar contratos de alto valor em qualquer cenário.
+                        </p>
+                        <span className="inline-flex items-center gap-2 text-white font-bold border-b border-blue-500 pb-1 group-hover:text-blue-400 transition-colors">
+                            Conhecer a formação <ArrowRight size={16} />
+                        </span>
+                    </div>
+                </Link>
+            </div>
+        </div>
+      </section>
+
+      {/* --- 4. SEÇÃO: POR QUE A VULP É DIFERENTE --- */}
+      <section className="py-20 bg-[#0A0A0A] border-y border-white/5">
+        <div className="max-w-6xl mx-auto px-6">
+            <div className="text-center mb-16">
+                <h2 className="text-3xl md:text-4xl font-bold mb-4">Por que a VULP é diferente?</h2>
+                <p className="text-gray-400">Esqueça a lousa e o caderno. Aqui o jogo é outro.</p>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                <div className="bg-[#151515] p-6 rounded-2xl border border-white/5 text-center hover:border-purple-500/30 transition-colors">
+                    <div className="w-12 h-12 bg-purple-900/20 rounded-full flex items-center justify-center mx-auto mb-4 text-purple-400">
+                        <Zap size={24} />
+                    </div>
+                    <h3 className="font-bold text-lg mb-2">80% Prática</h3>
+                    <p className="text-sm text-gray-400">Menos teoria, mais execução real.</p>
+                </div>
+                <div className="bg-[#151515] p-6 rounded-2xl border border-white/5 text-center hover:border-purple-500/30 transition-colors">
+                    <div className="w-12 h-12 bg-purple-900/20 rounded-full flex items-center justify-center mx-auto mb-4 text-purple-400">
+                        <Users size={24} />
+                    </div>
+                    <h3 className="font-bold text-lg mb-2">Presencial</h3>
+                    <p className="text-sm text-gray-400">Conexão olho no olho e networking.</p>
+                </div>
+                <div className="bg-[#151515] p-6 rounded-2xl border border-white/5 text-center hover:border-purple-500/30 transition-colors">
+                    <div className="w-12 h-12 bg-purple-900/20 rounded-full flex items-center justify-center mx-auto mb-4 text-purple-400">
+                        <MessageCircle size={24} />
+                    </div>
+                    <h3 className="font-bold text-lg mb-2">Feedback Direto</h3>
+                    <p className="text-sm text-gray-400">Sem rodeios. Você descobre onde melhorar.</p>
+                </div>
+                <div className="bg-[#151515] p-6 rounded-2xl border border-white/5 text-center hover:border-purple-500/30 transition-colors">
+                    <div className="w-12 h-12 bg-purple-900/20 rounded-full flex items-center justify-center mx-auto mb-4 text-purple-400">
+                        <Target size={24} />
+                    </div>
+                    <h3 className="font-bold text-lg mb-2">Portfólio Real</h3>
+                    <p className="text-sm text-gray-400">Saia com projetos prontos para apresentar.</p>
+                </div>
+            </div>
+        </div>
+      </section>
+
+      {/* --- 5. CTA FINAL: WHATSAPP --- */}
+      <section className="py-24 px-6 text-center">
+        <div className="max-w-2xl mx-auto">
+            <h2 className="text-3xl font-bold mb-8">Ainda com dúvida de qual caminho seguir?</h2>
+            <Link 
+                href="https://wa.me/5593991174787"
+                target="_blank"
+                className="bg-[#25D366] hover:bg-[#20bd5a] text-black font-bold py-4 px-10 rounded-full text-lg transition-all hover:scale-105 shadow-xl shadow-green-900/20 inline-flex items-center gap-3"
+            >
+                <MessageCircle size={24} fill="black" className="text-black" />
+                Quero conversar com a VULP
+            </Link>
+        </div>
+      </section>
+
+      {/* FOOTER SIMPLES */}
+      <footer className="py-12 border-t border-white/5 text-center text-gray-600 text-sm">
+        <p>© 2026 VULP. Todos os direitos reservados.</p>
+      </footer>
 
     </main>
   );
