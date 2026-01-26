@@ -4,13 +4,15 @@ import { useState } from "react";
 import { createBrowserClient } from "@supabase/ssr";
 import { 
   CheckCircle2, X, ChevronDown, Trophy, 
-  Zap, Brain, Target, Video, PenTool, Layout, ArrowRight, ShieldCheck, Smartphone 
+  Zap, Brain, Target, Video, PenTool, Layout, ArrowRight, ShieldCheck, Smartphone,
+  Users, Mic, Briefcase, TrendingUp // Novos ícones importados
 } from "lucide-react";
 import Link from "next/link";
 
 export default function MarketingLP() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
 
   // Supabase Client
   const supabase = createBrowserClient(
@@ -19,7 +21,11 @@ export default function MarketingLP() {
   );
 
   const openModal = () => setIsModalOpen(true);
-  const closeModal = () => setIsModalOpen(false);
+  
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setTimeout(() => setIsSuccess(false), 300);
+  };
 
   // Envio do Formulário
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -43,8 +49,7 @@ export default function MarketingLP() {
         alert("Erro ao enviar. Tente novamente.");
         console.error(error);
     } else {
-        alert("Aplicação enviada com sucesso! Entraremos em contato.");
-        closeModal();
+        setIsSuccess(true);
     }
   }
 
@@ -68,8 +73,6 @@ export default function MarketingLP() {
 
       {/* --- HERO SECTION --- */}
       <header className="relative pt-32 pb-20 md:pt-40 md:pb-32 overflow-hidden min-h-[700px] flex items-center">
-        
-        {/* 1. Imagem de Fundo (Alinhada à Direita) */}
         <div className="absolute top-0 right-0 w-full md:w-[60%] h-full z-0">
             <img 
                 src="/raposa.png" 
@@ -79,11 +82,8 @@ export default function MarketingLP() {
             <div className="absolute inset-0 bg-gradient-to-r from-[#050505] via-[#050505]/50 to-transparent md:via-transparent block md:hidden" />
         </div>
 
-        {/* 2. Conteúdo (Texto na Esquerda) */}
         <div className="max-w-7xl mx-auto px-6 w-full relative z-10 grid grid-cols-1 md:grid-cols-2">
-            
             <div className="text-left pt-10 md:pt-0">
-                {/* TÍTULO */}
                 <h1 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tight mb-6 leading-[0.9] drop-shadow-xl">
                     <span className="block text-white whitespace-nowrap">A RAPOSA DO</span>
                     <span className="block text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-purple-300">
@@ -105,8 +105,6 @@ export default function MarketingLP() {
                     </button>
                 </div>
             </div>
-
-            {/* Coluna da direita vazia */}
             <div></div>
         </div>
       </header>
@@ -126,15 +124,9 @@ export default function MarketingLP() {
                 </p>
                 
                 <ul className="space-y-4">
-                    <li className="flex items-center gap-3 font-medium">
-                        <X className="text-red-500" /> Nada de "copiar slide".
-                    </li>
-                    <li className="flex items-center gap-3 font-medium">
-                        <X className="text-red-500" /> Nada de teoria sem aplicação.
-                    </li>
-                    <li className="flex items-center gap-3 font-medium">
-                        <X className="text-red-500" /> Nada de professor que nunca vendeu nada.
-                    </li>
+                    <li className="flex items-center gap-3 font-medium"><X className="text-red-500" /> Nada de "copiar slide".</li>
+                    <li className="flex items-center gap-3 font-medium"><X className="text-red-500" /> Nada de teoria sem aplicação.</li>
+                    <li className="flex items-center gap-3 font-medium"><X className="text-red-500" /> Nada de professor que nunca vendeu nada.</li>
                 </ul>
             </div>
             
@@ -144,24 +136,15 @@ export default function MarketingLP() {
                 <div className="grid grid-cols-1 gap-4">
                     <div className="flex items-start gap-4 p-4 bg-white rounded-xl shadow-sm">
                         <div className="bg-purple-100 p-2 rounded-lg text-purple-600"><Brain size={20} /></div>
-                        <div>
-                            <h4 className="font-bold">Estratégia</h4>
-                            <p className="text-sm text-gray-500">Pensar como dono, não como executor.</p>
-                        </div>
+                        <div><h4 className="font-bold">Estratégia</h4><p className="text-sm text-gray-500">Pensar como dono, não como executor.</p></div>
                     </div>
                     <div className="flex items-start gap-4 p-4 bg-white rounded-xl shadow-sm">
                         <div className="bg-blue-100 p-2 rounded-lg text-blue-600"><PenTool size={20} /></div>
-                        <div>
-                            <h4 className="font-bold">Design com Propósito</h4>
-                            <p className="text-sm text-gray-500">Criar visuais que vendem, não só enfeitam.</p>
-                        </div>
+                        <div><h4 className="font-bold">Design com Propósito</h4><p className="text-sm text-gray-500">Criar visuais que vendem, não só enfeitam.</p></div>
                     </div>
                     <div className="flex items-start gap-4 p-4 bg-white rounded-xl shadow-sm">
                         <div className="bg-green-100 p-2 rounded-lg text-green-600"><Video size={20} /></div>
-                        <div>
-                            <h4 className="font-bold">Filmmaker Mobile</h4>
-                            <p className="text-sm text-gray-500">Captar, editar e dirigir usando o celular.</p>
-                        </div>
+                        <div><h4 className="font-bold">Filmmaker Mobile</h4><p className="text-sm text-gray-500">Captar, editar e dirigir usando o celular.</p></div>
                     </div>
                 </div>
             </div>
@@ -178,68 +161,89 @@ export default function MarketingLP() {
 
             <div className="space-y-6">
                 <AccordionModule 
-                    month="MÊS 01"
-                    title="Estratégia & Marketing"
-                    icon={<Brain className="text-purple-500" />}
-                    description="Transforme-se em alguém que pensa antes de postar."
-                    topics={[
-                        "Mindset: O Marketing como sistema",
-                        "Público-alvo real (quem paga x quem curte)",
-                        "Planejamento de Campanhas e Jornada",
-                        "Processos e Organização de Agência"
-                    ]}
-                    color="purple"
+                    month="MÊS 01" 
+                    title="Estratégia & Marketing" 
+                    icon={<Brain className="text-purple-500" />} 
+                    description="Transforme-se em alguém que pensa antes de postar." 
+                    topics={["Mindset: O Marketing como sistema", "Público-alvo real (quem paga x quem curte)", "Planejamento de Campanhas e Jornada", "Processos e Organização de Agência"]} 
+                    color="purple" 
                 />
                 <AccordionModule 
-                    month="MÊS 02"
-                    title="Design & Identidade"
-                    icon={<Layout className="text-blue-500" />}
-                    description="Design que resolve problemas e constrói valor."
-                    topics={[
-                        "Hierarquia Visual e Composição",
-                        "Design para Redes Sociais e Anúncios",
-                        "Sprint de Criação (Sob Pressão)",
-                        "Portfólio Estratégico e Precificação"
-                    ]}
-                    color="blue"
+                    month="MÊS 02" 
+                    title="Design & Identidade" 
+                    icon={<Layout className="text-blue-500" />} 
+                    description="Design que resolve problemas e constrói valor." 
+                    topics={["Hierarquia Visual e Composição", "Design para Redes Sociais e Anúncios", "Sprint de Criação (Sob Pressão)", "Portfólio Estratégico e Precificação"]} 
+                    color="blue" 
                 />
                 <AccordionModule 
-                    month="MÊS 03"
-                    title="Filmmaker Mobile"
-                    icon={<Video className="text-green-500" />}
-                    description="O celular como arma de vendas. Captação e edição."
-                    topics={[
-                        "Linguagem de Vídeo Curto (Reels/TikTok)",
-                        "Enquadramento, Luz e Direção de Cena",
-                        "Edição Funcional e Ritmo",
-                        "Vídeo de Vendas e Institucional"
-                    ]}
-                    color="green"
+                    month="MÊS 03" 
+                    title="Filmmaker Mobile" 
+                    icon={<Video className="text-green-500" />} 
+                    description="O celular como arma de vendas. Captação e edição." 
+                    topics={["Linguagem de Vídeo Curto (Reels/TikTok)", "Enquadramento, Luz e Direção de Cena", "Edição Funcional e Ritmo", "Vídeo de Vendas e Institucional"]} 
+                    color="green" 
                 />
             </div>
         </div>
       </section>
 
-      {/* --- O RITUAL VULP --- */}
-      <section className="py-20 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-[#0A0A0A] to-[#111]" />
-        
-        <div className="max-w-6xl mx-auto px-6 relative z-10">
-             <div className="mb-12 md:text-center">
-                <span className="text-purple-500 font-bold uppercase tracking-widest text-sm">Metodologia Exclusiva</span>
-                <h2 className="text-3xl md:text-5xl font-bold mt-2">O Ritual VULP</h2>
-                <p className="text-gray-400 mt-4 max-w-2xl mx-auto">
-                    Esqueça a sala de aula passiva. Aqui cada encontro segue um ritual fixo de 2 horas focado em execução.
-                </p>
-             </div>
+      {/* --- SEÇÃO SOFT SKILLS (EXPERIÊNCIA VULP) --- */}
+      <section className="py-24 px-6 bg-[#0A0A0A] border-t border-white/5">
+        <div className="max-w-6xl mx-auto">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                {/* Card Principal (Branco/Roxo) */}
+                <div className="lg:col-span-1 bg-white text-black p-10 rounded-3xl relative overflow-hidden group hover:scale-[1.02] transition-transform duration-300 flex flex-col justify-center">
+                    <div className="absolute top-0 right-0 w-48 h-48 bg-purple-500 blur-[80px] rounded-full opacity-30" />
+                    
+                    <span className="text-purple-600 font-black uppercase tracking-widest text-sm mb-4 block">Experiência VULP</span>
+                    <h3 className="text-4xl font-black mb-6 leading-tight">
+                        Muito além da <span className="text-purple-600">técnica.</span>
+                    </h3>
+                    <p className="text-gray-600 text-lg mb-8 leading-relaxed">
+                        Marketing é sobre pessoas. Na VULP, você não aprende só ferramenta. Você desenvolve as <strong>Soft Skills</strong> que diferenciam um executor de um estrategista.
+                    </p>
+                    <div className="inline-flex items-center gap-2 px-5 py-3 bg-purple-100 text-purple-700 rounded-full font-bold text-sm self-start">
+                        <Zap size={18} /> Skills de Liderança
+                    </div>
+                </div>
 
-             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                {/* Removi o highlight do 3º card para todos começarem iguais */}
-                <RitualCard step="01" title="Ativação" desc="10 min de contexto de mercado. O porquê aquilo importa." />
-                <RitualCard step="02" title="Teoria Direta" desc="20 min de conceito essencial. Sem enrolação." />
-                <RitualCard step="03" title="Campo de Guerra" desc="60 min de prática intensa. Pressão de tempo real." />
-                <RitualCard step="04" title="Defesa e Feedback" desc="30 min de apresentação e correção sem passar pano." />
-             </div>
+                {/* Grid de Cards Menores (Flutuantes) */}
+                <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <SoftSkillCard 
+                        title="Liderança Criativa" 
+                        icon={<Trophy size={24} />} 
+                        desc="Aprenda a liderar projetos e defender suas ideias." 
+                    />
+                    <SoftSkillCard 
+                        title="Oratória & Pitch" 
+                        icon={<Mic size={24} />} 
+                        desc="Apresente campanhas com segurança e clareza." 
+                    />
+                    <SoftSkillCard 
+                        title="Inteligência Emocional" 
+                        icon={<Brain size={24} />} 
+                        desc="Lide com pressão, prazos e feedback sem surtar." 
+                    />
+                    <SoftSkillCard 
+                        title="Networking Estratégico" 
+                        icon={<Users size={24} />} 
+                        desc="Conexão com empresários e profissionais da área." 
+                    />
+                    <SoftSkillCard 
+                        title="Coworking VULP" 
+                        icon={<Briefcase size={24} />} 
+                        desc="Acesso a um ambiente criativo de alta performance." 
+                    />
+                    <SoftSkillCard 
+                        title="Vivência de Agência" 
+                        icon={<TrendingUp size={24} />} 
+                        desc="Rotina real de aprovação, refação e entrega." 
+                    />
+                </div>
+
+            </div>
         </div>
       </section>
 
@@ -306,7 +310,6 @@ export default function MarketingLP() {
             >
                 Quero ser uma Raposa <ArrowRight />
             </button>
-           
          </div>
       </section>
 
@@ -323,23 +326,41 @@ export default function MarketingLP() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={closeModal} />
             <div className="relative bg-[#111] border border-white/10 w-full max-w-md rounded-3xl p-8 shadow-2xl animate-in fade-in zoom-in duration-300">
-                <button onClick={closeModal} className="absolute top-4 right-4 text-gray-500 hover:text-white"><X size={24} /></button>
+                <button onClick={closeModal} className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors"><X size={24} /></button>
 
-                <div className="text-center mb-8">
-                    <div className="w-12 h-12 bg-purple-600/20 rounded-full flex items-center justify-center mx-auto mb-4 text-purple-500"><Zap size={24} /></div>
-                    <h3 className="text-2xl font-bold text-white">Aplicação Raposa</h3>
-                    <p className="text-gray-400 text-sm mt-2">Preencha seus dados para receber o contato do nosso time.</p>
-                </div>
+                {isSuccess ? (
+                    <div className="flex flex-col items-center justify-center text-center py-6 animate-in slide-in-from-bottom-4 duration-500">
+                        <div className="w-20 h-20 bg-green-500/10 rounded-full flex items-center justify-center mb-6 border border-green-500/20">
+                            <CheckCircle2 size={40} className="text-green-500 drop-shadow-[0_0_10px_rgba(34,197,94,0.5)]" />
+                        </div>
+                        <h3 className="text-2xl font-bold text-white mb-2">Sucesso!</h3>
+                        <p className="text-gray-400 leading-relaxed mb-6">
+                            Seu cadastro foi realizado com sucesso!<br/>
+                            <span className="text-sm opacity-70">Nossa equipe entrará em contato em breve.</span>
+                        </p>
+                        <button onClick={closeModal} className="text-purple-500 hover:text-purple-400 font-bold text-sm transition-colors border border-purple-500/30 hover:border-purple-500 px-6 py-2 rounded-full">
+                            Fechar
+                        </button>
+                    </div>
+                ) : (
+                    <>
+                        <div className="text-center mb-8">
+                            <div className="w-12 h-12 bg-purple-600/20 rounded-full flex items-center justify-center mx-auto mb-4 text-purple-500"><Zap size={24} /></div>
+                            <h3 className="text-2xl font-bold text-white">Aplicação Raposa</h3>
+                            <p className="text-gray-400 text-sm mt-2">Preencha seus dados para receber o contato do nosso time.</p>
+                        </div>
 
-                <form className="space-y-4" onSubmit={handleSubmit}>
-                    <input name="name" type="text" placeholder="Seu nome" className="w-full bg-[#1A1A1A] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500" required />
-                    <input name="email" type="email" placeholder="seu@email.com" className="w-full bg-[#1A1A1A] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500" required />
-                    <input name="phone" type="tel" placeholder="(00) 00000-0000" className="w-full bg-[#1A1A1A] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500" required />
-                    <input name="city" type="text" placeholder="Santarém, PA" className="w-full bg-[#1A1A1A] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500" required />
-                    <button disabled={isLoading} type="submit" className="w-full bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white font-bold py-4 rounded-xl mt-4 transition-colors shadow-lg">
-                        {isLoading ? "Enviando..." : "Enviar Aplicação"}
-                    </button>
-                </form>
+                        <form className="space-y-4" onSubmit={handleSubmit}>
+                            <input name="name" type="text" placeholder="Seu nome" className="w-full bg-[#1A1A1A] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500 transition-colors" required />
+                            <input name="email" type="email" placeholder="seu@email.com" className="w-full bg-[#1A1A1A] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500 transition-colors" required />
+                            <input name="phone" type="tel" placeholder="(00) 00000-0000" className="w-full bg-[#1A1A1A] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500 transition-colors" required />
+                            <input name="city" type="text" placeholder="Santarém, PA" className="w-full bg-[#1A1A1A] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500 transition-colors" required />
+                            <button disabled={isLoading} type="submit" className="w-full bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white font-bold py-4 rounded-xl mt-4 transition-colors shadow-lg">
+                                {isLoading ? "Enviando..." : "Enviar Aplicação"}
+                            </button>
+                        </form>
+                    </>
+                )}
             </div>
         </div>
       )}
@@ -381,23 +402,22 @@ function AccordionModule({ month, title, description, topics, icon, color }: any
     );
 }
 
-// CORREÇÃO: Novo Card com efeito Neon Hover
-function RitualCard({ step, title, desc }: any) {
+// --- NOVO COMPONENTE: CARD FLUTUANTE DE SKILLS ---
+function SoftSkillCard({ title, icon, desc }: any) {
     return (
         <div className="
-            group relative p-6 rounded-2xl border bg-[#151515] border-white/5
-            transition-all duration-300 ease-in-out
-            hover:border-purple-500 hover:bg-purple-900/10
-            hover:shadow-[0_0_30px_rgba(168,85,247,0.2)]
-            hover:-translate-y-1
+            group bg-[#111] border border-white/5 p-6 rounded-2xl 
+            hover:border-purple-500 hover:bg-[#151515] hover:shadow-[0_5px_20px_rgba(168,85,247,0.15)]
+            transition-all duration-300 ease-out 
+            hover:-translate-y-2 hover:scale-[1.02]
         ">
-            <span className="text-3xl font-black text-white/10 mb-2 block group-hover:text-purple-500 transition-colors">
-                {step}
-            </span>
-            <h4 className="font-bold text-lg mb-2 text-white">
+            <div className="text-purple-500 mb-3 group-hover:text-white transition-colors">
+                {icon}
+            </div>
+            <h4 className="font-bold text-lg text-white mb-1 group-hover:text-purple-300 transition-colors">
                 {title}
             </h4>
-            <p className="text-sm text-gray-400 leading-relaxed group-hover:text-gray-200 transition-colors">
+            <p className="text-sm text-gray-400 group-hover:text-gray-300 transition-colors">
                 {desc}
             </p>
         </div>

@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import Link from "next/link";
 import UserMenu from "@/components/UserMenu"; 
+import FoxLottie from "@/components/FoxLottie"; // 1. Importando a animação
 import { ArrowRight, CheckCircle2, MessageCircle, Target, Zap, Users } from "lucide-react";
 
 export default async function Home() {
@@ -31,8 +32,11 @@ export default async function Home() {
   const { data: { session } } = await supabase.auth.getSession();
   
   return (
-    <main className="min-h-screen bg-[#050505] text-white selection:bg-purple-500/30 font-sans">
+    <main className="min-h-screen bg-[#050505] text-white selection:bg-purple-500/30 font-sans relative overflow-x-hidden">
       
+      {/* 2. RAPOSA ANIMADA (Fundo lateral esquerdo) */}
+      <FoxLottie />
+
       {/* --- NAVBAR LIMPA --- */}
       <nav className="fixed w-full z-50 bg-[#050505]/90 backdrop-blur-md border-b border-white/5">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
@@ -61,7 +65,7 @@ export default async function Home() {
       </nav>
 
       {/* --- 1. SEÇÃO HERO: CLAREZA IMEDIATA --- */}
-      <section className="pt-40 pb-20 px-6 relative overflow-hidden flex flex-col items-center text-center">
+      <section className="pt-40 pb-20 px-6 relative flex flex-col items-center text-center z-10">
         {/* Luz de fundo sutil */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-purple-900/20 blur-[120px] rounded-full pointer-events-none" />
         
@@ -87,11 +91,10 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* --- 2. SEÇÃO: PRA QUEM É A VULP (ATUALIZADA) --- */}
-      <section className="py-20 bg-[#0A0A0A] border-y border-white/5">
+      {/* --- 2. SEÇÃO: PRA QUEM É A VULP --- */}
+      <section className="py-20 bg-[#0A0A0A] border-y border-white/5 relative z-10">
         <div className="max-w-5xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
             <div>
-                {/* ALTERAÇÃO AQUI: Título em destaque e sem o aviso amarelo */}
                 <h2 className="text-4xl md:text-5xl font-black mb-6 text-purple-500">
                     Pra quem é a VULP?
                 </h2>
@@ -127,7 +130,7 @@ export default async function Home() {
       </section>
 
       {/* --- 3. SEÇÃO: ESCOLHA SEU CAMINHO --- */}
-      <section className="py-24 px-6">
+      <section className="py-24 px-6 relative z-10">
         <div className="max-w-6xl mx-auto">
             <h2 className="text-center text-3xl md:text-5xl font-bold mb-16">Escolha seu caminho</h2>
             
@@ -170,7 +173,7 @@ export default async function Home() {
       </section>
 
       {/* --- 4. SEÇÃO: POR QUE A VULP É DIFERENTE --- */}
-      <section className="py-20 bg-[#0A0A0A] border-y border-white/5">
+      <section className="py-20 bg-[#0A0A0A] border-y border-white/5 relative z-10">
         <div className="max-w-6xl mx-auto px-6">
             <div className="text-center mb-16">
                 <h2 className="text-3xl md:text-4xl font-bold mb-4">Por que a VULP é diferente?</h2>
@@ -211,7 +214,7 @@ export default async function Home() {
       </section>
 
       {/* --- 5. CTA FINAL: WHATSAPP --- */}
-      <section className="py-24 px-6 text-center">
+      <section className="py-24 px-6 text-center relative z-10">
         <div className="max-w-2xl mx-auto">
             <h2 className="text-3xl font-bold mb-8">Ainda com dúvida de qual caminho seguir?</h2>
             <Link 
@@ -226,7 +229,7 @@ export default async function Home() {
       </section>
 
       {/* FOOTER SIMPLES */}
-      <footer className="py-12 border-t border-white/5 text-center text-gray-600 text-sm">
+      <footer className="py-12 border-t border-white/5 text-center text-gray-600 text-sm relative z-10">
         <p>© 2026 VULP. Todos os direitos reservados.</p>
       </footer>
 

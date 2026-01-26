@@ -4,13 +4,14 @@ import { useState } from "react";
 import { createBrowserClient } from "@supabase/ssr";
 import { 
   CheckCircle2, X, ChevronDown, Trophy, 
-  Zap, Users, ArrowRight, TrendingUp, MessageSquare, DollarSign, Lock, Smartphone, Brain
+  Zap, Users, ArrowRight, TrendingUp, MessageSquare, DollarSign, Lock, Smartphone, Brain, Briefcase, Mic
 } from "lucide-react";
 import Link from "next/link";
 
 export default function VendasLP() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
 
   // Supabase Client
   const supabase = createBrowserClient(
@@ -19,7 +20,11 @@ export default function VendasLP() {
   );
 
   const openModal = () => setIsModalOpen(true);
-  const closeModal = () => setIsModalOpen(false);
+  
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setTimeout(() => setIsSuccess(false), 300);
+  };
 
   // Envio do Formulário
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -43,8 +48,7 @@ export default function VendasLP() {
         alert("Erro ao enviar. Tente novamente.");
         console.error(error);
     } else {
-        alert("Aplicação enviada com sucesso! Entraremos em contato.");
-        closeModal();
+        setIsSuccess(true);
     }
   }
 
@@ -66,25 +70,19 @@ export default function VendasLP() {
         </div>
       </nav>
 
-      {/* --- HERO SECTION (IMAGEM EXPANDIDA) --- */}
+      {/* --- HERO SECTION --- */}
       <header className="relative pt-32 pb-20 md:pt-40 md:pb-32 overflow-hidden min-h-[700px] flex items-center">
-        
-        {/* 1. Imagem de Fundo (Alinhada à Direita e Topo) */}
         <div className="absolute top-0 right-0 w-full md:w-[60%] h-full z-0">
             <img 
                 src="/vendedor.png" 
                 alt="O Novo Vendedor" 
                 className="w-full h-full object-cover object-top md:object-right-top opacity-90"
             />
-            {/* Gradiente para mesclar suavemente no mobile */}
             <div className="absolute inset-0 bg-gradient-to-r from-[#050505] via-[#050505]/50 to-transparent md:via-transparent block md:hidden" />
         </div>
 
-        {/* 2. Conteúdo (Texto) */}
         <div className="max-w-7xl mx-auto px-6 w-full relative z-10 grid grid-cols-1 md:grid-cols-2">
-            
             <div className="text-left pt-10 md:pt-0">
-                {/* CORREÇÃO AQUI: Adicionei padding-right (pr-4) e relaxei o tracking para não cortar o R */}
                 <h1 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tight mb-6 leading-[1.1] drop-shadow-xl pr-4">
                     O NOVO <br />
                     <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-purple-300 pb-2 pr-2">
@@ -105,10 +103,7 @@ export default function VendasLP() {
                     </button>
                 </div>
             </div>
-
-            {/* Coluna da direita vazia para deixar a imagem aparecer */}
             <div></div>
-
         </div>
       </header>
 
@@ -163,89 +158,91 @@ export default function VendasLP() {
             </div>
 
             <div className="space-y-6">
+                <AccordionModule number="01" title="Fundamentos & Mentalidade" icon={<Brain className="text-purple-500" />} description="Construa a base de quem vende muito." topics={["Venda Consultiva x Venda Empurrada", "Comunicação Não-Verbal e Postura", "Autoridade sem Arrogância", "Diagnóstico de Perfil Comercial"]} color="purple" />
+                <AccordionModule number="02" title="Leitura de Cliente & Diagnóstico" icon={<Users className="text-blue-500" />} description="Entenda para quem você vende em segundos." topics={["Identificação Rápida de Perfil", "Abertura de Conversa que Não Trava", "Escuta Ativa: Dor Real x Desejo", "Adaptação de Linguagem"]} color="blue" />
+                <AccordionModule number="03" title="Vendas por Canais (Zap & Insta)" icon={<Smartphone className="text-green-500" />} description="Onde o jogo acontece hoje." topics={["WhatsApp: Deixando de ser atendimento", "Instagram: Direct como ferramenta", "Erros que fazem o cliente sumir", "Venda Presencial e Rapport"]} color="green" />
+                <AccordionModule number="04" title="Objeções & Fechamento" icon={<Lock className="text-red-500" />} description="O momento de colocar dinheiro no bolso." topics={["Como vencer o 'Tá Caro'", "Sinais de Compra e Timing", "Follow-up Inteligente", "Construção de Rotina Previsível"]} color="red" />
+            </div>
+        </div>
+      </section>
+
+      {/* --- NOVA SEÇÃO: SOFT SKILLS (EXPERIÊNCIA VULP) --- */}
+      <section className="py-24 px-6 bg-[#0A0A0A] border-t border-white/5">
+        <div className="max-w-6xl mx-auto">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 
-                {/* MÓDULO 1 */}
-                <AccordionModule 
-                    number="01"
-                    title="Fundamentos & Mentalidade"
-                    icon={<Brain className="text-purple-500" />}
-                    description="Construa a base de quem vende muito."
-                    topics={[
-                        "Venda Consultiva x Venda Empurrada",
-                        "Comunicação Não-Verbal e Postura",
-                        "Autoridade sem Arrogância",
-                        "Diagnóstico de Perfil Comercial"
-                    ]}
-                    color="purple"
-                />
+                {/* Card Principal (Branco/Roxo) */}
+                <div className="lg:col-span-1 bg-white text-black p-10 rounded-3xl relative overflow-hidden group hover:scale-[1.02] transition-transform duration-300 flex flex-col justify-center">
+                    <div className="absolute top-0 right-0 w-48 h-48 bg-purple-500 blur-[80px] rounded-full opacity-30" />
+                    
+                    <span className="text-purple-600 font-black uppercase tracking-widest text-sm mb-4 block">Experiência VULP</span>
+                    <h3 className="text-4xl font-black mb-6 leading-tight">
+                        SOFT <span className="text-purple-600">SKILLS.</span>
+                    </h3>
+                    <p className="text-gray-600 text-lg mb-8 leading-relaxed">
+                        Vender é sobre pessoas. Na VULP, você não aprende só script. Você desenvolve as <strong>Soft Skills</strong> que diferenciam um tirador de pedido de um líder comercial.
+                    </p>
+                    <div className="inline-flex items-center gap-2 px-5 py-3 bg-purple-100 text-purple-700 rounded-full font-bold text-sm self-start">
+                        <Zap size={18} /> Skills de Liderança
+                    </div>
+                </div>
 
-                {/* MÓDULO 2 */}
-                <AccordionModule 
-                    number="02"
-                    title="Leitura de Cliente & Diagnóstico"
-                    icon={<Users className="text-blue-500" />}
-                    description="Entenda para quem você vende em segundos."
-                    topics={[
-                        "Identificação Rápida de Perfil (Racional, Emocional)",
-                        "Abertura de Conversa que Não Trava",
-                        "Escuta Ativa: Dor Real x Desejo",
-                        "Adaptação de Linguagem"
-                    ]}
-                    color="blue"
-                />
-
-                {/* MÓDULO 3 */}
-                <AccordionModule 
-                    number="03"
-                    title="Vendas por Canais (Zap & Insta)"
-                    icon={<Smartphone className="text-green-500" />}
-                    description="Onde o jogo acontece hoje."
-                    topics={[
-                        "WhatsApp: Deixando de ser atendimento para ser venda",
-                        "Instagram: Direct como ferramenta de conversão",
-                        "Erros que fazem o cliente sumir (vácuo)",
-                        "Venda Presencial e Rapport"
-                    ]}
-                    color="green"
-                />
-
-                {/* MÓDULO 4 */}
-                <AccordionModule 
-                    number="04"
-                    title="Objeções & Fechamento"
-                    icon={<Lock className="text-red-500" />}
-                    description="O momento de colocar dinheiro no bolso."
-                    topics={[
-                        "Como vencer o 'Tá Caro' e 'Vou Pensar'",
-                        "Sinais de Compra e Timing",
-                        "Follow-up Inteligente (sem ser chato)",
-                        "Construção de Rotina Previsível"
-                    ]}
-                    color="red"
-                />
+                {/* Grid de Cards Menores (Flutuantes) */}
+                <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <SoftSkillCard 
+                        title="Liderança" 
+                        icon={<Trophy size={24} />} 
+                        desc="Assuma o controle da negociação e lidere o cliente." 
+                    />
+                    <SoftSkillCard 
+                        title="Oratória & Presença" 
+                        icon={<Mic size={24} />} 
+                        desc="Fale com clareza, tom de voz e persuasão." 
+                    />
+                    <SoftSkillCard 
+                        title="Inteligência Emocional" 
+                        icon={<Brain size={24} />} 
+                        desc="Não perca a venda (nem a calma) por pressão." 
+                    />
+                    <SoftSkillCard 
+                        title="Networking Estratégico" 
+                        icon={<Users size={24} />} 
+                        desc="Conexão com outros profissionais e empresas." 
+                    />
+                    <SoftSkillCard 
+                        title="Coworking VULP" 
+                        icon={<Briefcase size={24} />} 
+                        desc="Acesso a um ambiente de alta performance." 
+                    />
+                    <SoftSkillCard 
+                        title="Vivência de Mercado" 
+                        icon={<TrendingUp size={24} />} 
+                        desc="Situações reais do dia a dia, zero teoria." 
+                    />
+                </div>
 
             </div>
         </div>
       </section>
 
       {/* --- DIFERENCIAIS VULP (GRID) --- */}
-      <section className="py-24 px-6 relative border-y border-white/5 bg-[#0A0A0A]">
+      <section className="py-24 px-6 relative border-y border-white/5 bg-[#050505]">
         <div className="max-w-6xl mx-auto">
             <h2 className="text-3xl font-bold mb-12 text-center">Por que esse curso funciona?</h2>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div className="p-8 rounded-3xl bg-[#111] border border-white/5 hover:border-purple-500/50 transition-colors">
-                    <div className="w-12 h-12 bg-purple-900/20 rounded-xl flex items-center justify-center text-purple-400 mb-6"><Zap size={24} /></div>
+                <div className="p-8 rounded-3xl bg-[#111] border border-white/5 hover:border-purple-500/50 transition-colors group">
+                    <div className="w-12 h-12 bg-purple-900/20 rounded-xl flex items-center justify-center text-purple-400 mb-6 group-hover:scale-110 transition-transform"><Zap size={24} /></div>
                     <h3 className="text-xl font-bold mb-3">Simulação Real (Role Play)</h3>
                     <p className="text-gray-400 text-sm">Nada de teoria. Você vai vender para o professor e ser corrigido na hora. Pressão real de negociação.</p>
                 </div>
-                <div className="p-8 rounded-3xl bg-[#111] border border-white/5 hover:border-purple-500/50 transition-colors">
-                    <div className="w-12 h-12 bg-purple-900/20 rounded-xl flex items-center justify-center text-purple-400 mb-6"><MessageSquare size={24} /></div>
+                <div className="p-8 rounded-3xl bg-[#111] border border-white/5 hover:border-purple-500/50 transition-colors group">
+                    <div className="w-12 h-12 bg-purple-900/20 rounded-xl flex items-center justify-center text-purple-400 mb-6 group-hover:scale-110 transition-transform"><MessageSquare size={24} /></div>
                     <h3 className="text-xl font-bold mb-3">Dossiê de Vendas</h3>
                     <p className="text-gray-400 text-sm">Você sai com seu roteiro de abordagem, respostas para objeções e rotina comercial prontos.</p>
                 </div>
-                <div className="p-8 rounded-3xl bg-[#111] border border-white/5 hover:border-purple-500/50 transition-colors">
-                    <div className="w-12 h-12 bg-purple-900/20 rounded-xl flex items-center justify-center text-purple-400 mb-6"><DollarSign size={24} /></div>
+                <div className="p-8 rounded-3xl bg-[#111] border border-white/5 hover:border-purple-500/50 transition-colors group">
+                    <div className="w-12 h-12 bg-purple-900/20 rounded-xl flex items-center justify-center text-purple-400 mb-6 group-hover:scale-110 transition-transform"><DollarSign size={24} /></div>
                     <h3 className="text-xl font-bold mb-3">Foco em Dinheiro</h3>
                     <p className="text-gray-400 text-sm">O objetivo é formar vendedores que se pagam. Previsibilidade e consistência no fechamento.</p>
                 </div>
@@ -255,9 +252,6 @@ export default function VendasLP() {
 
       {/* --- CTA FINAL --- */}
       <section className="py-32 px-6 text-center bg-[#050505] relative overflow-hidden">
-         {/* Efeito de brilho */}
-         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-purple-600/10 blur-[100px] rounded-full pointer-events-none" />
-
          <div className="max-w-3xl mx-auto relative z-10">
             <h2 className="text-4xl md:text-6xl font-black mb-6 text-white">
                 Pare de perder venda.
@@ -280,41 +274,59 @@ export default function VendasLP() {
         <p className="text-gray-600 text-sm">© 2026 VULP Education.</p>
       </footer>
 
-      {/* --- MODAL --- */}
+      {/* --- MODAL INTELIGENTE --- */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={closeModal} />
             <div className="relative bg-[#111] border border-white/10 w-full max-w-md rounded-3xl p-8 shadow-2xl animate-in fade-in zoom-in duration-300">
-                <button onClick={closeModal} className="absolute top-4 right-4 text-gray-500 hover:text-white"><X size={24} /></button>
+                <button onClick={closeModal} className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors"><X size={24} /></button>
 
-                <div className="text-center mb-8">
-                    <div className="w-12 h-12 bg-purple-600/20 rounded-full flex items-center justify-center mx-auto mb-4 text-purple-500"><TrendingUp size={24} /></div>
-                    <h3 className="text-2xl font-bold text-white">Aplicação Vendas</h3>
-                    <p className="text-gray-400 text-sm mt-2">Preencha seus dados para receber o contato do nosso time.</p>
-                </div>
+                {isSuccess ? (
+                    <div className="flex flex-col items-center justify-center text-center py-6 animate-in slide-in-from-bottom-4 duration-500">
+                        <div className="w-20 h-20 bg-green-500/10 rounded-full flex items-center justify-center mb-6 border border-green-500/20">
+                            <CheckCircle2 size={40} className="text-green-500 drop-shadow-[0_0_10px_rgba(34,197,94,0.5)]" />
+                        </div>
+                        <h3 className="text-2xl font-bold text-white mb-2">Sucesso!</h3>
+                        <p className="text-gray-400 leading-relaxed mb-6">
+                            Seu cadastro foi realizado com sucesso!<br/>
+                            <span className="text-sm opacity-70">Nossa equipe entrará em contato em breve.</span>
+                        </p>
+                        <button onClick={closeModal} className="text-purple-500 hover:text-purple-400 font-bold text-sm transition-colors border border-purple-500/30 hover:border-purple-500 px-6 py-2 rounded-full">
+                            Fechar
+                        </button>
+                    </div>
+                ) : (
+                    <>
+                        <div className="text-center mb-8">
+                            <div className="w-12 h-12 bg-purple-600/20 rounded-full flex items-center justify-center mx-auto mb-4 text-purple-500"><TrendingUp size={24} /></div>
+                            <h3 className="text-2xl font-bold text-white">Aplicação Vendas</h3>
+                            <p className="text-gray-400 text-sm mt-2">Preencha seus dados para receber o contato do nosso time.</p>
+                        </div>
 
-                <form className="space-y-4" onSubmit={handleSubmit}>
-                    <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Nome Completo</label>
-                        <input name="name" type="text" placeholder="Seu nome" className="w-full bg-[#1A1A1A] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500" required />
-                    </div>
-                    <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1">E-mail</label>
-                        <input name="email" type="email" placeholder="seu@email.com" className="w-full bg-[#1A1A1A] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500" required />
-                    </div>
-                    <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1">WhatsApp</label>
-                        <input name="phone" type="tel" placeholder="(00) 00000-0000" className="w-full bg-[#1A1A1A] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500" required />
-                    </div>
-                    <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Cidade</label>
-                        <input name="city" type="text" placeholder="Santarém, PA" className="w-full bg-[#1A1A1A] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500" required />
-                    </div>
+                        <form className="space-y-4" onSubmit={handleSubmit}>
+                            <div>
+                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Nome Completo</label>
+                                <input name="name" type="text" placeholder="Seu nome" className="w-full bg-[#1A1A1A] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500 transition-colors" required />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">E-mail</label>
+                                <input name="email" type="email" placeholder="seu@email.com" className="w-full bg-[#1A1A1A] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500 transition-colors" required />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">WhatsApp</label>
+                                <input name="phone" type="tel" placeholder="(00) 00000-0000" className="w-full bg-[#1A1A1A] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500 transition-colors" required />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Cidade</label>
+                                <input name="city" type="text" placeholder="Santarém, PA" className="w-full bg-[#1A1A1A] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500 transition-colors" required />
+                            </div>
 
-                    <button disabled={isLoading} type="submit" className="w-full bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white font-bold py-4 rounded-xl mt-4 transition-colors shadow-lg">
-                        {isLoading ? "Enviando..." : "Enviar Aplicação"}
-                    </button>
-                </form>
+                            <button disabled={isLoading} type="submit" className="w-full bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white font-bold py-4 rounded-xl mt-4 transition-colors shadow-lg">
+                                {isLoading ? "Enviando..." : "Enviar Aplicação"}
+                            </button>
+                        </form>
+                    </>
+                )}
             </div>
         </div>
       )}
@@ -337,23 +349,16 @@ function AccordionModule({ number, title, description, topics, icon, color }: an
 
     return (
         <div className={`border border-white/10 rounded-2xl bg-[#0F0F0F] overflow-hidden transition-all duration-300 hover:border-white/20`}>
-            <button 
-                onClick={() => setIsOpen(!isOpen)}
-                className="w-full flex items-center justify-between p-6 md:p-8 text-left"
-            >
+            <button onClick={() => setIsOpen(!isOpen)} className="w-full flex items-center justify-between p-6 md:p-8 text-left">
                 <div className="flex items-center gap-6">
-                    <div className={`w-14 h-14 rounded-xl flex items-center justify-center shrink-0 ${colors[color]}`}>
-                        {icon}
-                    </div>
+                    <div className={`w-14 h-14 rounded-xl flex items-center justify-center shrink-0 ${colors[color]}`}>{icon}</div>
                     <div>
                         <span className={`text-xs font-bold uppercase tracking-wider mb-1 block ${colors[color].split(" ")[0]}`}>MÓDULO {number}</span>
                         <h3 className="text-xl md:text-2xl font-bold text-white mb-1">{title}</h3>
                         <p className="text-sm text-gray-400 hidden md:block">{description}</p>
                     </div>
                 </div>
-                <div className={`p-2 rounded-full bg-white/5 text-gray-400 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}>
-                    <ChevronDown />
-                </div>
+                <div className={`p-2 rounded-full bg-white/5 text-gray-400 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}><ChevronDown /></div>
             </button>
             
             {isOpen && (
@@ -362,13 +367,34 @@ function AccordionModule({ number, title, description, topics, icon, color }: an
                     <ul className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-6">
                         {topics.map((topic: string, i: number) => (
                             <li key={i} className="flex items-start gap-3 text-gray-300 text-sm">
-                                <div className={`mt-1.5 w-1.5 h-1.5 rounded-full shrink-0 ${colors[color].split(" ")[0].replace("text", "bg")}`} />
-                                {topic}
+                                <div className={`mt-1.5 w-1.5 h-1.5 rounded-full shrink-0 ${colors[color].split(" ")[0].replace("text", "bg")}`} />{topic}
                             </li>
                         ))}
                     </ul>
                 </div>
             )}
+        </div>
+    );
+}
+
+// --- NOVO COMPONENTE: CARD FLUTUANTE DE SKILLS ---
+function SoftSkillCard({ title, icon, desc }: any) {
+    return (
+        <div className="
+            group bg-[#111] border border-white/5 p-6 rounded-2xl 
+            hover:border-purple-500 hover:bg-[#151515] hover:shadow-[0_5px_20px_rgba(168,85,247,0.15)]
+            transition-all duration-300 ease-out 
+            hover:-translate-y-2 hover:scale-[1.02]
+        ">
+            <div className="text-purple-500 mb-3 group-hover:text-white transition-colors">
+                {icon}
+            </div>
+            <h4 className="font-bold text-lg text-white mb-1 group-hover:text-purple-300 transition-colors">
+                {title}
+            </h4>
+            <p className="text-sm text-gray-400 group-hover:text-gray-300 transition-colors">
+                {desc}
+            </p>
         </div>
     );
 }
