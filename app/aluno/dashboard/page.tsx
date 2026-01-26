@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { PlayCircle, Trophy, Building2, BookOpen } from "lucide-react";
 import Link from "next/link";
 import UserMenu from "@/components/UserMenu";
+import { ClassroomButton } from "@/components/ClassroomButton";
 
 export default function AlunoDashboard() {
   const [firstName, setFirstName] = useState("Aluno");
@@ -134,9 +135,12 @@ export default function AlunoDashboard() {
             <p className="text-gray-400 text-sm mb-6 max-w-md mx-auto">
                 Acesse a área de membros para começar sua jornada de aprendizado profissional.
             </p>
-            <Link href="/aluno/cursos" className="inline-flex bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-xl transition-colors shadow-lg shadow-purple-900/20">
-                Ir para Área de Aulas
-            </Link>
+            
+            {/* 2. SUBSTITUÍ O LINK PELO BOTÃO INTELIGENTE */}
+            <div className="flex justify-center">
+                <ClassroomButton />
+            </div>
+
         </div>
       </div>
 
