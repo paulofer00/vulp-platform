@@ -4,29 +4,29 @@ const CADEMI_URL = process.env.CADEMI_API_URL;
 const CADEMI_KEY = process.env.CADEMI_API_KEY;
 
 export async function getCademiLoginToken(email: string) {
-  // 1. Verificação de Segurança das Chaves
   if (!CADEMI_URL || !CADEMI_KEY) {
-    console.error("❌ ERRO CRÍTICO: Variáveis de ambiente CADEMI não encontradas.");
+    console.error("❌ ERRO: Variáveis de ambiente CADEMI não encontradas.");
     return null;
   }
 
-  // Tentando o endpoint alternativo de Auth
-const endpoint = `${CADEMI_URL}/usuario/login_token`;
-  console.log(`🔌 Conectando na Cademi: ${endpoint}`);
-  console.log(`📧 Tentando logar usuário: ${email}`);
+  // CORREÇÃO: Usando GET e passando o email na URL
+  // O endpoint correto geralmente é /usuario/login para pegar o link direto
+  const params = new URLSearchParams({ email });
+  const endpoint = `${CADEMI_URL}/usuario/login?${params.toString()}`;
+  
+  console.log(`🔌 Conectando na Cademi (GET): ${endpoint}`);
 
   try {
     const response = await fetch(endpoint, {
-      method: "POST",
+      method: "GET", // MUDANÇA IMPORTANTE: Agora é GET
       headers: {
-        "Authorization": CADEMI_KEY,
+        "Authorization": CADEMI_KEY, // A chave vai no header
         "Content-Type": "application/json",
         "Accept": "application/json"
       },
-      body: JSON.stringify({ email }),
+      // GET não tem "body", então removemos aquela linha
     });
 
-    // Se a API responder com erro (ex: 404, 403, 500)
     if (!response.ok) {
       const errorText = await response.text();
       console.error(`❌ Erro HTTP Cademi (${response.status}):`, errorText);
@@ -36,15 +36,16 @@ const endpoint = `${CADEMI_URL}/usuario/login_token`;
     const data = await response.json();
     console.log("✅ Resposta da Cademi:", JSON.stringify(data));
 
+    // A Cademi costuma retornar { success: true, data: { redirect_url: "..." } }
     if (data.success && data.data?.redirect_url) {
       return data.data.redirect_url;
     } else {
-      console.error("⚠️ Cademi retornou sucesso: false ou sem redirect_url");
+      console.error("⚠️ Sucesso false ou sem redirect_url");
       return null;
     }
 
   } catch (error) {
-    console.error("❌ Erro de conexão/rede:", error);
+    console.error("❌ Erro de conexão:", error);
     return null;
   }
 }
