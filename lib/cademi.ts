@@ -10,7 +10,8 @@ export async function getCademiLoginToken(email: string) {
     return null;
   }
 
-  const endpoint = `${CADEMI_URL}/auth/login`;
+  // Tentando o endpoint alternativo de Auth
+const endpoint = `${CADEMI_URL}/usuario/login_token`;
   console.log(`🔌 Conectando na Cademi: ${endpoint}`);
   console.log(`📧 Tentando logar usuário: ${email}`);
 
