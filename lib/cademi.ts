@@ -5,47 +5,53 @@ const CADEMI_KEY = process.env.CADEMI_API_KEY;
 
 export async function getCademiLoginToken(email: string) {
   if (!CADEMI_URL || !CADEMI_KEY) {
-    console.error("❌ ERRO: Variáveis de ambiente CADEMI não encontradas.");
+    console.error("❌ ERRO: Chaves da Cademi não configuradas.");
     return null;
   }
 
-  // CORREÇÃO: Usando GET e passando o email na URL
-  // O endpoint correto geralmente é /usuario/login para pegar o link direto
-  const params = new URLSearchParams({ email });
-  const endpoint = `${CADEMI_URL}/usuario/login?${params.toString()}`;
-  
-  console.log(`🔌 Conectando na Cademi (GET): ${endpoint}`);
+  const headers = {
+    "Authorization": CADEMI_KEY,
+    "Accept": "application/json"
+  };
 
   try {
-    const response = await fetch(endpoint, {
-      method: "GET", // MUDANÇA IMPORTANTE: Agora é GET
-      headers: {
-        "Authorization": CADEMI_KEY, // A chave vai no header
-        "Content-Type": "application/json",
-        "Accept": "application/json"
-      },
-      // GET não tem "body", então removemos aquela linha
-    });
+    // --- PASSO 1: Encontrar o ID do aluno pelo E-mail ---
+    // Usamos o filtro ?email=... ou ?search=... (depende da versão, mas email costuma funcionar)
+    const searchParams = new URLSearchParams({ email });
+    const searchEndpoint = `${CADEMI_URL}/usuario?${searchParams.toString()}`;
+    
+    console.log(`🔍 [1/2] Buscando ID do aluno: ${email}`);
+    
+    const searchResponse = await fetch(searchEndpoint, { method: "GET", headers });
+    const searchData = await searchResponse.json();
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`❌ Erro HTTP Cademi (${response.status}):`, errorText);
+    // Verifica se encontrou alguém
+    if (!searchData.success || !searchData.data || searchData.data.length === 0) {
+      console.error("❌ Aluno não encontrado na Cademi com este e-mail.");
       return null;
     }
 
-    const data = await response.json();
-    console.log("✅ Resposta da Cademi:", JSON.stringify(data));
+    // Pega o ID do primeiro aluno da lista
+    const alunoID = searchData.data[0].id;
+    console.log(`✅ ID Encontrado: ${alunoID}`);
 
-    // A Cademi costuma retornar { success: true, data: { redirect_url: "..." } }
-    if (data.success && data.data?.redirect_url) {
-      return data.data.redirect_url;
+    // --- PASSO 2: Gerar o Link Mágico usando o ID ---
+    const loginEndpoint = `${CADEMI_URL}/usuario/login/${alunoID}`;
+    console.log(`🔌 [2/2] Gerando link de acesso...`);
+
+    const loginResponse = await fetch(loginEndpoint, { method: "GET", headers });
+    const loginData = await loginResponse.json();
+
+    if (loginData.success && loginData.data?.redirect_url) {
+      console.log("🚀 Link gerado com sucesso!");
+      return loginData.data.redirect_url;
     } else {
-      console.error("⚠️ Sucesso false ou sem redirect_url");
+      console.error("⚠️ Erro ao gerar link final:", JSON.stringify(loginData));
       return null;
     }
 
   } catch (error) {
-    console.error("❌ Erro de conexão:", error);
+    console.error("❌ Erro de conexão com a Cademi:", error);
     return null;
   }
 }
