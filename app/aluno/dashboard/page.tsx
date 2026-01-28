@@ -3,10 +3,11 @@
 import { createBrowserClient } from "@supabase/ssr";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { PlayCircle, Trophy, Building2, BookOpen } from "lucide-react";
+import { PlayCircle, Trophy, Building2, BookOpen, ExternalLink } from "lucide-react"; // Adicionei ExternalLink
 import Link from "next/link";
 import UserMenu from "@/components/UserMenu";
-import { ClassroomButton } from "@/components/ClassroomButton";
+
+// Removi a importação do ClassroomButton pois vamos usar link direto agora
 
 export default function AlunoDashboard() {
   const [firstName, setFirstName] = useState("Aluno");
@@ -65,7 +66,7 @@ export default function AlunoDashboard() {
         <UserMenu />
       </div>
 
-      {/* GRID DE CARDS (AGORA CENTRALIZADOS) */}
+      {/* GRID DE CARDS */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         
         {/* Card 1: Cursos em Andamento */}
@@ -136,9 +137,18 @@ export default function AlunoDashboard() {
                 Acesse a área de membros para começar sua jornada de aprendizado profissional.
             </p>
             
-            {/* 2. SUBSTITUÍ O LINK PELO BOTÃO INTELIGENTE */}
+            {/* --- BOTÃO NOVO (Link Direto) --- */}
             <div className="flex justify-center">
-                <ClassroomButton />
+                <a 
+                    href="https://vulpacademy.cademi.com.br/login" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-xl transition-all shadow-lg shadow-purple-900/20 hover:scale-[1.02] active:scale-95"
+                >
+                    <PlayCircle size={20} />
+                    Ir para Área de Aulas
+                    <ExternalLink size={16} className="opacity-50" />
+                </a>
             </div>
 
         </div>
