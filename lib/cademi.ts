@@ -9,7 +9,7 @@ export async function getCademiLoginToken(rawEmail: string) {
     return null;
   }
 
-  // 1. Limpeza do E-mail (Remove espaços e deixa minúsculo)
+  // Limpa o e-mail
   const email = rawEmail.trim().toLowerCase();
 
   const headers = {
@@ -18,22 +18,43 @@ export async function getCademiLoginToken(rawEmail: string) {
   };
 
   try {
-    // --- TENTATIVA 1: Busca Exata por E-mail ---
-    let alunoID = await buscarID(email, "email", headers);
+    // --- TENTATIVA NOVA: Buscar direto pela URL (conforme print da doc) ---
+    // Endpoint: /usuario/{email}
+    const userEndpoint = `${CADEMI_URL}/usuario/${email}`;
+    
+    console.log(`🔍 Buscando dados diretos: ${userEndpoint}`);
+    
+    const userResponse = await fetch(userEndpoint, { method: "GET", headers });
+    
+    // Se der 404, o usuário realmente não existe
+    if (userResponse.status === 404) {
+        console.error("❌ Usuário não existe na Cademi.");
+        return null;
+    }
 
-    // --- TENTATIVA 2: Busca Genérica (search) se a 1 falhar ---
-    if (!alunoID) {
-        console.warn(`⚠️ Busca exata falhou. Tentando busca genérica...`);
-        alunoID = await buscarID(email, "search", headers);
+    const userData = await userResponse.json();
+    console.log("📦 Resposta User:", JSON.stringify(userData));
+
+    // A API deve retornar o objeto do usuário direto dentro de 'data'
+    let alunoID;
+
+    if (userData.success && userData.data) {
+        // As vezes volta array, as vezes objeto. Garantimos aqui:
+        if (Array.isArray(userData.data)) {
+            alunoID = userData.data[0]?.id;
+        } else {
+            alunoID = userData.data.id;
+        }
     }
 
     if (!alunoID) {
-      console.error(`❌ DESISTINDO: Aluno ${email} não encontrado na Cademi (Lista vazia).`);
-      // Aqui poderíamos criar o aluno se fosse o caso, mas vamos focar no erro.
-      return null;
+        console.error("❌ ID não encontrado na resposta do usuário.");
+        return null;
     }
 
-    // --- PASSO FINAL: Gerar Link com o ID encontrado ---
+    console.log(`✅ ID Confirmado: ${alunoID}`);
+
+    // --- PASSO 2: Gerar Link de Login ---
     const loginEndpoint = `${CADEMI_URL}/usuario/login/${alunoID}`;
     const loginResponse = await fetch(loginEndpoint, { method: "GET", headers });
     const loginData = await loginResponse.json();
@@ -47,45 +68,7 @@ export async function getCademiLoginToken(rawEmail: string) {
     }
 
   } catch (error) {
-    console.error("❌ Erro Crítico de Conexão:", error);
+    console.error("❌ Erro Crítico:", error);
     return null;
   }
-}
-
-// Função auxiliar para tentar buscar com parâmetros diferentes
-async function buscarID(valor: string, paramName: string, headers: any) {
-    const params = new URLSearchParams({ [paramName]: valor });
-    const endpoint = `${CADEMI_URL}/usuario?${params.toString()}`;
-    
-    console.log(`🔍 Buscando ID via [${paramName}]: ${endpoint}`);
-    
-    const response = await fetch(endpoint, { method: "GET", headers });
-    
-    if (!response.ok) {
-        console.error(`❌ Erro HTTP ${response.status} na busca.`);
-        return null;
-    }
-
-    const json = await response.json();
-    
-    // Log para você ver na Vercel o que exatamente voltou
-    console.log(`📦 Resposta Raw [${paramName}]:`, JSON.stringify(json));
-
-    if (!json.success || !json.data) return null;
-
-    // Se for lista
-    if (Array.isArray(json.data)) {
-        if (json.data.length > 0) {
-            // Encontrou! Retorna o ID do primeiro da lista
-            return json.data[0].id;
-        }
-        return null; // Lista vazia
-    } 
-    
-    // Se for objeto único
-    if (json.data.id) {
-        return json.data.id;
-    }
-
-    return null;
 }
