@@ -43,7 +43,7 @@ export function ClassroomButton() {
       ) : (
         <>
           <PlayCircle size={20} />
-          Ir para Área de Aulas
+          Meus Cursos
         </>
       )}
     </button>
