@@ -18,37 +18,47 @@ export async function getCademiLoginToken(rawEmail: string) {
   };
 
   try {
-    // --- TENTATIVA NOVA: Buscar direto pela URL (conforme print da doc) ---
+    // --- PASSO 1: Buscar dados do usuário ---
     // Endpoint: /usuario/{email}
     const userEndpoint = `${CADEMI_URL}/usuario/${email}`;
-    
-    console.log(`🔍 Buscando dados diretos: ${userEndpoint}`);
+    console.log(`🔍 Buscando usuário: ${userEndpoint}`);
     
     const userResponse = await fetch(userEndpoint, { method: "GET", headers });
     
-    // Se der 404, o usuário realmente não existe
-    if (userResponse.status === 404) {
-        console.error("❌ Usuário não existe na Cademi.");
+    if (!userResponse.ok) {
+        console.error(`❌ Erro HTTP ${userResponse.status} ao buscar usuário.`);
         return null;
     }
 
     const userData = await userResponse.json();
-    console.log("📦 Resposta User:", JSON.stringify(userData));
+    console.log("📦 Resposta Bruta:", JSON.stringify(userData));
 
-    // A API deve retornar o objeto do usuário direto dentro de 'data'
     let alunoID;
 
     if (userData.success && userData.data) {
-        // As vezes volta array, as vezes objeto. Garantimos aqui:
+        // LÓGICA BLINDADA: Verifica todos os formatos possíveis
+        
+        // 1. Se for Lista (Array)
         if (Array.isArray(userData.data)) {
             alunoID = userData.data[0]?.id;
-        } else {
+        } 
+        // 2. Se for Objeto com ID direto
+        else if (userData.data.id) {
             alunoID = userData.data.id;
+        }
+        // 3. O CASO QUE ESTÁ ACONTECENDO: Objeto onde a chave é o e-mail
+        else {
+            const keys = Object.keys(userData.data);
+            if (keys.length > 0) {
+                const primeiraChave = keys[0]; // Pega "btrzcancio@gmail.com" dinamicamente
+                const dadosAluno = userData.data[primeiraChave];
+                alunoID = dadosAluno?.id;
+            }
         }
     }
 
     if (!alunoID) {
-        console.error("❌ ID não encontrado na resposta do usuário.");
+        console.error("❌ ID não encontrado dentro da estrutura 'data'.");
         return null;
     }
 
