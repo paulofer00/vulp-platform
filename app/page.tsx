@@ -3,7 +3,9 @@ import { cookies } from "next/headers";
 import Link from "next/link";
 import UserMenu from "@/components/UserMenu"; 
 import FoxLottie from "@/components/FoxLottie"; 
-import { MentorsSection } from "@/components/MentorsSection"; // <--- MUDANÇA AQUI: USE CHAVES { }
+import { MentorsSection } from "@/components/MentorsSection";
+import MouseTrail from "@/components/MouseTrail";
+import { ScrollReveal } from "@/components/ScrollReveal";
 import { ArrowRight, CheckCircle2, MessageCircle, Target, Zap, Users } from "lucide-react";
 
 export default async function Home() {
@@ -14,17 +16,8 @@ export default async function Home() {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        getAll() {
-          return cookieStore.getAll();
-        },
-        setAll(cookiesToSet) {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            )
-          } catch {
-          }
-        },
+        getAll() { return cookieStore.getAll(); },
+        setAll(cookiesToSet) { try { cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options)) } catch {} },
       },
     }
   );
@@ -34,10 +27,10 @@ export default async function Home() {
   return (
     <main className="min-h-screen bg-[#050505] text-white selection:bg-purple-500/30 font-sans relative overflow-x-hidden">
       
-      {/* RAPOSA ANIMADA */}
+      <MouseTrail />
       <FoxLottie />
 
-      {/* --- NAVBAR --- */}
+      {/* NAVBAR */}
       <nav className="fixed w-full z-50 bg-[#050505]/90 backdrop-blur-md border-b border-white/5">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity">
@@ -60,139 +53,168 @@ export default async function Home() {
         </div>
       </nav>
 
-      {/* --- 1. HERO SECTION --- */}
+      {/* --- 1. HERO SECTION (ANIMAÇÃO SUAVE NO TÍTULO) --- */}
       <section className="pt-40 pb-20 px-6 relative flex flex-col items-center text-center z-10">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-purple-900/20 blur-[120px] rounded-full pointer-events-none" />
+        
         <div className="relative z-10 max-w-4xl mx-auto">
-            <h1 className="text-5xl md:text-7xl font-black tracking-tighter mb-6 leading-tight">
-                UMA ESCOLA <br />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-purple-300">
-                    NADA CONVENCIONAL
-                </span>
-            </h1>
-            <p className="text-xl text-gray-400 max-w-2xl mx-auto mb-12 font-medium">
-                Uma formação 100% prática e presencial, feita para quem quer entrar no mercado de verdade, não apenas ganhar um certificado.
-            </p>
-            <div className="flex flex-col md:flex-row gap-4 justify-center">
-                <Link href="/marketing" className="group bg-purple-600 hover:bg-purple-700 text-white px-8 py-4 rounded-full font-bold text-lg transition-all hover:scale-105 shadow-lg shadow-purple-900/20 flex items-center justify-center gap-2">
-                    Quero trabalhar com Marketing <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-                </Link>
-                <Link href="/vendas" className="group bg-white/10 hover:bg-white text-white hover:text-black border border-white/20 hover:border-white px-8 py-4 rounded-full font-bold text-lg transition-all hover:scale-105 flex items-center justify-center gap-2">
-                    Quero vender melhor <Target size={18} />
-                </Link>
-            </div>
+            <ScrollReveal>
+                <h1 className="text-5xl md:text-7xl font-black tracking-tighter mb-6 leading-tight">
+                    UMA ESCOLA <br />
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-purple-300">
+                        NADA CONVENCIONAL
+                    </span>
+                </h1>
+            </ScrollReveal>
+
+            <ScrollReveal delay={0.2}>
+                <p className="text-xl text-gray-400 max-w-2xl mx-auto mb-12 font-medium">
+                    Uma formação 100% prática e presencial, feita para quem quer entrar no mercado de verdade, não apenas ganhar um certificado.
+                </p>
+            </ScrollReveal>
+
+            <ScrollReveal delay={0.4}>
+                <div className="flex flex-col md:flex-row gap-4 justify-center">
+                    <Link href="/marketing" className="group bg-purple-600 hover:bg-purple-700 text-white px-8 py-4 rounded-full font-bold text-lg transition-all hover:scale-105 shadow-lg shadow-purple-900/20 flex items-center justify-center gap-2">
+                        Quero trabalhar com Marketing <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                    </Link>
+                    <Link href="/vendas" className="group bg-white/10 hover:bg-white text-white hover:text-black border border-white/20 hover:border-white px-8 py-4 rounded-full font-bold text-lg transition-all hover:scale-105 flex items-center justify-center gap-2">
+                        Quero vender melhor <Target size={18} />
+                    </Link>
+                </div>
+            </ScrollReveal>
         </div>
       </section>
 
-      {/* --- 2. PRA QUEM É --- */}
+      {/* --- 2. PRA QUEM É (TEXTO VEM DA ESQUERDA, CARD VEM DA DIREITA) --- */}
       <section className="py-20 bg-[#0A0A0A] border-y border-white/5 relative z-10">
         <div className="max-w-5xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-            <div>
-                <h2 className="text-4xl md:text-5xl font-black mb-6 text-purple-500">
-                    Pra quem é a VULP?
-                </h2>
-                <h3 className="text-xl font-bold text-white mb-6">
-                    Não é para quem busca apenas um papel na parede.
-                </h3>
-                <p className="text-gray-400 text-lg leading-relaxed mb-6">
-                    A VULP não é um curso tradicional onde você senta, ouve e vai embora. Aqui existe <strong>pressão, feedback real e entrega de resultado.</strong>
-                </p>
-                <p className="text-gray-400 text-lg leading-relaxed">
-                    Se você quer teoria, procure uma faculdade. Se você quer mercado, prática e um portfólio que abre portas, a VULP é o seu lugar.
-                </p>
-            </div>
-            <div className="bg-[#111] p-8 rounded-3xl border border-white/10 relative">
-                <div className="absolute -top-6 -right-6 w-24 h-24 bg-purple-600/20 blur-2xl rounded-full" />
-                <ul className="space-y-4 relative z-10">
-                    <li className="flex items-start gap-3">
-                        <CheckCircle2 className="text-purple-500 mt-1 shrink-0" />
-                        <span className="text-gray-300">Ambiente de agência real, não sala de aula.</span>
-                    </li>
-                    <li className="flex items-start gap-3">
-                        <CheckCircle2 className="text-purple-500 mt-1 shrink-0" />
-                        <span className="text-gray-300">Mentores que vivem o que ensinam todos os dias.</span>
-                    </li>
-                    <li className="flex items-start gap-3">
-                        <CheckCircle2 className="text-purple-500 mt-1 shrink-0" />
-                        <span className="text-gray-300">Networking com empresários que contratam.</span>
-                    </li>
-                </ul>
-            </div>
+            
+            <ScrollReveal direction="left">
+                <div>
+                    <h2 className="text-4xl md:text-5xl font-black mb-6 text-purple-500">
+                        Pra quem é a VULP?
+                    </h2>
+                    <h3 className="text-xl font-bold text-white mb-6">
+                        Não é para quem busca apenas um papel na parede.
+                    </h3>
+                    <p className="text-gray-400 text-lg leading-relaxed mb-6">
+                        A VULP não é um curso tradicional onde você senta, ouve e vai embora. Aqui existe <strong>pressão, feedback real e entrega de resultado.</strong>
+                    </p>
+                    <p className="text-gray-400 text-lg leading-relaxed">
+                        Se você quer teoria, procure uma faculdade. Se você quer mercado, prática e um portfólio que abre portas, a VULP é o seu lugar.
+                    </p>
+                </div>
+            </ScrollReveal>
+
+            <ScrollReveal direction="right" delay={0.2}>
+                <div className="bg-[#111] p-8 rounded-3xl border border-white/10 relative hover:border-purple-500/30 transition-colors duration-500">
+                    <div className="absolute -top-6 -right-6 w-24 h-24 bg-purple-600/20 blur-2xl rounded-full" />
+                    <ul className="space-y-4 relative z-10">
+                        <li className="flex items-start gap-3">
+                            <CheckCircle2 className="text-purple-500 mt-1 shrink-0" />
+                            <span className="text-gray-300">Ambiente de agência real, não sala de aula.</span>
+                        </li>
+                        <li className="flex items-start gap-3">
+                            <CheckCircle2 className="text-purple-500 mt-1 shrink-0" />
+                            <span className="text-gray-300">Mentores que vivem o que ensinam todos os dias.</span>
+                        </li>
+                        <li className="flex items-start gap-3">
+                            <CheckCircle2 className="text-purple-500 mt-1 shrink-0" />
+                            <span className="text-gray-300">Networking com empresários que contratam.</span>
+                        </li>
+                    </ul>
+                </div>
+            </ScrollReveal>
+
         </div>
       </section>
 
-      {/* --- 3. ESCOLHA SEU CAMINHO --- */}
+      {/* --- 3. ESCOLHA SEU CAMINHO (CARDS SOBEM UM APÓS O OUTRO) --- */}
       <section className="py-24 px-6 relative z-10">
         <div className="max-w-6xl mx-auto">
-            <h2 className="text-center text-3xl md:text-5xl font-bold mb-16">Escolha seu caminho</h2>
+            <ScrollReveal>
+                <h2 className="text-center text-3xl md:text-5xl font-bold mb-16">Escolha seu caminho</h2>
+            </ScrollReveal>
+            
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <Link href="/marketing" className="group relative bg-[#0F0F0F] border border-white/10 rounded-3xl p-10 hover:border-purple-500 transition-all duration-300 overflow-hidden">
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-purple-600/10 blur-[80px] rounded-full group-hover:bg-purple-600/20 transition-all" />
-                    <div className="relative z-10">
-                        <h3 className="text-3xl font-black uppercase mb-4 group-hover:text-purple-400 transition-colors">Raposa do Marketing</h3>
-                        <p className="text-gray-400 text-lg mb-8 h-20">Domine as estratégias digitais, criação de conteúdo e gestão de marcas que vendem.</p>
-                        <span className="inline-flex items-center gap-2 text-white font-bold border-b border-purple-500 pb-1 group-hover:text-purple-400 transition-colors">Conhecer a formação <ArrowRight size={16} /></span>
-                    </div>
-                </Link>
-                <Link href="/vendas" className="group relative bg-[#0F0F0F] border border-white/10 rounded-3xl p-10 hover:border-blue-500 transition-all duration-300 overflow-hidden">
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/10 blur-[80px] rounded-full group-hover:bg-blue-600/20 transition-all" />
-                    <div className="relative z-10">
-                        <h3 className="text-3xl font-black uppercase mb-4 group-hover:text-blue-400 transition-colors">O Novo Vendedor</h3>
-                        <p className="text-gray-400 text-lg mb-8 h-20">Aprenda a negociar, persuadir e fechar contratos de alto valor em qualquer cenário.</p>
-                        <span className="inline-flex items-center gap-2 text-white font-bold border-b border-blue-500 pb-1 group-hover:text-blue-400 transition-colors">Conhecer a formação <ArrowRight size={16} /></span>
-                    </div>
-                </Link>
+                
+                <ScrollReveal delay={0.1}>
+                    <Link href="/marketing" className="group relative block bg-[#0F0F0F] border border-white/10 rounded-3xl p-10 hover:border-purple-500 transition-all duration-300 overflow-hidden h-full">
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-purple-600/10 blur-[80px] rounded-full group-hover:bg-purple-600/20 transition-all" />
+                        <div className="relative z-10">
+                            <h3 className="text-3xl font-black uppercase mb-4 group-hover:text-purple-400 transition-colors">Raposa do Marketing</h3>
+                            <p className="text-gray-400 text-lg mb-8 h-20">Domine as estratégias digitais, criação de conteúdo e gestão de marcas que vendem.</p>
+                            <span className="inline-flex items-center gap-2 text-white font-bold border-b border-purple-500 pb-1 group-hover:text-purple-400 transition-colors">Conhecer a formação <ArrowRight size={16} /></span>
+                        </div>
+                    </Link>
+                </ScrollReveal>
+
+                <ScrollReveal delay={0.3}>
+                    <Link href="/vendas" className="group relative block bg-[#0F0F0F] border border-white/10 rounded-3xl p-10 hover:border-blue-500 transition-all duration-300 overflow-hidden h-full">
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/10 blur-[80px] rounded-full group-hover:bg-blue-600/20 transition-all" />
+                        <div className="relative z-10">
+                            <h3 className="text-3xl font-black uppercase mb-4 group-hover:text-blue-400 transition-colors">O Novo Vendedor</h3>
+                            <p className="text-gray-400 text-lg mb-8 h-20">Aprenda a negociar, persuadir e fechar contratos de alto valor em qualquer cenário.</p>
+                            <span className="inline-flex items-center gap-2 text-white font-bold border-b border-blue-500 pb-1 group-hover:text-blue-400 transition-colors">Conhecer a formação <ArrowRight size={16} /></span>
+                        </div>
+                    </Link>
+                </ScrollReveal>
+
             </div>
         </div>
       </section>
 
-      {/* --- 4. DIFERENCIAIS --- */}
+      {/* --- 4. DIFERENCIAIS (EFEITO ESCADINHA NOS ÍNDICES) --- */}
       <section className="py-20 bg-[#0A0A0A] border-y border-white/5 relative z-10">
         <div className="max-w-6xl mx-auto px-6">
-            <div className="text-center mb-16">
-                <h2 className="text-3xl md:text-4xl font-bold mb-4">Por que a VULP é diferente?</h2>
-                <p className="text-gray-400">Esqueça a lousa e o caderno. Aqui o jogo é outro.</p>
-            </div>
+            <ScrollReveal>
+                <div className="text-center mb-16">
+                    <h2 className="text-3xl md:text-4xl font-bold mb-4">Por que a VULP é diferente?</h2>
+                    <p className="text-gray-400">Esqueça a lousa e o caderno. Aqui o jogo é outro.</p>
+                </div>
+            </ScrollReveal>
+
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                <div className="bg-[#151515] p-6 rounded-2xl border border-white/5 text-center hover:border-purple-500/30 transition-colors">
-                    <div className="w-12 h-12 bg-purple-900/20 rounded-full flex items-center justify-center mx-auto mb-4 text-purple-400"><Zap size={24} /></div>
-                    <h3 className="font-bold text-lg mb-2">80% Prática</h3>
-                    <p className="text-sm text-gray-400">Menos teoria, mais execução real.</p>
-                </div>
-                <div className="bg-[#151515] p-6 rounded-2xl border border-white/5 text-center hover:border-purple-500/30 transition-colors">
-                    <div className="w-12 h-12 bg-purple-900/20 rounded-full flex items-center justify-center mx-auto mb-4 text-purple-400"><Users size={24} /></div>
-                    <h3 className="font-bold text-lg mb-2">Presencial</h3>
-                    <p className="text-sm text-gray-400">Conexão olho no olho e networking.</p>
-                </div>
-                <div className="bg-[#151515] p-6 rounded-2xl border border-white/5 text-center hover:border-purple-500/30 transition-colors">
-                    <div className="w-12 h-12 bg-purple-900/20 rounded-full flex items-center justify-center mx-auto mb-4 text-purple-400"><MessageCircle size={24} /></div>
-                    <h3 className="font-bold text-lg mb-2">Feedback Direto</h3>
-                    <p className="text-sm text-gray-400">Sem rodeios. Você descobre onde melhorar.</p>
-                </div>
-                <div className="bg-[#151515] p-6 rounded-2xl border border-white/5 text-center hover:border-purple-500/30 transition-colors">
-                    <div className="w-12 h-12 bg-purple-900/20 rounded-full flex items-center justify-center mx-auto mb-4 text-purple-400"><Target size={24} /></div>
-                    <h3 className="font-bold text-lg mb-2">Portfólio Real</h3>
-                    <p className="text-sm text-gray-400">Saia com projetos prontos para apresentar.</p>
-                </div>
+                {[
+                    { icon: Zap, title: "80% Prática", desc: "Menos teoria, mais execução." },
+                    { icon: Users, title: "Presencial", desc: "Networking olho no olho." },
+                    { icon: MessageCircle, title: "Feedback Real", desc: "Sem rodeios, direto ao ponto." },
+                    { icon: Target, title: "Portfólio", desc: "Saia com projetos reais." }
+                ].map((item, i) => (
+                    <ScrollReveal key={i} delay={i * 0.1}>
+                        <div className="bg-[#151515] p-6 rounded-2xl border border-white/5 text-center hover:border-purple-500/30 transition-colors h-full flex flex-col items-center justify-center group">
+                            <div className="w-14 h-14 bg-purple-900/10 rounded-full flex items-center justify-center mb-4 text-purple-500 group-hover:scale-110 group-hover:bg-purple-500 group-hover:text-white transition-all duration-300">
+                                <item.icon size={28} />
+                            </div>
+                            <h3 className="font-bold text-lg mb-2 text-white">{item.title}</h3>
+                            <p className="text-sm text-gray-400">{item.desc}</p>
+                        </div>
+                    </ScrollReveal>
+                ))}
             </div>
         </div>
       </section>
 
-      {/* --- 5. NOVA SEÇÃO MENTORES (COMPONENTE CLIENTE) --- */}
-      <MentorsSection />
+      {/* --- 5. MENTORES (O COMPONENTE JÁ TEM ANIMAÇÕES INTERNAS, MAS VAMOS DAR UM FADE IN GERAL) --- */}
+      <ScrollReveal>
+          <MentorsSection />
+      </ScrollReveal>
 
       {/* --- 6. CTA WHATSAPP --- */}
       <section className="py-24 px-6 text-center relative z-10">
         <div className="max-w-2xl mx-auto">
-            <h2 className="text-3xl font-bold mb-8">Ainda com dúvida de qual caminho seguir?</h2>
-            <Link 
-                href="https://wa.me/5593991174787"
-                target="_blank"
-                className="bg-[#25D366] hover:bg-[#20bd5a] text-black font-bold py-4 px-10 rounded-full text-lg transition-all hover:scale-105 shadow-xl shadow-green-900/20 inline-flex items-center gap-3"
-            >
-                <MessageCircle size={24} fill="black" className="text-black" />
-                Quero conversar com a VULP
-            </Link>
+            <ScrollReveal>
+                <h2 className="text-3xl font-bold mb-8">Ainda com dúvida de qual caminho seguir?</h2>
+                <Link 
+                    href="https://wa.me/5593991174787"
+                    target="_blank"
+                    className="bg-[#25D366] hover:bg-[#20bd5a] text-black font-bold py-4 px-10 rounded-full text-lg transition-all hover:scale-105 shadow-xl shadow-green-900/20 inline-flex items-center gap-3"
+                >
+                    <MessageCircle size={24} fill="black" className="text-black" />
+                    Quero conversar com a VULP
+                </Link>
+            </ScrollReveal>
         </div>
       </section>
 

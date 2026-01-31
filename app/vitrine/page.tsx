@@ -1,8 +1,9 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-import { BadgeCheck, Trophy, User } from "lucide-react";
+import { BadgeCheck, Trophy, User, Zap } from "lucide-react";
 import Link from "next/link";
-import UserMenu from "@/components/UserMenu"; // <--- Importamos o Menu Inteligente
+import UserMenu from "@/components/UserMenu";
+import { getAlunoPublico } from "@/lib/cademi"; // <--- Importamos a função nova
 
 export default async function VitrinePage() {
   const cookieStore = await cookies();
@@ -15,35 +16,49 @@ export default async function VitrinePage() {
     }
   );
 
-  // 1. Verifica se tem alguém logado (Sessão)
+  // 1. Verifica sessão
   const { data: { session } } = await supabase.auth.getSession();
 
-  // 2. Busca os alunos
-  const { data: students } = await supabase
-    .from("profiles") // OBS: Certifique-se que seus alunos estão na tabela 'profiles' com role='student'
+  // 2. Busca os alunos no Supabase
+  const { data: profiles } = await supabase
+    .from("profiles")
     .select("*")
-    .eq('role', 'student') // Filtra apenas alunos
-    // .order('points', { ascending: false }); // Descomente se tiver coluna 'points' na profiles
-    
-  // Se ainda estiver usando a tabela 'students' separada, mantenha: .from("students").select("*")
+    .eq('role', 'student');
+
+  // 3. ENRIQUECIMENTO DE DADOS (Busca os pontos na Cademi para cada aluno)
+  // Usamos Promise.all para buscar todos ao mesmo tempo (mais rápido)
+  const studentsWithPoints = await Promise.all(
+    (profiles || []).map(async (student) => {
+      // Se o aluno tiver email, busca na Cademi
+      let pontos = 0;
+      if (student.email) {
+        const cademiData = await getAlunoPublico(student.email);
+        if (cademiData) {
+            pontos = cademiData.pontos;
+        }
+      }
+      // Retorna o aluno do Supabase somado com os pontos da Cademi
+      return { ...student, pontosReais: pontos };
+    })
+  );
+
+  // 4. Ordena pelo ranking (Maior pontuação primeiro)
+  const sortedStudents = studentsWithPoints.sort((a, b) => b.pontosReais - a.pontosReais);
 
   return (
     <div className="min-h-screen bg-[#050505] text-white font-sans selection:bg-purple-500/30">
       
-      {/* NAVBAR INTELIGENTE */}
+      {/* NAVBAR */}
       <nav className="border-b border-white/5 bg-[#050505]/80 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-6 h-20 flex items-center justify-between">
-          
           <Link href="/" className="cursor-pointer hover:opacity-80 transition-opacity">
             <img src="/logo-white.png" alt="VULP" className="h-8 w-auto" />
           </Link>
 
           <div className="flex gap-4 items-center">
              {session ? (
-                // SE LOGADO: Mostra o Menu do Usuário (Foto, Painel, Sair)
                 <UserMenu />
              ) : (
-                // SE NÃO LOGADO: Mostra os botões de entrar
                 <>
                     <Link href="/login" className="px-6 py-2 rounded-full border border-white/10 hover:bg-white/10 transition-colors font-bold text-sm">
                         Sou Empresa
@@ -63,14 +78,22 @@ export default async function VitrinePage() {
                 Contrate os <span className="text-purple-500">Melhores</span>
             </h1>
             <p className="text-xl text-gray-400 mb-10">
-                Acesse nossa base exclusiva de alunos certificados.
+                Ranking atualizado em tempo real baseado na performance prática.
             </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {students && students.length > 0 ? (
-                students.map((student) => (
-                    <div key={student.id} className="bg-[#0A0A0A] border border-white/10 rounded-3xl p-6 hover:border-purple-500/30 transition-all group flex flex-col">
+            {sortedStudents.length > 0 ? (
+                sortedStudents.map((student, index) => (
+                    <div key={student.id} className="bg-[#0A0A0A] border border-white/10 rounded-3xl p-6 hover:border-purple-500/30 transition-all group flex flex-col relative overflow-hidden">
+                        
+                        {/* Destaque para o TOP 3 */}
+                        {index < 3 && (
+                            <div className="absolute top-0 right-0 bg-yellow-500/10 text-yellow-500 text-[10px] font-bold px-3 py-1 rounded-bl-xl border-l border-b border-yellow-500/20">
+                                TOP {index + 1}
+                            </div>
+                        )}
+
                         <div className="flex justify-between items-start mb-6">
                             <div className="w-16 h-16 rounded-full bg-purple-900/20 border border-white/5 flex items-center justify-center text-purple-400 font-bold text-2xl overflow-hidden">
                                 {student.avatar_url ? (
@@ -79,23 +102,31 @@ export default async function VitrinePage() {
                                     (student.full_name || "U").charAt(0)
                                 )}
                             </div>
-                            {/* Exemplo de XP fake caso não tenha no banco ainda */}
-                            <div className="px-3 py-1 bg-yellow-500/10 text-yellow-500 text-xs font-bold rounded-full border border-yellow-500/20 flex items-center gap-1">
-                                <Trophy size={12} /> {student.points || 0} XP
+                            
+                            {/* PONTUAÇÃO REAL DA CADEMI */}
+                            <div className="flex flex-col items-end">
+                                <div className="px-3 py-1 bg-purple-500/10 text-purple-400 text-sm font-bold rounded-full border border-purple-500/20 flex items-center gap-1.5">
+                                    <Zap size={14} fill="currentColor" /> {student.pontosReais} XP
+                                </div>
+                                <span className="text-[10px] text-gray-500 mt-1 uppercase tracking-wider">Performance</span>
                             </div>
                         </div>
+
                         <div className="mb-4">
                             <h3 className="text-xl font-bold mb-1 group-hover:text-purple-400 transition-colors flex items-center gap-2">
-                                {student.full_name || "Aluno VULP"} <BadgeCheck size={16} className="text-blue-500/50" /> 
+                                {student.full_name || "Aluno VULP"} 
+                                {student.pontosReais > 100 && <BadgeCheck size={16} className="text-blue-500" />}
                             </h3>
-                            <p className="text-sm text-purple-300 font-medium">Talento VULP</p>
+                            <p className="text-sm text-gray-400 font-medium">{student.bio ? "Talento Verificado" : "Novo Talento"}</p>
                         </div>
-                        <p className="text-gray-400 text-sm leading-relaxed mb-6 line-clamp-3 min-h-[60px]">
-                            {student.bio || "Biografia em construção..."}
+                        
+                        <p className="text-gray-500 text-sm leading-relaxed mb-6 line-clamp-3 min-h-[60px]">
+                            {student.bio || "Este aluno está focado em construir resultados práticos na plataforma."}
                         </p>
+
                         <div className="mt-auto flex gap-3">
-                             <Link href={`/talento/${student.id}`} className="flex-1 py-3 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-center text-sm font-bold transition-colors shadow-lg shadow-purple-900/20">
-                                Ver Perfil
+                             <Link href={`/talento/${student.id}`} className="flex-1 py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 text-white text-center text-sm font-bold transition-all">
+                                Ver Perfil Completo
                              </Link>
                         </div>
                     </div>
