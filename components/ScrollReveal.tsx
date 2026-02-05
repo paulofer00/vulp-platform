@@ -1,7 +1,7 @@
-"use client"; // Obrigatório no topo
+"use client";
 
-import { motion } from "framer-motion";
-import { ReactNode } from "react";
+import { motion, useAnimation, useInView } from "framer-motion";
+import { ReactNode, useEffect, useRef } from "react";
 
 interface ScrollRevealProps {
   children: ReactNode;
@@ -10,7 +10,6 @@ interface ScrollRevealProps {
   className?: string;
 }
 
-// NOTE AQUI: Tirei o "default" e deixei "export function"
 export function ScrollReveal({ 
   children, 
   delay = 0, 
@@ -18,30 +17,47 @@ export function ScrollReveal({
   className = "" 
 }: ScrollRevealProps) {
   
+  const ref = useRef(null);
+  // O "margin" ajustado evita que a animação dispare cedo demais ou tarde demais
+  const isInView = useInView(ref, { once: true, margin: "-10% 0px" });
+  const controls = useAnimation();
+
   const directions = {
-    up: { y: 50, x: 0 },
-    left: { y: 0, x: -50 },
-    right: { y: 0, x: 50 },
+    up: { y: 40, x: 0 },
+    left: { y: 0, x: -40 },
+    right: { y: 0, x: 40 },
   };
+
+  useEffect(() => {
+    if (isInView) {
+      controls.start("visible");
+    }
+  }, [isInView, controls]);
 
   return (
     <motion.div
-      initial={{ 
-        opacity: 0, 
-        ...directions[direction] 
-      }}
-      whileInView={{ 
-        opacity: 1, 
-        y: 0, 
-        x: 0 
-      }}
-      viewport={{ once: true, margin: "-50px" }}
-      transition={{ 
-        duration: 0.8, 
-        delay: delay, 
-        ease: [0.21, 0.47, 0.32, 0.98]
+      ref={ref}
+      initial="hidden"
+      animate={controls}
+      variants={{
+        hidden: { 
+          opacity: 0, 
+          ...directions[direction] 
+        },
+        visible: { 
+          opacity: 1, 
+          y: 0, 
+          x: 0,
+          transition: {
+            duration: 0.6, // Levemente mais rápido para evitar "arrasto"
+            delay: delay,
+            ease: "easeOut"
+          }
+        }
       }}
       className={className}
+      // will-change avisa o navegador para preparar a GPU (evita piscadas)
+      style={{ willChange: "opacity, transform" }} 
     >
       {children}
     </motion.div>

@@ -4,17 +4,25 @@ import { useState } from "react";
 import { createBrowserClient } from "@supabase/ssr";
 import { 
   CheckCircle2, X, ChevronDown, Trophy, 
-  Zap, Brain, Target, Video, PenTool, Layout, ArrowRight, ShieldCheck, Smartphone,
-  Users, Mic, Briefcase, TrendingUp // Novos ícones importados
+  Zap, Brain, Video, PenTool, Layout, ArrowRight, ShieldCheck, 
+  Users, Mic, Briefcase, TrendingUp, CreditCard, Lock
 } from "lucide-react";
 import Link from "next/link";
+
+// --- CONFIGURAÇÃO ---
+// Mantivemos fora do componente para ficar organizado e sem erro
+const CHECKOUT_CONFIG = {
+    infiniteTag: "upeup", // ✅ Sua Tag Correta
+    productName: "Formacao Raposa do Marketing",
+    price: 100, // R$ 1,00
+};
 
 export default function MarketingLP() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [paymentLink, setPaymentLink] = useState(""); 
 
-  // Supabase Client
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -24,10 +32,34 @@ export default function MarketingLP() {
   
   const closeModal = () => {
     setIsModalOpen(false);
-    setTimeout(() => setIsSuccess(false), 300);
+    setTimeout(() => {
+        setIsSuccess(false);
+        setPaymentLink(""); 
+    }, 300);
   };
 
-  // Envio do Formulário
+  // --- GERADOR DE LINK INTELIGENTE ---
+  const generateCheckoutUrl = (leadId: string) => {
+    // Detecta automaticamente se é localhost ou vulp.vc
+    const baseUrl = typeof window !== "undefined" ? window.location.origin : "https://vulp.vc";
+    
+    const items = JSON.stringify([
+        {
+            name: CHECKOUT_CONFIG.productName,
+            price: CHECKOUT_CONFIG.price,
+            quantity: 1
+        }
+    ]);
+
+    const params = new URLSearchParams({
+        items: items,
+        order_nsu: leadId,
+        redirect_url: `${baseUrl}/obrigado` // <--- Redireciona para a página certa
+    });
+
+    return `https://checkout.infinitepay.io/${CHECKOUT_CONFIG.infiniteTag}?${params.toString()}`;
+  };
+
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setIsLoading(true);
@@ -41,22 +73,34 @@ export default function MarketingLP() {
         origin: "raposa-marketing-lp" 
     };
 
-    const { error } = await supabase.from("leads").insert(data);
+    let leadId = `temp_${Date.now()}`;
+    
+    try {
+        const { data: lead, error } = await supabase
+            .from("leads")
+            .insert(data)
+            .select()
+            .single();
 
-    setIsLoading(false);
-
-    if (error) {
-        alert("Erro ao enviar. Tente novamente.");
-        console.error(error);
-    } else {
-        setIsSuccess(true);
+        if (!error && lead) {
+            leadId = lead.id;
+        }
+    } catch (err) {
+        console.error("Erro ao salvar", err);
     }
+
+    // Gera o link e salva no estado
+    const link = generateCheckoutUrl(leadId);
+    setPaymentLink(link);
+    
+    setIsLoading(false);
+    setIsSuccess(true);
   }
 
   return (
     <div className="min-h-screen bg-[#050505] text-white font-sans selection:bg-purple-500/30">
       
-      {/* --- NAVBAR --- */}
+      {/* NAVBAR */}
       <nav className="fixed w-full z-40 bg-[#050505]/90 backdrop-blur-md border-b border-white/5">
         <div className="max-w-6xl mx-auto px-6 h-20 flex items-center justify-between">
             <Link href="/">
@@ -71,7 +115,7 @@ export default function MarketingLP() {
         </div>
       </nav>
 
-      {/* --- HERO SECTION --- */}
+      {/* HERO SECTION */}
       <header className="relative pt-32 pb-20 md:pt-40 md:pb-32 overflow-hidden min-h-[700px] flex items-center">
         <div className="absolute top-0 right-0 w-full md:w-[60%] h-full z-0">
             <img 
@@ -109,7 +153,7 @@ export default function MarketingLP() {
         </div>
       </header>
 
-      {/* --- SEÇÃO CLARA: O PROBLEMA --- */}
+      {/* SEÇÃO O PROBLEMA */}
       <section className="py-20 bg-white text-black relative z-20">
         <div className="max-w-6xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
             <div>
@@ -151,7 +195,7 @@ export default function MarketingLP() {
         </div>
       </section>
 
-      {/* --- A JORNADA DE 3 MESES --- */}
+      {/* A TRILHA DA RAPOSA */}
       <section className="py-24 px-6 bg-[#050505]">
         <div className="max-w-4xl mx-auto">
             <div className="text-center mb-16">
@@ -188,66 +232,30 @@ export default function MarketingLP() {
         </div>
       </section>
 
-      {/* --- SEÇÃO SOFT SKILLS (EXPERIÊNCIA VULP) --- */}
+      {/* SOFT SKILLS */}
       <section className="py-24 px-6 bg-[#0A0A0A] border-t border-white/5">
         <div className="max-w-6xl mx-auto">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                
-                {/* Card Principal (Branco/Roxo) */}
                 <div className="lg:col-span-1 bg-white text-black p-10 rounded-3xl relative overflow-hidden group hover:scale-[1.02] transition-transform duration-300 flex flex-col justify-center">
                     <div className="absolute top-0 right-0 w-48 h-48 bg-purple-500 blur-[80px] rounded-full opacity-30" />
-                    
                     <span className="text-purple-600 font-black uppercase tracking-widest text-sm mb-4 block">Experiência VULP</span>
-                    <h3 className="text-4xl font-black mb-6 leading-tight">
-                        Muito além da <span className="text-purple-600">técnica.</span>
-                    </h3>
-                    <p className="text-gray-600 text-lg mb-8 leading-relaxed">
-                        Marketing é sobre pessoas. Na VULP, você não aprende só ferramenta. Você desenvolve as <strong>Soft Skills</strong> que diferenciam um executor de um estrategista.
-                    </p>
-                    <div className="inline-flex items-center gap-2 px-5 py-3 bg-purple-100 text-purple-700 rounded-full font-bold text-sm self-start">
-                        <Zap size={18} /> Skills de Liderança
-                    </div>
+                    <h3 className="text-4xl font-black mb-6 leading-tight">Muito além da <span className="text-purple-600">técnica.</span></h3>
+                    <p className="text-gray-600 text-lg mb-8 leading-relaxed">Marketing é sobre pessoas. Na VULP, você não aprende só ferramenta. Você desenvolve as <strong>Soft Skills</strong> que diferenciam um executor de um estrategista.</p>
+                    <div className="inline-flex items-center gap-2 px-5 py-3 bg-purple-100 text-purple-700 rounded-full font-bold text-sm self-start"><Zap size={18} /> Skills de Liderança</div>
                 </div>
-
-                {/* Grid de Cards Menores (Flutuantes) */}
                 <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <SoftSkillCard 
-                        title="Liderança Criativa" 
-                        icon={<Trophy size={24} />} 
-                        desc="Aprenda a liderar projetos e defender suas ideias." 
-                    />
-                    <SoftSkillCard 
-                        title="Oratória & Pitch" 
-                        icon={<Mic size={24} />} 
-                        desc="Apresente campanhas com segurança e clareza." 
-                    />
-                    <SoftSkillCard 
-                        title="Inteligência Emocional" 
-                        icon={<Brain size={24} />} 
-                        desc="Lide com pressão, prazos e feedback sem surtar." 
-                    />
-                    <SoftSkillCard 
-                        title="Networking Estratégico" 
-                        icon={<Users size={24} />} 
-                        desc="Conexão com empresários e profissionais da área." 
-                    />
-                    <SoftSkillCard 
-                        title="Coworking VULP" 
-                        icon={<Briefcase size={24} />} 
-                        desc="Acesso a um ambiente criativo de alta performance." 
-                    />
-                    <SoftSkillCard 
-                        title="Vivência de Agência" 
-                        icon={<TrendingUp size={24} />} 
-                        desc="Rotina real de aprovação, refação e entrega." 
-                    />
+                    <SoftSkillCard title="Liderança Criativa" icon={<Trophy size={24} />} desc="Aprenda a liderar projetos e defender suas ideias." />
+                    <SoftSkillCard title="Oratória & Pitch" icon={<Mic size={24} />} desc="Apresente campanhas com segurança e clareza." />
+                    <SoftSkillCard title="Inteligência Emocional" icon={<Brain size={24} />} desc="Lide com pressão, prazos e feedback sem surtar." />
+                    <SoftSkillCard title="Networking Estratégico" icon={<Users size={24} />} desc="Conexão com empresários e profissionais da área." />
+                    <SoftSkillCard title="Coworking VULP" icon={<Briefcase size={24} />} desc="Acesso a um ambiente criativo de alta performance." />
+                    <SoftSkillCard title="Vivência de Agência" icon={<TrendingUp size={24} />} desc="Rotina real de aprovação, refação e entrega." />
                 </div>
-
             </div>
         </div>
       </section>
 
-      {/* --- CARREIRA E PORTFÓLIO --- */}
+      {/* CARREIRA */}
       <section className="py-24 px-6 bg-white text-black border-t border-gray-200">
          <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
             <div className="order-2 md:order-1 relative">
@@ -255,73 +263,42 @@ export default function MarketingLP() {
                     <p className="text-gray-400 font-mono text-sm">[Foto: Alunos apresentando projeto]</p>
                 </div>
                 <div className="absolute -bottom-6 -right-6 bg-black text-white p-6 rounded-2xl shadow-2xl max-w-xs">
-                    <div className="flex items-center gap-2 mb-2 text-purple-400">
-                        <ShieldCheck size={20} />
-                        <span className="font-bold text-sm uppercase">Garantia de Ensino</span>
-                    </div>
-                    <p className="text-sm text-gray-300">
-                        Você sai com um portfólio real contendo Estratégia, Design e Vídeo.
-                    </p>
+                    <div className="flex items-center gap-2 mb-2 text-purple-400"><ShieldCheck size={20} /><span className="font-bold text-sm uppercase">Garantia de Ensino</span></div>
+                    <p className="text-sm text-gray-300">Você sai com um portfólio real contendo Estratégia, Design e Vídeo.</p>
                 </div>
             </div>
-
             <div className="order-1 md:order-2">
-                <h2 className="text-3xl md:text-5xl font-black mb-6">
-                    Você não sai apenas com um certificado.
-                </h2>
-                <p className="text-lg text-gray-600 mb-8 leading-relaxed">
-                    Sai com uma profissão. Ensinamos não só a técnica, mas como <strong>vender seu serviço, precificar e fechar contratos.</strong>
-                </p>
-
+                <h2 className="text-3xl md:text-5xl font-black mb-6">Você não sai apenas com um certificado.</h2>
+                <p className="text-lg text-gray-600 mb-8 leading-relaxed">Sai com uma profissão. Ensinamos não só a técnica, mas como <strong>vender seu serviço, precificar e fechar contratos.</strong></p>
                 <div className="space-y-6">
                     <h3 className="font-bold text-xl">Onde você pode atuar:</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
-                            <CheckCircle2 className="text-green-600" size={18} /> Social Media Freelancer
-                        </div>
-                        <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
-                            <CheckCircle2 className="text-green-600" size={18} /> Agências de Marketing
-                        </div>
-                        <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
-                            <CheckCircle2 className="text-green-600" size={18} /> Filmmaker Mobile
-                        </div>
-                        <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
-                            <CheckCircle2 className="text-green-600" size={18} /> Equipes Internas de Empresas
-                        </div>
+                        <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100"><CheckCircle2 className="text-green-600" size={18} /> Social Media Freelancer</div>
+                        <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100"><CheckCircle2 className="text-green-600" size={18} /> Agências de Marketing</div>
+                        <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100"><CheckCircle2 className="text-green-600" size={18} /> Filmmaker Mobile</div>
+                        <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100"><CheckCircle2 className="text-green-600" size={18} /> Equipes Internas de Empresas</div>
                     </div>
                 </div>
             </div>
          </div>
       </section>
 
-      {/* --- CTA FINAL --- */}
+      {/* CTA FINAL */}
       <section className="py-32 px-6 text-center bg-[#050505] relative">
          <div className="max-w-3xl mx-auto relative z-10">
-            <h2 className="text-4xl md:text-6xl font-black mb-6 text-white">
-                Torne-se uma <span className="text-purple-500">Raposa.</span>
-            </h2>
-            <p className="text-xl text-gray-400 mb-12">
-                As vagas são limitadas para garantir a qualidade da mentoria presencial.
-                Não deixe para depois.
-            </p>
-            <button 
-                onClick={openModal}
-                className="w-full md:w-auto bg-purple-600 hover:bg-purple-700 text-white font-bold py-5 px-12 rounded-full text-xl shadow-xl shadow-purple-900/30 flex items-center justify-center gap-2 mx-auto transition-all hover:scale-105"
-            >
-                Quero ser uma Raposa <ArrowRight />
-            </button>
+            <h2 className="text-4xl md:text-6xl font-black mb-6 text-white">Torne-se uma <span className="text-purple-500">Raposa.</span></h2>
+            <p className="text-xl text-gray-400 mb-12">As vagas são limitadas para garantir a qualidade da mentoria presencial. Não deixe para depois.</p>
+            <button onClick={openModal} className="w-full md:w-auto bg-purple-600 hover:bg-purple-700 text-white font-bold py-5 px-12 rounded-full text-xl shadow-xl shadow-purple-900/30 flex items-center justify-center gap-2 mx-auto transition-all hover:scale-105">Quero ser uma Raposa <ArrowRight /></button>
          </div>
       </section>
 
-      {/* --- FOOTER --- */}
+      {/* FOOTER */}
       <footer className="py-12 px-6 bg-black text-center border-t border-white/5">
-        <div className="flex justify-center mb-6">
-            <img src="/logo-white.png" alt="VULP" className="h-6 opacity-50" />
-        </div>
+        <div className="flex justify-center mb-6"><img src="/logo-white.png" alt="VULP" className="h-6 opacity-50" /></div>
         <p className="text-gray-600 text-sm">© 2026 VULP Education.</p>
       </footer>
 
-      {/* --- MODAL --- */}
+      {/* MODAL DE INSCRIÇÃO */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={closeModal} />
@@ -333,14 +310,26 @@ export default function MarketingLP() {
                         <div className="w-20 h-20 bg-green-500/10 rounded-full flex items-center justify-center mb-6 border border-green-500/20">
                             <CheckCircle2 size={40} className="text-green-500 drop-shadow-[0_0_10px_rgba(34,197,94,0.5)]" />
                         </div>
-                        <h3 className="text-2xl font-bold text-white mb-2">Sucesso!</h3>
+                        <h3 className="text-2xl font-bold text-white mb-2">Inscrição Recebida!</h3>
                         <p className="text-gray-400 leading-relaxed mb-6">
-                            Seu cadastro foi realizado com sucesso!<br/>
-                            <span className="text-sm opacity-70">Nossa equipe entrará em contato em breve.</span>
+                            Para garantir sua vaga, finalize o pagamento seguro através da InfinitePay.
                         </p>
-                        <button onClick={closeModal} className="text-purple-500 hover:text-purple-400 font-bold text-sm transition-colors border border-purple-500/30 hover:border-purple-500 px-6 py-2 rounded-full">
-                            Fechar
-                        </button>
+                        
+                        {/* BOTÃO VERDE INFINITEPAY */}
+                        {paymentLink && (
+                            <Link 
+                                href={paymentLink}
+                                target="_self" // Self para garantir que vá, ou _blank se preferir aba nova
+                                className="w-full bg-[#00D775] hover:bg-[#00c068] text-[#002f1a] font-black text-lg py-4 px-6 rounded-xl shadow-lg shadow-green-900/20 flex items-center justify-center gap-2 transition-transform hover:scale-105 mb-4"
+                            >
+                                <CreditCard size={20} />
+                                Pagar com InfinitePay
+                            </Link>
+                        )}
+                        
+                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                            <Lock size={12} /> Ambiente seguro e criptografado
+                        </div>
                     </div>
                 ) : (
                     <>
@@ -356,7 +345,7 @@ export default function MarketingLP() {
                             <input name="phone" type="tel" placeholder="(00) 00000-0000" className="w-full bg-[#1A1A1A] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500 transition-colors" required />
                             <input name="city" type="text" placeholder="Santarém, PA" className="w-full bg-[#1A1A1A] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500 transition-colors" required />
                             <button disabled={isLoading} type="submit" className="w-full bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white font-bold py-4 rounded-xl mt-4 transition-colors shadow-lg">
-                                {isLoading ? "Enviando..." : "Enviar Aplicação"}
+                                {isLoading ? "Processando..." : "Ir para Pagamento"}
                             </button>
                         </form>
                     </>
@@ -402,24 +391,12 @@ function AccordionModule({ month, title, description, topics, icon, color }: any
     );
 }
 
-// --- NOVO COMPONENTE: CARD FLUTUANTE DE SKILLS ---
 function SoftSkillCard({ title, icon, desc }: any) {
     return (
-        <div className="
-            group bg-[#111] border border-white/5 p-6 rounded-2xl 
-            hover:border-purple-500 hover:bg-[#151515] hover:shadow-[0_5px_20px_rgba(168,85,247,0.15)]
-            transition-all duration-300 ease-out 
-            hover:-translate-y-2 hover:scale-[1.02]
-        ">
-            <div className="text-purple-500 mb-3 group-hover:text-white transition-colors">
-                {icon}
-            </div>
-            <h4 className="font-bold text-lg text-white mb-1 group-hover:text-purple-300 transition-colors">
-                {title}
-            </h4>
-            <p className="text-sm text-gray-400 group-hover:text-gray-300 transition-colors">
-                {desc}
-            </p>
+        <div className="group bg-[#111] border border-white/5 p-6 rounded-2xl hover:border-purple-500 hover:bg-[#151515] hover:shadow-[0_5px_20px_rgba(168,85,247,0.15)] transition-all duration-300 ease-out hover:-translate-y-2 hover:scale-[1.02]">
+            <div className="text-purple-500 mb-3 group-hover:text-white transition-colors">{icon}</div>
+            <h4 className="font-bold text-lg text-white mb-1 group-hover:text-purple-300 transition-colors">{title}</h4>
+            <p className="text-sm text-gray-400 group-hover:text-gray-300 transition-colors">{desc}</p>
         </div>
     );
 }

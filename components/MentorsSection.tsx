@@ -34,7 +34,7 @@ const partners = [
     { name: "MOV", area: "Produtora" },
     { name: "URBANO", area: "Imobiliária" },
     { name: "QG", area: "Ecossistema" },
-    { name: "IBM", area: "Tecnologia" },
+    { name: "MACEDO", area: "Engenharia" },
 ];
 
 // --- SVG PATHS DA RAPOSA ---
