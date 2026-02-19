@@ -86,7 +86,7 @@ export default function VendasLP() {
             <img 
                 src="/vendedor-mobile.png" 
                 alt="O Novo Vendedor Mobile" 
-                className="block md:hidden w-full h-full object-cover object-top opacity-50"
+                className="block md:hidden w-full h-full object-cover object-center opacity-50"
             />
 
             {/* Gradientes para escurecer a imagem no mobile e dar leitura ao texto */}

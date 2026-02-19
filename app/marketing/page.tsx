@@ -118,12 +118,25 @@ export default function MarketingLP() {
       {/* HERO SECTION */}
       <header className="relative pt-32 pb-20 md:pt-40 md:pb-32 overflow-hidden min-h-[700px] flex items-center">
         <div className="absolute top-0 right-0 w-full md:w-[60%] h-full z-0">
+            
+            {/* 1. IMAGEM DESKTOP (Escondida no mobile, visível a partir do tamanho 'md') */}
             <img 
                 src="/raposa.png" 
                 alt="Raposa do Marketing" 
-                className="w-full h-full object-cover object-top md:object-right-top opacity-90"
+                className="hidden md:block w-full h-full object-cover object-right-top opacity-90"
             />
-            <div className="absolute inset-0 bg-gradient-to-r from-[#050505] via-[#050505]/50 to-transparent md:via-transparent block md:hidden" />
+
+            {/* 2. IMAGEM MOBILE (Visível no mobile, escondida a partir do tamanho 'md') */}
+            {/* IMPORTANTE: Coloque a imagem ideal para celular na pasta public com o nome 'raposa-mobile.png' */}
+            <img 
+                src="/raposa-mobile.png" 
+                alt="Raposa do Marketing Mobile" 
+                className="block md:hidden w-full h-full object-cover object-center opacity-50"
+            />
+
+            {/* Gradientes para escurecer a imagem no mobile e dar leitura ao texto */}
+            <div className="absolute inset-0 bg-gradient-to-r from-[#050505] via-[#050505]/70 to-transparent md:via-transparent block md:hidden" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/80 to-transparent block md:hidden" />
         </div>
 
         <div className="max-w-7xl mx-auto px-6 w-full relative z-10 grid grid-cols-1 md:grid-cols-2">
