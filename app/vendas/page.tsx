@@ -71,39 +71,39 @@ export default function VendasLP() {
       </nav>
 
       {/* --- HERO SECTION --- */}
-      <header className="relative pt-32 pb-20 md:pt-40 md:pb-32 overflow-hidden min-h-[700px] flex items-center">
-        <div className="absolute top-0 right-0 w-full md:w-[60%] h-full z-0">
-            
-            {/* 1. IMAGEM DESKTOP (Escondida no mobile) */}
+      <header className="relative pt-[65vh] pb-8 md:pt-40 md:pb-32 overflow-hidden min-h-[100vh] md:min-h-[700px] flex items-end md:items-center">
+        <div className="absolute inset-0 w-full h-full z-0">
+            {/* 1. IMAGEM DESKTOP */}
             <img 
                 src="/vendedor.png" 
                 alt="O Novo Vendedor" 
-                className="hidden md:block w-full h-full object-cover object-right-top opacity-90"
+                className="hidden md:block w-full md:w-[60%] h-full object-cover object-right-top opacity-90 absolute top-0 right-0"
             />
 
-            {/* 2. IMAGEM MOBILE (Visível apenas no mobile) */}
-            {/* IMPORTANTE: Coloque a imagem ideal na pasta public com o nome 'vendedor-mobile.png' */}
+            {/* 2. IMAGEM MOBILE */}
             <img 
                 src="/vendedor-mobile.png" 
                 alt="O Novo Vendedor Mobile" 
-                className="block md:hidden w-full h-full object-cover object-center opacity-50"
+                className="block md:hidden w-full h-full object-cover object-center opacity-100"
             />
 
-            {/* Gradientes para escurecer a imagem no mobile e dar leitura ao texto */}
-            <div className="absolute inset-0 bg-gradient-to-r from-[#050505] via-[#050505]/70 to-transparent md:via-transparent block md:hidden" />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/80 to-transparent block md:hidden" />
+            {/* Gradientes Desktop */}
+            <div className="absolute inset-0 bg-gradient-to-r from-[#050505] via-[#050505]/50 to-transparent hidden md:block" />
+            
+            {/* Gradiente Mobile - Focado na parte de baixo para liberar o topo */}
+            <div className="absolute bottom-0 w-full h-[60%] bg-gradient-to-t from-[#050505] via-[#050505]/95 to-transparent block md:hidden" />
         </div>
 
-        <div className="max-w-7xl mx-auto px-6 w-full relative z-10 grid grid-cols-1 md:grid-cols-2">
-            <div className="text-left pt-10 md:pt-0">
-                <h1 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tight mb-6 leading-[1.1] drop-shadow-xl pr-4">
+        <div className="max-w-7xl mx-auto px-6 w-full relative z-10 grid grid-cols-1 md:grid-cols-2 mt-auto">
+            <div className="text-left">
+                <h1 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tight mb-4 leading-[1.1] drop-shadow-2xl pr-4">
                     O NOVO <br />
                     <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-purple-300 pb-2 pr-2">
                         VENDEDOR
                     </span>
                 </h1>
                 
-                <p className="text-xl text-gray-300 max-w-lg mb-10 leading-relaxed font-light drop-shadow-md bg-[#050505]/40 md:bg-transparent p-2 md:p-0 rounded-lg backdrop-blur-sm md:backdrop-blur-none">
+                <p className="text-xl text-gray-300 max-w-lg mb-8 leading-relaxed font-light drop-shadow-md">
                     Esqueça o script decorado. Aprenda a negociar, persuadir e fechar contratos com método e previsibilidade.
                 </p>
 
@@ -116,7 +116,7 @@ export default function VendasLP() {
                     </button>
                 </div>
             </div>
-            <div></div>
+            <div className="hidden md:block"></div>
         </div>
       </header>
 
