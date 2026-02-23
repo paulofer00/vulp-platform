@@ -53,7 +53,7 @@ export default async function Home() {
         </div>
       </nav>
 
-      {/* --- 1. HERO SECTION (ANIMAÇÃO SUAVE NO TÍTULO) --- */}
+      {/* --- 1. HERO SECTION --- */}
       <section className="pt-40 pb-20 px-6 relative flex flex-col items-center text-center z-10">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-purple-900/20 blur-[120px] rounded-full pointer-events-none" />
         
@@ -74,19 +74,23 @@ export default async function Home() {
             </ScrollReveal>
 
             <ScrollReveal delay={0.4}>
-                <div className="flex flex-col md:flex-row gap-4 justify-center">
-                    <Link href="/marketing" className="group bg-purple-600 hover:bg-purple-700 text-white px-8 py-4 rounded-full font-bold text-lg transition-all hover:scale-105 shadow-lg shadow-purple-900/20 flex items-center justify-center gap-2">
-                        Quero trabalhar com Marketing <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-                    </Link>
-                    <Link href="/vendas" className="group bg-white/10 hover:bg-white text-white hover:text-black border border-white/20 hover:border-white px-8 py-4 rounded-full font-bold text-lg transition-all hover:scale-105 flex items-center justify-center gap-2">
-                        Quero vender melhor <Target size={18} />
+                <div className="flex justify-center">
+                    {/* BOTÃO ALTERADO AQUI */}
+                    <Link 
+                        href="/posicione-se" 
+                        className="group bg-purple-600 hover:bg-white text-white hover:text-purple-600 px-8 py-4 rounded-full font-bold text-xl transition-all duration-300 hover:scale-110 shadow-[0_0_40px_-10px_rgba(147,51,234,0.5)] flex items-center justify-center gap-3"
+                    >
+                        Posicione-se Agora 
+                        <ArrowRight size={22} className="group-hover:translate-x-1 transition-transform" />
                     </Link>
                 </div>
             </ScrollReveal>
         </div>
       </section>
 
-      {/* --- 2. PRA QUEM É (TEXTO VEM DA ESQUERDA, CARD VEM DA DIREITA) --- */}
+      {/* O RESTANTE DA PÁGINA CONTINUA IGUAL... */}
+      
+      {/* --- 2. PRA QUEM É --- */}
       <section className="py-20 bg-[#0A0A0A] border-y border-white/5 relative z-10">
         <div className="max-w-5xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
             
@@ -130,7 +134,7 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* --- 3. ESCOLHA SEU CAMINHO (CARDS SOBEM UM APÓS O OUTRO) --- */}
+      {/* --- 3. ESCOLHA SEU CAMINHO --- */}
       <section className="py-24 px-6 relative z-10">
         <div className="max-w-6xl mx-auto">
             <ScrollReveal>
@@ -165,7 +169,7 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* --- 4. DIFERENCIAIS (EFEITO ESCADINHA NOS ÍNDICES) --- */}
+      {/* --- 4. DIFERENCIAIS --- */}
       <section className="py-20 bg-[#0A0A0A] border-y border-white/5 relative z-10">
         <div className="max-w-6xl mx-auto px-6">
             <ScrollReveal>
@@ -196,7 +200,7 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* --- 5. MENTORES (O COMPONENTE JÁ TEM ANIMAÇÕES INTERNAS, MAS VAMOS DAR UM FADE IN GERAL) --- */}
+      {/* --- 5. MENTORES --- */}
       <ScrollReveal>
           <MentorsSection />
       </ScrollReveal>
@@ -207,7 +211,7 @@ export default async function Home() {
             <ScrollReveal>
                 <h2 className="text-3xl font-bold mb-8">Ainda com dúvida de qual caminho seguir?</h2>
                 <Link 
-                    href="https://wa.me/5593991174787"
+                    href="https://wa.me/5593992185577"
                     target="_blank"
                     className="bg-[#25D366] hover:bg-[#20bd5a] text-black font-bold py-4 px-10 rounded-full text-lg transition-all hover:scale-105 shadow-xl shadow-green-900/20 inline-flex items-center gap-3"
                 >

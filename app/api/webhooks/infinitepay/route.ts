@@ -4,10 +4,9 @@ import { NextResponse } from "next/server";
 import { sendWelcomeEmail } from "@/lib/email";
 
 // --- 1. CONFIGURAÇÃO: MAPA DE CURSOS ---
-// Aqui você liga a "origin" (do formulário) ao ID do curso na Cademi
 const ORIGIN_TO_COURSE_ID: Record<string, string> = {
-  "raposa-marketing-lp": "539381", // ✅ Seu ID Configurado
-  // "raposa-vendas-lp": "67890", // Futuro
+  "raposa-marketing-lp": "Cursovitalicio", // ID do curso Marketing
+  "posicione-se-agora": "posicionese",  // ID do curso Posicione-se
 };
 
 export async function POST(request: Request) {
@@ -53,10 +52,7 @@ export async function POST(request: Request) {
     // --- 2. LÓGICA DE ESCOLHA DO CURSO ---
     console.log(`🦊 Lead Encontrado (${lead.name}) vindo de: ${lead.origin}`);
 
-    // Descobre qual curso liberar baseado na origem
     const courseIdToEnroll = ORIGIN_TO_COURSE_ID[lead.origin];
-    
-    // Se achou um curso correspondente, coloca na lista. Se não, lista vazia.
     const courseIds = courseIdToEnroll ? [courseIdToEnroll] : [];
 
     if (!courseIdToEnroll) {
@@ -71,19 +67,20 @@ export async function POST(request: Request) {
       courseIds: courseIds 
     });
 
+    // 👇 AQUI ESTÁ A CORREÇÃO PRINCIPAL 👇
     if (cademiResult.success) {
       console.log(`✅ Aluno matriculado: ${lead.email}`);
-      console.log(`🔑 Senha Gerada: ${cademiResult.password}`); 
+      
+      // Se a Cademi não mandar a senha (porque o aluno já tinha cadastro), mandamos essa mensagem no lugar:
+      const passwordToSend = cademiResult.password || "Você já possui cadastro na VULP! Use a sua senha antiga ou clique em 'Esqueci minha senha' na página de login.";
 
-      // --- 4. ENVIAR E-MAIL COM A SENHA ---
-      if (cademiResult.password) {
-          await sendWelcomeEmail(lead.email, lead.name, cademiResult.password);
-          console.log(`📧 E-mail de acesso enviado para: ${lead.email}`);
-      }
+      // --- 4. ENVIAR E-MAIL (AGORA ENVIA SEMPRE!) ---
+      await sendWelcomeEmail(lead.email, lead.name, passwordToSend);
+      console.log(`📧 E-mail de acesso enviado para: ${lead.email}`);
 
       return NextResponse.json({ message: "Aluno matriculado e notificado!" });
     } else {
-      // ESTE ERA O PEDAÇO QUE FALTAVA:
+      console.error("❌ Falha na Cademi:", cademiResult.error);
       return NextResponse.json({ error: "Erro ao criar na Cademi" }, { status: 500 });
     }
 

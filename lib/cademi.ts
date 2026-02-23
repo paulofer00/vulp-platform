@@ -141,62 +141,63 @@ export async function getProgressoCurso(email: string, produtoId: string) {
     return null;
   }
 }
-// --- FUNÇÃO 4: CRIAR ALUNO (NOVA) ---
-// Usada pelo Webhook quando o pagamento é aprovado
-// lib/cademi.ts (Apenas a função createCademiStudent mudou)
-
-// Agora aceitamos um array opcional "courseIds"
+// --- FUNÇÃO 4: CRIAR ALUNO (OFICIAL: VIA /entrega/enviar) ---
 export async function createCademiStudent(student: { name: string; email: string; phone?: string; courseIds?: string[] }) {
-  
-  if (!process.env.CADEMI_API_URL || !process.env.CADEMI_API_KEY) {
-     // Ajuste as variáveis de ambiente para os nomes que você usa (CADEMI_URL ou CADEMI_API_URL)
-     // No seu código anterior você usava CADEMI_URL e CADEMI_KEY como constantes globais.
-     // Se elas já estão definidas no topo do arquivo, pode remover esse if.
-     return { success: false, error: "Configuração ausente" };
-  }
-
-  // Pegando as variáveis globais que você já tem no topo do arquivo
   const baseUrl = process.env.CADEMI_API_URL; 
   const apiKey = process.env.CADEMI_API_KEY;
 
-  const password = Math.random().toString(36).slice(-8) + "Fox!";
-
-  // Montamos a lista de cursos dinamicamente
-  const cursosParaMatricular = student.courseIds 
-    ? student.courseIds.map(id => ({ id })) 
-    : [];
-
-  const payload = {
-    usuario: {
-      nome: student.name,
-      email: student.email,
-      celular: student.phone,
-      senha: password, 
-      envia_email: false 
-    },
-    cursos: cursosParaMatricular // <--- AQUI QUE A MÁGICA ACONTECE
-  };
+  if (!baseUrl || !apiKey) {
+     return { success: false, error: "Configuração ausente (.env)" };
+  }
 
   try {
-    const response = await fetch(`${baseUrl}/usuario`, {
-      method: "POST",
-      headers: {
-        "Authorization": apiKey!, // O ! força o TypeScript a aceitar se tiver certeza que existe
-        "Content-Type": "application/json",
-        "Accept": "application/json"
-      },
-      body: JSON.stringify(payload)
-    });
+    const cursos = student.courseIds || [];
+    let allSuccess = true;
+    let errorMsg = "";
 
-    const json = await response.json();
+    console.log(`🦊 Matriculando aluno via /entrega/enviar: ${student.email}`);
 
-    if (!response.ok || !json.success) {
-       return { success: false, error: json.errors || json.message };
+    for (const courseId of cursos) {
+        const payload = {
+            codigo: `vulp_${Date.now()}_${courseId}`, 
+            status: "aprovado",
+            produto_id: courseId, // AQUI VAI O ID DA ENTREGA!
+            cliente_nome: student.name,
+            cliente_email: student.email,
+            cliente_celular: student.phone || ""
+        };
+
+        const response = await fetch(`${baseUrl}/entrega/enviar`, {
+            method: "POST",
+            headers: {
+                "Authorization": apiKey,
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            },
+            body: JSON.stringify(payload)
+        });
+
+        const json = await response.json();
+        console.log(`📡 Resposta Cademi (Entrega ${courseId}):`, JSON.stringify(json));
+
+        // 👇 NOVA TRAVA: Pega o erro oculto da Cademi
+        const errorMessage = json.error || json.errors || json.message || json.data?.Carga?.erro;
+
+        if (!response.ok || json.success === false || json.status === "erro" || errorMessage) {
+            allSuccess = false;
+            errorMsg = errorMessage || JSON.stringify(json);
+        }
     }
 
-    return { success: true, password, login: student.email };
+    if (!allSuccess) {
+        return { success: false, error: errorMsg };
+    }
+
+    const instrucaoSenha = "A Cademi enviou-te um e-mail com a senha provisória. Se preferires, podes clicar em 'Esqueci a minha senha' no ecrã de login para criares a tua própria senha agora mesmo!";
+
+    return { success: true, password: instrucaoSenha, login: student.email };
 
   } catch (error) {
-    return { success: false, error };
+    return { success: false, error: error instanceof Error ? error.message : "Erro desconhecido" };
   }
 }
