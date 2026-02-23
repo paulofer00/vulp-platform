@@ -1,39 +1,43 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Users, Zap } from "lucide-react";
+// O ícone Users foi removido pois usaremos fotos reais agora
+import { Zap } from "lucide-react";
 
-// --- DADOS DOS MENTORES ---
+// --- DADOS DOS MENTORES ATUALIZADOS COM IMAGENS ---
 const mentors = [
   {
     id: 1,
-    name: "QG",
-    role: "Estratégia & Visão",
-    description: "Fundador da VULP. Especialista em construir negócios do zero e escalar operações.",
-    color: "from-purple-600 to-indigo-600"
+    name: "Nelson",
+    role: "CEO Agência Up&Up",
+    description: "Fundador da Agência Up&Up, empreendedor de visão.",
+    color: "from-purple-600 to-indigo-600",
+    image: "/nelson.png" // Foto do Nelson
   },
   {
     id: 2,
-    name: "Gabriel",
-    role: "Marketing & Vendas",
-    description: "Mestre em tráfego e conversão. Já gerenciou mais de 7 dígitos em anúncios.",
-    color: "from-blue-600 to-cyan-500"
+    name: "Beatriz Fernandes",
+    role: "Influencer",
+    description: "Beatriz é a maior influencer de vendas na região, com mais de 70K de seguidores.",
+    color: "from-blue-600 to-cyan-500",
+    image: "/bea.png" // Foto da Bea
   },
   {
     id: 3,
-    name: "Renata",
-    role: "Design & Branding",
-    description: "A mente criativa por trás da identidade visual que converte e encanta.",
-    color: "from-pink-500 to-rose-500"
+    name: "Alarico Neto",
+    role: "CEO Tapajós Skate Shop",
+    description: "O criador da maior Skate Shop da região, converte vendas presenciais através do digital.",
+    color: "from-pink-500 to-rose-500",
+    image: "/alarico.png" // Foto do Alarico
   }
 ];
 
 // --- DADOS DAS EMPRESAS PARCEIRAS ---
 const partners = [
-    { name: "UP", area: "Agência" },
-    { name: "MOV", area: "Produtora" },
-    { name: "URBANO", area: "Imobiliária" },
-    { name: "QG", area: "Ecossistema" },
+    { name: "UP", area: "Agência de Marketing" },
+    { name: "Empresa", area: "Empresa" },
+    { name: "Empresa", area: "Empresa" },
+    { name: "QG", area: "Loja de Iphone" },
     { name: "MACEDO", area: "Engenharia" },
 ];
 
@@ -95,7 +99,7 @@ export function MentorsSection() {
                 </div>
             </div>
 
-            {/* Lado Direito - Slider Cards (Mantido igual) */}
+            {/* Lado Direito - Slider Cards */}
             <div className="order-1 lg:order-2 relative h-[500px] w-full flex items-center justify-center perspective-1000">
                 {mentors.map((mentor, index) => (
                     <div 
@@ -109,11 +113,18 @@ export function MentorsSection() {
                         <div className="relative w-full h-full bg-[#0A0A0A] rounded-[2rem] overflow-hidden border border-purple-500/20 shadow-2xl shadow-purple-900/20 group hover:border-purple-500/50 transition-colors">
                             <div className={`absolute top-0 w-full h-2/3 bg-gradient-to-b ${mentor.color} opacity-20`} />
                             <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center text-white">
+                                
+                                {/* FOTO DO MENTOR AQUI */}
                                 <div className={`w-40 h-40 rounded-full mb-8 p-1 bg-gradient-to-br ${mentor.color} shadow-[0_0_30px_rgba(168,85,247,0.4)]`}>
                                     <div className="w-full h-full bg-[#151515] rounded-full flex items-center justify-center overflow-hidden relative">
-                                        <Users size={64} className="text-gray-400 group-hover:text-white transition-colors" />
+                                        <img 
+                                            src={mentor.image} 
+                                            alt={mentor.name} 
+                                            className="w-full h-full object-cover rounded-full group-hover:scale-110 transition-transform duration-500" 
+                                        />
                                     </div>
                                 </div>
+
                                 <h3 className="text-4xl font-black mb-2 uppercase tracking-tight">{mentor.name}</h3>
                                 <p className={`text-sm font-bold uppercase tracking-widest bg-clip-text text-transparent bg-gradient-to-r ${mentor.color} mb-6`}>{mentor.role}</p>
                                 <p className="text-gray-400 text-sm max-w-xs mx-auto leading-relaxed">"{mentor.description}"</p>
@@ -124,7 +135,7 @@ export function MentorsSection() {
             </div>
         </div>
 
-        {/* --- NOVA FAIXA DE EMPRESAS INTERATIVA (Branco -> Preto no hover) --- */}
+        {/* --- NOVA FAIXA DE EMPRESAS INTERATIVA --- */}
         <div className="border-t border-gray-200 pt-16 relative">
             <p className="text-center text-gray-500 text-xs uppercase tracking-[0.2em] mb-10 font-bold">
                 Empresas parceiras do ecossistema
