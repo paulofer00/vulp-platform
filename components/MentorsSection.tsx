@@ -1,8 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-// O ícone Users foi removido pois usaremos fotos reais agora
-import { Zap } from "lucide-react";
 
 // --- DADOS DOS MENTORES ATUALIZADOS COM IMAGENS ---
 const mentors = [
@@ -12,7 +10,7 @@ const mentors = [
     role: "CEO Agência Up&Up",
     description: "Fundador da Agência Up&Up, empreendedor de visão.",
     color: "from-purple-600 to-indigo-600",
-    image: "/nelson.png" // Foto do Nelson
+    image: "/nelson.png" 
   },
   {
     id: 2,
@@ -20,7 +18,7 @@ const mentors = [
     role: "Influencer",
     description: "Beatriz é a maior influencer de vendas na região, com mais de 70K de seguidores.",
     color: "from-blue-600 to-cyan-500",
-    image: "/bea.png" // Foto da Bea
+    image: "/bea.png" 
   },
   {
     id: 3,
@@ -28,7 +26,7 @@ const mentors = [
     role: "CEO Tapajós Skate Shop",
     description: "O criador da maior Skate Shop da região, converte vendas presenciais através do digital.",
     color: "from-pink-500 to-rose-500",
-    image: "/alarico.png" // Foto do Alarico
+    image: "/alarico.png" 
   }
 ];
 
@@ -110,32 +108,38 @@ export function MentorsSection() {
                                 : "opacity-0 translate-x-20 rotate-6 scale-90 z-0"
                         }`}
                     >
-                        <div className="relative w-full h-full bg-[#0A0A0A] rounded-[2rem] overflow-hidden border border-purple-500/20 shadow-2xl shadow-purple-900/20 group hover:border-purple-500/50 transition-colors">
-                            <div className={`absolute top-0 w-full h-2/3 bg-gradient-to-b ${mentor.color} opacity-20`} />
-                            <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center text-white">
+                        {/* CARD REESTRUTURADO (Imagem em cima, Texto em baixo) */}
+                        <div className="relative w-full h-full bg-[#0A0A0A] rounded-[2rem] overflow-hidden border border-purple-500/20 shadow-2xl shadow-purple-900/20 group hover:border-purple-500/50 transition-colors flex flex-col">
+                            
+                            {/* PARTE SUPERIOR: FOTO GRANDE (60% do Card) */}
+                            <div className="relative w-full h-[60%] overflow-hidden bg-[#151515]">
+                                {/* Sobreposição suave colorida por cima da foto */}
+                                <div className={`absolute inset-0 bg-gradient-to-t ${mentor.color} opacity-20 mix-blend-overlay z-10 transition-opacity group-hover:opacity-0`} />
                                 
-                                {/* FOTO DO MENTOR AQUI */}
-                                <div className={`w-40 h-40 rounded-full mb-8 p-1 bg-gradient-to-br ${mentor.color} shadow-[0_0_30px_rgba(168,85,247,0.4)]`}>
-                                    <div className="w-full h-full bg-[#151515] rounded-full flex items-center justify-center overflow-hidden relative">
-                                        <img 
-                                            src={mentor.image} 
-                                            alt={mentor.name} 
-                                            className="w-full h-full object-cover rounded-full group-hover:scale-110 transition-transform duration-500" 
-                                        />
-                                    </div>
-                                </div>
-
-                                <h3 className="text-4xl font-black mb-2 uppercase tracking-tight">{mentor.name}</h3>
-                                <p className={`text-sm font-bold uppercase tracking-widest bg-clip-text text-transparent bg-gradient-to-r ${mentor.color} mb-6`}>{mentor.role}</p>
-                                <p className="text-gray-400 text-sm max-w-xs mx-auto leading-relaxed">"{mentor.description}"</p>
+                                <img 
+                                    src={mentor.image} 
+                                    alt={mentor.name} 
+                                    className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-700 z-0" 
+                                />
+                                
+                                {/* Degradê escuro na base da foto para conectar suavemente com o texto */}
+                                <div className="absolute bottom-0 w-full h-24 bg-gradient-to-t from-[#0A0A0A] to-transparent z-20" />
                             </div>
+
+                            {/* PARTE INFERIOR: TEXTO (40% do Card) */}
+                            <div className="relative flex-1 flex flex-col items-center justify-start p-6 text-center text-white z-30 -mt-4">
+                                <h3 className="text-3xl font-black mb-1 uppercase tracking-tight drop-shadow-lg">{mentor.name}</h3>
+                                <p className={`text-sm font-bold uppercase tracking-widest bg-clip-text text-transparent bg-gradient-to-r ${mentor.color} mb-3 drop-shadow-md`}>{mentor.role}</p>
+                                <p className="text-gray-400 text-sm max-w-[280px] mx-auto leading-relaxed">"{mentor.description}"</p>
+                            </div>
+
                         </div>
                     </div>
                 ))}
             </div>
         </div>
 
-        {/* --- NOVA FAIXA DE EMPRESAS INTERATIVA --- */}
+        {/* --- FAIXA DE EMPRESAS INTERATIVA --- */}
         <div className="border-t border-gray-200 pt-16 relative">
             <p className="text-center text-gray-500 text-xs uppercase tracking-[0.2em] mb-10 font-bold">
                 Empresas parceiras do ecossistema
@@ -148,9 +152,7 @@ export function MentorsSection() {
                         transition-all duration-300 overflow-hidden cursor-default
                         hover:bg-black hover:border-black hover:scale-105 hover:shadow-xl"
                     >
-                        {/* Estado Inicial: Texto Preto */}
                         <div className="relative z-10 flex flex-col items-center group-hover:invert transition-all duration-300">
-                             {/* Simulando Logo com Texto Bold */}
                              <span className="text-2xl font-black tracking-tighter text-gray-900 mb-1">{p.name}</span>
                              <span className="text-[10px] uppercase font-bold tracking-widest text-gray-400">{p.area}</span>
                         </div>
