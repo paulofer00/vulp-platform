@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
 const mentors = [
   {
     id: 1,
-    name: "Nelson",
+    name: "Nelson Jr.",
     role: "CEO Agência Up&Up",
     description: "Fundador da Agência Up&Up, empreendedor de visão.",
     color: "from-purple-600 to-indigo-600",

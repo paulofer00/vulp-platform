@@ -147,7 +147,7 @@ export function ExplodingBrands() {
           className="text-6xl md:text-8xl font-black leading-[0.9] tracking-tighter drop-shadow-2xl pointer-events-none"
         >
           PRA QUEM É<br />
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-500 via-fuchsia-400 to-purple-500 pointer-events-none">
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-500 via-fuchsia-400 to-purple-500 pointer-events-none pr-2 pb-2">
             A VULP?
           </span>
         </motion.h2>
