@@ -160,16 +160,17 @@ export function MentorsSection() {
                     >
                         <div className="relative z-10 flex flex-col items-center w-full">
                              
-                             {/* 👇 2. SISTEMA INTELIGENTE DE LOGOS 👇 */}
-                             {p.image ? (
-                                // Se tiver imagem configurada no array, mostra a logo
-                                // Efeito: Fica cinza em descanso, e ganha cor/brilho no hover quando o fundo fica preto!
-                                <img 
-                                    src={p.image} 
-                                    alt={p.name} 
-                                    className="w-20 h-20 object-contain mb-2 filter grayscale opacity-70 group-hover:grayscale-0 group-hover:opacity-100 group-hover:drop-shadow-[0_0_10px_rgba(255,255,255,0.2)] transition-all duration-300" 
-                                />
-                             ) : (
+                             {/* 👇 SISTEMA INTELIGENTE DE LOGOS 👇 */}
+{p.image ? (
+    <img 
+        src={p.image} 
+        alt={p.name} 
+        // 1. brightness-0 transforma a logo em preta
+        // 2. opacity-70 deixa ela com um tom de grafite/cinza escuro perfeito pro fundo branco
+        // 3. No hover, tiramos o brilho 0 e ela volta a ter cor/destaque!
+        className="w-20 h-20 object-contain mb-2 brightness-0 opacity-70 group-hover:brightness-100 group-hover:opacity-100 group-hover:drop-shadow-[0_0_15px_rgba(255,255,255,0.2)] transition-all duration-300" 
+    />
+) : (
                                 // Se não tiver imagem, mostra o nome em texto como fallback
                                 <span className="text-2xl font-black tracking-tighter text-gray-900 group-hover:text-white transition-colors duration-300 mb-1">
                                     {p.name}
