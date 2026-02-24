@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 
-// --- DADOS DOS MENTORES ATUALIZADOS COM IMAGENS ---
+// --- DADOS DOS MENTORES ---
 const mentors = [
   {
     id: 1,
@@ -30,13 +30,14 @@ const mentors = [
   }
 ];
 
-// --- DADOS DAS EMPRESAS PARCEIRAS ---
+// --- DADOS DAS EMPRESAS PARCEIRAS (ATUALIZADO COM TAPAJÓS) ---
 const partners = [
-    { name: "UP", area: "Agência de Marketing" },
-    { name: "Empresa", area: "Empresa" },
-    { name: "Empresa", area: "Empresa" },
-    { name: "QG", area: "Loja de Iphone" },
-    { name: "MACEDO", area: "Engenharia" },
+    { name: "UP", area: "Agência de Marketing", image: "/up.png" },
+    { name: "Macedo", area: "Engenharia", image: "/macedo.png" },
+    { name: "QG", area: "Loja de Iphone", image: "/qg.png" },
+    { name: "Tapajós", area: "Skate Shop", image: "/tss.png" },
+    // Deixei mais uma vazia caso entre mais um parceiro no futuro!
+    { name: "Sua Empresa", area: "Parceiro" }, 
 ];
 
 // --- SVG PATHS DA RAPOSA ---
@@ -108,22 +109,27 @@ export function MentorsSection() {
                                 : "opacity-0 translate-x-20 rotate-6 scale-90 z-0"
                         }`}
                     >
-                        {/* CARD REESTRUTURADO (Imagem em cima, Texto em baixo) */}
+                        {/* CARD REESTRUTURADO */}
                         <div className="relative w-full h-full bg-[#0A0A0A] rounded-[2rem] overflow-hidden border border-purple-500/20 shadow-2xl shadow-purple-900/20 group hover:border-purple-500/50 transition-colors flex flex-col">
                             
-                            {/* PARTE SUPERIOR: FOTO GRANDE (60% do Card) */}
-                            <div className="relative w-full h-[60%] overflow-hidden bg-[#151515]">
-                                {/* Sobreposição suave colorida por cima da foto */}
-                                <div className={`absolute inset-0 bg-gradient-to-t ${mentor.color} opacity-20 mix-blend-overlay z-10 transition-opacity group-hover:opacity-0`} />
+                            {/* PARTE SUPERIOR: FOTO E NEON */}
+                            <div className="relative w-full h-[60%] overflow-hidden bg-[#151515] flex items-end justify-center">
                                 
+                                {/* 👇 1. NEON ROXO DISSIPADO (A MÁGICA ACONTECE AQUI) 👇 */}
+                                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-purple-600/70 blur-[80px] rounded-full z-0 pointer-events-none group-hover:scale-110 transition-transform duration-700" />
+
+                                {/* Sobreposição suave colorida por cima da foto */}
+                                <div className={`absolute inset-0 bg-gradient-to-t ${mentor.color} opacity-20 mix-blend-overlay z-10 transition-opacity group-hover:opacity-0 pointer-events-none`} />
+                                
+                                {/* Imagem do Mentor (Para o neon brilhar, a foto precisa estar sem fundo/recortada) */}
                                 <img 
                                     src={mentor.image} 
                                     alt={mentor.name} 
-                                    className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-700 z-0" 
+                                    className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-700 relative z-10" 
                                 />
                                 
                                 {/* Degradê escuro na base da foto para conectar suavemente com o texto */}
-                                <div className="absolute bottom-0 w-full h-24 bg-gradient-to-t from-[#0A0A0A] to-transparent z-20" />
+                                <div className="absolute bottom-0 w-full h-24 bg-gradient-to-t from-[#0A0A0A] to-transparent z-20 pointer-events-none" />
                             </div>
 
                             {/* PARTE INFERIOR: TEXTO (40% do Card) */}
@@ -139,7 +145,7 @@ export function MentorsSection() {
             </div>
         </div>
 
-        {/* --- FAIXA DE EMPRESAS INTERATIVA --- */}
+        {/* --- FAIXA DE EMPRESAS INTERATIVA (ATUALIZADA) --- */}
         <div className="border-t border-gray-200 pt-16 relative">
             <p className="text-center text-gray-500 text-xs uppercase tracking-[0.2em] mb-10 font-bold">
                 Empresas parceiras do ecossistema
@@ -150,11 +156,29 @@ export function MentorsSection() {
                         key={i} 
                         className="group relative w-36 h-36 bg-gray-50 rounded-2xl flex flex-col items-center justify-center border border-gray-200 
                         transition-all duration-300 overflow-hidden cursor-default
-                        hover:bg-black hover:border-black hover:scale-105 hover:shadow-xl"
+                        hover:bg-black hover:border-black hover:scale-105 hover:shadow-xl p-4"
                     >
-                        <div className="relative z-10 flex flex-col items-center group-hover:invert transition-all duration-300">
-                             <span className="text-2xl font-black tracking-tighter text-gray-900 mb-1">{p.name}</span>
-                             <span className="text-[10px] uppercase font-bold tracking-widest text-gray-400">{p.area}</span>
+                        <div className="relative z-10 flex flex-col items-center w-full">
+                             
+                             {/* 👇 2. SISTEMA INTELIGENTE DE LOGOS 👇 */}
+                             {p.image ? (
+                                // Se tiver imagem configurada no array, mostra a logo
+                                // Efeito: Fica cinza em descanso, e ganha cor/brilho no hover quando o fundo fica preto!
+                                <img 
+                                    src={p.image} 
+                                    alt={p.name} 
+                                    className="w-20 h-20 object-contain mb-2 filter grayscale opacity-70 group-hover:grayscale-0 group-hover:opacity-100 group-hover:drop-shadow-[0_0_10px_rgba(255,255,255,0.2)] transition-all duration-300" 
+                                />
+                             ) : (
+                                // Se não tiver imagem, mostra o nome em texto como fallback
+                                <span className="text-2xl font-black tracking-tighter text-gray-900 group-hover:text-white transition-colors duration-300 mb-1">
+                                    {p.name}
+                                </span>
+                             )}
+
+                             <span className="text-[10px] uppercase font-bold tracking-widest text-gray-400 text-center">
+                                {p.area}
+                             </span>
                         </div>
                     </div>
                 ))}
