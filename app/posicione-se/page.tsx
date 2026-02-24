@@ -14,10 +14,8 @@ import { useGSAP } from "@gsap/react";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import dynamic from "next/dynamic";
 
-// Isto obriga o Next.js a carregar o 3D só quando a página já abriu no cliente
 const VulpCoinScene = dynamic(() => import("@/components/VulpCoinScene"), { ssr: false });
 
-// Regista o plugin ScrollTrigger de forma segura no Next.js
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger, useGSAP);
 }
@@ -26,7 +24,7 @@ if (typeof window !== "undefined") {
 const CHECKOUT_CONFIG = {
     infiniteTag: "upeup", 
     productName: "Curso Posicione-se Agora",
-    price: 49700, // R$ 497,00 (Em centavos)
+    price: 49700, 
 };
 
 // --- DADOS DOS ASTRONAUTAS ---
@@ -35,16 +33,16 @@ const astronauts = [
     id: 1,
     name: "Beatriz Fernandes",
     title: "A Voz do Engajamento",
-    role: "Influenciadora (+70k seguidores)",
+    role: "Influenciadora (+70k)",
     description: "Sabe exatamente como prender a atenção e transformar seguidores engajados numa comunidade fiel e compradora.",
-    image: "/bea.png", // Usa o nome real do teu ficheiro
+    image: "/bea.png", 
     color: "from-pink-500 to-purple-500"
   },
   {
     id: 2,
     name: "Alarico Neto",
     title: "O Estrategista Híbrido",
-    role: "Dono da Tapajós Skate Shop",
+    role: "Tapajós Skate Shop",
     description: "Transformou a maior loja da região numa máquina de vendas presenciais usando o poder massivo do posicionamento online.",
     image: "/alarico.png",
     color: "from-blue-500 to-cyan-500"
@@ -54,7 +52,7 @@ const astronauts = [
     name: "Nelson Jr.",
     title: "O Arquiteto Digital",
     role: "CEO Agência Up&Up",
-    description: "O cérebro por trás da maior agência de marketing da região. Traz o método validado por grandes empresas para o seu negócio.",
+    description: "O cérebro por trás da maior agência de marketing. Traz o método validado por grandes empresas para o seu negócio.",
     image: "/nelson.png",
     color: "from-purple-500 to-indigo-500"
   }
@@ -67,10 +65,8 @@ export default function PosicioneSeLP() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [paymentLink, setPaymentLink] = useState(""); 
 
-  // Referência para o contentor principal onde o GSAP vai atuar
   const mainRef = useRef<HTMLDivElement>(null);
 
-  // Supabase Client
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -78,6 +74,14 @@ export default function PosicioneSeLP() {
 
   const nextAstro = () => setCurrentAstro((prev) => (prev + 1) % astronauts.length);
   const prevAstro = () => setCurrentAstro((prev) => (prev - 1 + astronauts.length) % astronauts.length);
+
+  // Auto-play do Carrossel de Elite
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentAstro((prev) => (prev + 1) % astronauts.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => {
@@ -88,65 +92,31 @@ export default function PosicioneSeLP() {
     }, 300);
   };
 
-  // --- ANIMAÇÕES GSAP ---
   useGSAP(() => {
-    // 1. Hero Section (Animação de Entrada)
     gsap.from(".hero-bg img", { scale: 1.15, duration: 2.5, ease: "power2.out" });
     gsap.from(".hero-button", { y: 80, opacity: 0, duration: 1.2, delay: 0.5, ease: "back.out(1.5)" });
 
-    // 2. Título da Secção dos Astronautas
     gsap.from(".astro-header", {
-      scrollTrigger: {
-        trigger: ".astro-section",
-        start: "top 80%", // Ativa quando o topo da secção atinge 80% da altura do ecrã
-      },
-      y: 50,
-      opacity: 0,
-      duration: 1,
-      ease: "power3.out"
+      scrollTrigger: { trigger: ".astro-section", start: "top 80%" },
+      y: 50, opacity: 0, duration: 1, ease: "power3.out"
     });
 
-    // 3. Card/Carrossel dos Astronautas
     gsap.from(".astro-card", {
-      scrollTrigger: {
-        trigger: ".astro-section",
-        start: "top 65%",
-      },
-      y: 100,
-      opacity: 0,
-      scale: 0.95,
-      duration: 1.2,
-      ease: "power4.out"
+      scrollTrigger: { trigger: ".astro-section", start: "top 65%" },
+      y: 100, opacity: 0, scale: 0.95, duration: 1.2, ease: "power4.out"
     });
 
-    // 4. Módulos do Curso (Efeito Stagger - Um de cada vez)
     gsap.from(".modulo-card", {
-      scrollTrigger: {
-        trigger: ".modulos-section",
-        start: "top 75%",
-      },
-      y: 60,
-      opacity: 0,
-      duration: 0.8,
-      stagger: 0.2, // O atraso entre cada um a aparecer!
-      ease: "back.out(1.2)"
+      scrollTrigger: { trigger: ".modulos-section", start: "top 75%" },
+      y: 60, opacity: 0, duration: 0.8, stagger: 0.2, ease: "back.out(1.2)"
     });
 
-    // 5. Oferta/Preço
     gsap.from(".oferta-card", {
-      scrollTrigger: {
-        trigger: ".oferta-section",
-        start: "top 70%",
-      },
-      scale: 0.9,
-      opacity: 0,
-      duration: 1,
-      ease: "power3.out"
+      scrollTrigger: { trigger: ".oferta-section", start: "top 70%" },
+      scale: 0.9, opacity: 0, duration: 1, ease: "power3.out"
     });
-
   }, { scope: mainRef });
 
-  // --- GERADOR DE LINK INTELIGENTE ---
   const generateCheckoutUrl = (leadId: string) => {
     const baseUrl = typeof window !== "undefined" ? window.location.origin : "https://vulp.vc";
     const items = JSON.stringify([{ name: CHECKOUT_CONFIG.productName, price: CHECKOUT_CONFIG.price, quantity: 1 }]);
@@ -154,7 +124,6 @@ export default function PosicioneSeLP() {
     return `https://checkout.infinitepay.io/${CHECKOUT_CONFIG.infiniteTag}?${params.toString()}`;
   };
 
-  // --- ENVIO E GERAÇÃO DE PAGAMENTO ---
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setIsLoading(true);
@@ -183,28 +152,23 @@ export default function PosicioneSeLP() {
   }
 
   return (
-    // Adicionámos o mainRef aqui para o GSAP conseguir "ver" toda a página
     <div ref={mainRef} className="min-h-screen bg-[#02000A] text-white font-sans selection:bg-indigo-500/30 relative overflow-hidden">
       
-      {/* BACKGROUND DE PARTÍCULAS NO ESPAÇO */}
       <ParticlesBackground />
 
-      {/* --- NAVBAR --- */}
+      {/* NAVBAR */}
       <nav className="fixed w-full z-40 bg-[#02000A]/80 backdrop-blur-md border-b border-white/5">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
             <Link href="/">
                 <img src="/logo-white.png" alt="VULP" className="h-8 w-auto hover:opacity-80 transition-opacity" />
             </Link>
-            <button 
-                onClick={openModal}
-                className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold py-2 px-6 rounded-full transition-all shadow-[0_0_15px_rgba(99,102,241,0.4)] text-sm"
-            >
+            <button onClick={openModal} className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold py-2 px-6 rounded-full transition-all shadow-[0_0_15px_rgba(99,102,241,0.4)] text-sm">
                 Garantir Vaga
             </button>
         </div>
       </nav>
 
-      {/* --- 1. HERO SECTION --- */}
+      {/* HERO SECTION */}
       <header className="relative w-full h-[100svh] min-h-[600px] md:min-h-[700px] flex flex-col items-center justify-end pb-12 md:pb-10 z-10">
         <div className="absolute inset-0 z-0 hero-bg">
             <img src="/posicione-se-espaco-sideral.png" alt="Desktop" className="hidden md:block w-full h-full object-cover object-top" />
@@ -219,60 +183,97 @@ export default function PosicioneSeLP() {
         </div>
       </header>
 
-      {/* --- SEÇÃO: OS 3 ASTRONAUTAS (COM SCROLLTRIGGER) --- */}
+      {/* --- SEÇÃO: OS 3 ASTRONAUTAS (DESIGN DE ELITE INJETADO) --- */}
       <section className="py-24 relative z-10 bg-gradient-to-b from-transparent to-[#050212] astro-section">
         <div className="max-w-6xl mx-auto px-6">
-            <div className="text-center mb-16 astro-header">
-                <h2 className="text-3xl md:text-5xl font-black mb-4 text-white">Os Três Astronautas do Mercado</h2>
-                <p className="text-lg text-indigo-300">Quem vai guiar a sua jornada até o topo.</p>
-            </div>
-
-            <div className="relative bg-[#0A051A] border border-white/10 rounded-3xl p-8 md:p-12 overflow-hidden shadow-2xl astro-card">
-                <div className={`absolute -top-20 -right-20 w-96 h-96 bg-gradient-to-br ${astronauts[currentAstro].color} opacity-20 blur-[100px] rounded-full transition-colors duration-700`} />
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center relative z-10">
-                    <div className="relative aspect-square md:aspect-[4/5] bg-gradient-to-t from-[#110826] to-transparent rounded-2xl overflow-hidden border border-white/5 flex items-end justify-center">
-                        <div className="absolute inset-0 flex items-center justify-center text-gray-800">
-                             {/* SE TIVER AS FOTOS REAIS, COLOQUE A TAG IMG AQUI como fizemos na vitrine! */}
-                            <Star size={100} className="opacity-20" />
+            
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+                
+                {/* Lado Esquerdo - Textos e Controles */}
+                <div className="order-2 lg:order-1 flex flex-col justify-center astro-header">
+                    <h2 className="text-4xl md:text-6xl font-black mb-6 text-white leading-tight">
+                        Os Três <br/>
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">
+                            Astronautas
+                        </span> <br/>
+                        do Mercado.
+                    </h2>
+                    <p className="text-lg text-indigo-300 mb-8 border-l-4 border-indigo-500 pl-6 leading-relaxed">
+                        Quem vai guiar a sua jornada até o topo. <br/>
+                        Eles já trilharam o caminho e agora abrem a caixa-preta para si.
+                    </p>
+                    
+                    {/* Controles de Navegação */}
+                    <div className="flex items-center gap-4 mt-4">
+                        <button onClick={prevAstro} className="p-4 rounded-full bg-white/5 hover:bg-white/10 text-white transition-colors border border-white/10">
+                            <ChevronLeft size={24} />
+                        </button>
+                        <div className="flex gap-2">
+                            {astronauts.map((_, i) => (
+                                <button 
+                                    key={i} 
+                                    onClick={() => setCurrentAstro(i)}
+                                    className={`h-2 rounded-full transition-all duration-500 ${i === currentAstro ? 'w-10 bg-indigo-500 shadow-[0_0_10px_#6366f1]' : 'w-2 bg-white/20 hover:bg-white/40'}`} 
+                                />
+                            ))}
                         </div>
-                    </div>
-
-                    <div className="flex flex-col h-full justify-center">
-                        <span className={`inline-block px-4 py-1 rounded-full text-xs font-bold uppercase tracking-widest mb-6 w-max bg-gradient-to-r ${astronauts[currentAstro].color} text-white`}>
-                            {astronauts[currentAstro].title}
-                        </span>
-                        
-                        <h3 className="text-4xl md:text-5xl font-black mb-2 text-white">
-                            {astronauts[currentAstro].name}
-                        </h3>
-                        <p className="text-xl text-indigo-300 font-medium mb-6">
-                            {astronauts[currentAstro].role}
-                        </p>
-                        <p className="text-gray-400 text-lg leading-relaxed mb-10">
-                            {astronauts[currentAstro].description}
-                        </p>
-
-                        <div className="flex items-center gap-4 mt-auto">
-                            <button onClick={prevAstro} className="p-4 rounded-full bg-white/5 hover:bg-white/10 text-white transition-colors border border-white/10">
-                                <ChevronLeft size={24} />
-                            </button>
-                            <div className="flex gap-2">
-                                {astronauts.map((_, i) => (
-                                    <div key={i} className={`h-2 rounded-full transition-all duration-300 ${i === currentAstro ? 'w-8 bg-indigo-500' : 'w-2 bg-white/20'}`} />
-                                ))}
-                            </div>
-                            <button onClick={nextAstro} className="p-4 rounded-full bg-white/5 hover:bg-white/10 text-white transition-colors border border-white/10">
-                                <ChevronRight size={24} />
-                            </button>
-                        </div>
+                        <button onClick={nextAstro} className="p-4 rounded-full bg-white/5 hover:bg-white/10 text-white transition-colors border border-white/10">
+                            <ChevronRight size={24} />
+                        </button>
                     </div>
                 </div>
+
+                {/* Lado Direito - Cartas Empilhadas 3D */}
+                <div className="order-1 lg:order-2 relative h-[550px] w-full flex items-center justify-center astro-card" style={{ perspective: '1000px' }}>
+                    {astronauts.map((astro, index) => (
+                        <div 
+                            key={astro.id}
+                            className={`absolute inset-0 transition-all duration-700 ease-out transform ${
+                                index === currentAstro 
+                                    ? "opacity-100 translate-x-0 rotate-0 scale-100 z-20" 
+                                    : "opacity-0 translate-x-20 rotate-6 scale-90 z-0"
+                            }`}
+                        >
+                            <div className="relative w-full h-full bg-[#0A051A] rounded-[2rem] overflow-hidden border border-indigo-500/20 shadow-2xl shadow-indigo-900/20 group hover:border-indigo-500/50 transition-colors flex flex-col">
+                                
+                                {/* Topo: Imagem + Neon */}
+                                <div className="relative w-full h-[55%] overflow-hidden bg-[#050212] flex items-end justify-center">
+                                    {/* Neon */}
+                                    <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-gradient-to-br ${astro.color} opacity-40 blur-[80px] rounded-full z-0 pointer-events-none group-hover:scale-110 transition-transform duration-700`} />
+                                    {/* Overlay */}
+                                    <div className={`absolute inset-0 bg-gradient-to-t ${astro.color} opacity-20 mix-blend-overlay z-10 transition-opacity group-hover:opacity-0 pointer-events-none`} />
+                                    
+                                    {/* A Foto */}
+                                    <img 
+                                        src={astro.image} 
+                                        alt={astro.name} 
+                                        className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-700 relative z-10" 
+                                    />
+                                    
+                                    {/* Base escura */}
+                                    <div className="absolute bottom-0 w-full h-24 bg-gradient-to-t from-[#0A051A] to-transparent z-20 pointer-events-none" />
+                                </div>
+
+                                {/* Base: Textos do Mentor */}
+                                <div className="relative flex-1 flex flex-col items-center justify-start p-6 text-center text-white z-30 -mt-2">
+                                    <span className={`inline-block px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest mb-3 border border-white/10 bg-white/5 text-gray-300`}>
+                                        {astro.title}
+                                    </span>
+                                    <h3 className="text-3xl font-black mb-1 uppercase tracking-tight drop-shadow-lg">{astro.name}</h3>
+                                    <p className={`text-sm font-bold uppercase tracking-widest bg-clip-text text-transparent bg-gradient-to-r ${astro.color} mb-3 drop-shadow-md`}>{astro.role}</p>
+                                    <p className="text-gray-400 text-sm max-w-[280px] mx-auto leading-relaxed line-clamp-3">"{astro.description}"</p>
+                                </div>
+
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
             </div>
         </div>
       </section>
 
-      {/* --- SEÇÃO: O QUE VAI APRENDER (COM STAGGER) --- */}
+      {/* MODULOS SECTION */}
       <section className="py-24 relative z-10 bg-[#02000A] border-y border-white/5 modulos-section">
         <div className="max-w-6xl mx-auto px-6">
             <h2 className="text-3xl md:text-5xl font-black mb-16 text-center text-white astro-header">
@@ -305,17 +306,16 @@ export default function PosicioneSeLP() {
         </div>
       </section>
 
-      {/* --- SEÇÃO DE OFERTA / CHECKOUT (CORRIGIDA) --- */}
+      {/* OFERTA SECTION */}
       <section className="py-32 relative z-10 bg-gradient-to-t from-[#02000A] via-[#0A051A] to-[#02000A] oferta-section">
         <div className="max-w-4xl mx-auto px-6 text-center">
             
-            {/* 👇 REDUZI A ALTURA PARA h-56 PARA APROXIMAR DO TEXTO 👇 */}
             <div className="h-56 w-full mx-auto mb-2 relative z-20">
                 <VulpCoinScene />
             </div>
             
             <h2 className="text-4xl md:text-6xl font-black mb-6 text-white relative z-30 drop-shadow-2xl">
-                Pronto para a descolagem?
+                Pronto para a decolagem?
             </h2>
             <p className="text-xl text-gray-400 mb-10 relative z-30">
                 Não é apenas um curso. É o acesso ao conhecimento daqueles que dominam o mercado digital e físico na região. 
@@ -330,10 +330,7 @@ export default function PosicioneSeLP() {
                     <span className="text-xl text-gray-500 font-medium">/ ou em 12x</span>
                 </div>
                 
-                <button 
-                    onClick={openModal}
-                    className="w-full md:w-auto bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold py-5 px-16 rounded-full text-xl shadow-[0_0_20px_rgba(99,102,241,0.5)] flex items-center justify-center gap-2 mx-auto transition-all hover:scale-105"
-                >
+                <button onClick={openModal} className="w-full md:w-auto bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold py-5 px-16 rounded-full text-xl shadow-[0_0_20px_rgba(99,102,241,0.5)] flex items-center justify-center gap-2 mx-auto transition-all hover:scale-105">
                     Garantir Vaga Agora <Rocket size={20} />
                 </button>
                 
@@ -344,7 +341,7 @@ export default function PosicioneSeLP() {
         </div>
       </section>
 
-      {/* --- MODAL INTELIGENTE C/ INFINITEPAY --- */}
+      {/* MODAL */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={closeModal} />
@@ -362,11 +359,7 @@ export default function PosicioneSeLP() {
                         </p>
                         
                         {paymentLink && (
-                            <Link 
-                                href={paymentLink}
-                                target="_self" 
-                                className="w-full bg-[#00D775] hover:bg-[#00c068] text-[#002f1a] font-black text-lg py-4 px-6 rounded-xl shadow-lg flex items-center justify-center gap-2 transition-transform hover:scale-105 mb-4"
-                            >
+                            <Link href={paymentLink} target="_self" className="w-full bg-[#00D775] hover:bg-[#00c068] text-[#002f1a] font-black text-lg py-4 px-6 rounded-xl shadow-lg flex items-center justify-center gap-2 transition-transform hover:scale-105 mb-4">
                                 <CreditCard size={20} /> Pagar com InfinitePay
                             </Link>
                         )}

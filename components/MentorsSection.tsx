@@ -37,7 +37,7 @@ const partners = [
     { name: "QG", area: "Loja de Iphone", image: "/qg.png" },
     { name: "Tapajós", area: "Skate Shop", image: "/tss.png" },
     // Deixei mais uma vazia caso entre mais um parceiro no futuro!
-    { name: "Sua Empresa", area: "Parceiro" }, 
+    { name: "Masa", area: "Distribuidora", image: "/masa.png", skipFilter: true }, 
 ];
 
 // --- SVG PATHS DA RAPOSA ---
@@ -84,8 +84,8 @@ export function MentorsSection() {
                     </span>
                 </h2>
                 <p className="text-gray-600 text-lg leading-relaxed mb-8 border-l-4 border-purple-500 pl-6">
-                    A teoria aceita tudo. O mercado não. <br/>
-                    Na VULP, seus mentores não são teóricos de palco.
+                    Formação construída na prática. <br/>
+                    Mentores que ensinam em sala o que aplicam no mercado.
                 </p>
                 <div className="flex gap-3 mt-8">
                     {mentors.map((_, idx) => (
@@ -165,10 +165,13 @@ export function MentorsSection() {
     <img 
         src={p.image} 
         alt={p.name} 
-        // 1. brightness-0 transforma a logo em preta
-        // 2. opacity-70 deixa ela com um tom de grafite/cinza escuro perfeito pro fundo branco
-        // 3. No hover, tiramos o brilho 0 e ela volta a ter cor/destaque!
-        className="w-20 h-20 object-contain mb-2 brightness-0 opacity-70 group-hover:brightness-100 group-hover:opacity-100 group-hover:drop-shadow-[0_0_15px_rgba(255,255,255,0.2)] transition-all duration-300" 
+        // 👇 A MÁGICA ACONTECE NESTA LINHA ABAIXO 👇
+        // Usamos uma condicional ternária:
+        // SE p.skipFilter for verdadeiro (caso da Masa) -> aplica só 'opacity-90' (fica natural)
+        // SE NÃO (outras empresas) -> aplica 'brightness-0 opacity-70' (fica silhueta preta)
+        className={`w-20 h-20 object-contain mb-2 transition-all duration-300 
+        ${p.skipFilter ? 'opacity-90' : 'brightness-0 opacity-70'} 
+        group-hover:brightness-100 group-hover:opacity-100 group-hover:drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]`} 
     />
 ) : (
                                 // Se não tiver imagem, mostra o nome em texto como fallback

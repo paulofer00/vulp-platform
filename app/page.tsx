@@ -8,6 +8,9 @@ import MouseTrail from "@/components/MouseTrail";
 import { ScrollReveal } from "@/components/ScrollReveal";
 import { ArrowRight, CheckCircle2, MessageCircle, Target, Zap, Users } from "lucide-react";
 import VideoManifesto from "@/components/VideoManifesto";
+import { ExplodingBrands } from "@/components/ExplodingBrands";
+import { InfiniteAnswers } from "@/components/InfiniteAnswers";
+import { DiferenciaisScroll } from "@/components/DiferenciaisScroll";
 
 export default async function Home() {
   const cookieStore = await cookies();
@@ -26,7 +29,7 @@ export default async function Home() {
   const { data: { session } } = await supabase.auth.getSession();
   
   return (
-    <main className="min-h-screen bg-[#050505] text-white selection:bg-purple-500/30 font-sans relative overflow-x-hidden">
+    <main className="min-h-screen bg-[#050505] text-white selection:bg-purple-500/30 font-sans relative">
       
       <MouseTrail />
       <FoxLottie />
@@ -99,49 +102,9 @@ export default async function Home() {
         </div>
       </section>
       
-      {/* --- 2. PRA QUEM É --- */}
-      <section className="py-20 bg-[#0A0A0A] border-y border-white/5 relative z-10">
-        <div className="max-w-5xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-            
-            <ScrollReveal direction="left">
-                <div>
-                    <h2 className="text-4xl md:text-5xl font-black mb-6 text-purple-500">
-                        Pra quem é a VULP?
-                    </h2>
-                    <h3 className="text-xl font-bold text-white mb-6">
-                        Não é para quem busca apenas um papel na parede.
-                    </h3>
-                    <p className="text-gray-400 text-lg leading-relaxed mb-6">
-                        A VULP não é um curso tradicional onde você senta, ouve e vai embora. Aqui existe <strong>pressão, feedback real e entrega de resultado.</strong>
-                    </p>
-                    <p className="text-gray-400 text-lg leading-relaxed">
-                        Se você quer teoria, procure uma escola comum. Se você quer mercado, prática e um portfólio que abre portas, a VULP é o seu lugar.
-                    </p>
-                </div>
-            </ScrollReveal>
-
-            <ScrollReveal direction="right" delay={0.2}>
-                <div className="bg-[#111] p-8 rounded-3xl border border-white/10 relative hover:border-purple-500/30 transition-colors duration-500">
-                    <div className="absolute -top-6 -right-6 w-24 h-24 bg-purple-600/20 blur-2xl rounded-full" />
-                    <ul className="space-y-4 relative z-10">
-                        <li className="flex items-start gap-3">
-                            <CheckCircle2 className="text-purple-500 mt-1 shrink-0" />
-                            <span className="text-gray-300">Ambiente de mercado real, não somente sala de aula.</span>
-                        </li>
-                        <li className="flex items-start gap-3">
-                            <CheckCircle2 className="text-purple-500 mt-1 shrink-0" />
-                            <span className="text-gray-300">Mentores que ensinam o que vivem todos os dias.</span>
-                        </li>
-                        <li className="flex items-start gap-3">
-                            <CheckCircle2 className="text-purple-500 mt-1 shrink-0" />
-                            <span className="text-gray-300">Networking com empresários que contratam.</span>
-                        </li>
-                    </ul>
-                </div>
-            </ScrollReveal>
-
-        </div>
-      </section>
+      {/* --- 2. PRA QUEM É (EXPLOSÃO 3D + CARROSSEL) --- */}
+      <ExplodingBrands />
+      <InfiniteAnswers />
 
       {/* --- 3. ESCOLHA SEU CAMINHO --- */}
       <section className="py-24 px-6 relative z-10">
@@ -178,36 +141,8 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* --- 4. DIFERENCIAIS --- */}
-      <section className="py-20 bg-[#0A0A0A] border-y border-white/5 relative z-10">
-        <div className="max-w-6xl mx-auto px-6">
-            <ScrollReveal>
-                <div className="text-center mb-16">
-                    <h2 className="text-3xl md:text-4xl font-bold mb-4">Por que a VULP é diferente?</h2>
-                    <p className="text-gray-400">Esqueça a lousa e o caderno. Aqui o jogo é outro.</p>
-                </div>
-            </ScrollReveal>
-
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                {[
-                    { icon: Zap, title: "80% Prática", desc: "Menos teoria, mais execução." },
-                    { icon: Users, title: "Presencial", desc: "Networking olho no olho." },
-                    { icon: MessageCircle, title: "Feedback Real", desc: "Sem rodeios, direto ao ponto." },
-                    { icon: Target, title: "Portfólio", desc: "Saia com projetos reais." }
-                ].map((item, i) => (
-                    <ScrollReveal key={i} delay={i * 0.1}>
-                        <div className="bg-[#151515] p-6 rounded-2xl border border-white/5 text-center hover:border-purple-500/30 transition-colors h-full flex flex-col items-center justify-center group">
-                            <div className="w-14 h-14 bg-purple-900/10 rounded-full flex items-center justify-center mb-4 text-purple-500 group-hover:scale-110 group-hover:bg-purple-500 group-hover:text-white transition-all duration-300">
-                                <item.icon size={28} />
-                            </div>
-                            <h3 className="font-bold text-lg mb-2 text-white">{item.title}</h3>
-                            <p className="text-sm text-gray-400">{item.desc}</p>
-                        </div>
-                    </ScrollReveal>
-                ))}
-            </div>
-        </div>
-      </section>
+      {/* --- 4. DIFERENCIAIS (SCROLL HORIZONTAL 3D) --- */}
+      <DiferenciaisScroll />
 
       {/* --- 5. MENTORES --- */}
       <ScrollReveal>
