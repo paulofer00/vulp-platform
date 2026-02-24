@@ -7,6 +7,7 @@ import { MentorsSection } from "@/components/MentorsSection";
 import MouseTrail from "@/components/MouseTrail";
 import { ScrollReveal } from "@/components/ScrollReveal";
 import { ArrowRight, CheckCircle2, MessageCircle, Target, Zap, Users } from "lucide-react";
+import VideoManifesto from "@/components/VideoManifesto";
 
 export default async function Home() {
   const cookieStore = await cookies();
@@ -87,6 +88,10 @@ export default async function Home() {
             </ScrollReveal>
         </div>
       </section>
+      {/* --- NOVA SEÇÃO: VÍDEO MANIFESTO --- */}
+      <ScrollReveal delay={0.2}>
+          <VideoManifesto />
+      </ScrollReveal>
 
       {/* O RESTANTE DA PÁGINA CONTINUA IGUAL... */}
       
@@ -106,7 +111,7 @@ export default async function Home() {
                         A VULP não é um curso tradicional onde você senta, ouve e vai embora. Aqui existe <strong>pressão, feedback real e entrega de resultado.</strong>
                     </p>
                     <p className="text-gray-400 text-lg leading-relaxed">
-                        Se você quer teoria, procure uma faculdade. Se você quer mercado, prática e um portfólio que abre portas, a VULP é o seu lugar.
+                        Se você quer teoria, procure uma escola comum. Se você quer mercado, prática e um portfólio que abre portas, a VULP é o seu lugar.
                     </p>
                 </div>
             </ScrollReveal>
@@ -117,11 +122,11 @@ export default async function Home() {
                     <ul className="space-y-4 relative z-10">
                         <li className="flex items-start gap-3">
                             <CheckCircle2 className="text-purple-500 mt-1 shrink-0" />
-                            <span className="text-gray-300">Ambiente de agência real, não sala de aula.</span>
+                            <span className="text-gray-300">Ambiente de mercado real, não somente sala de aula.</span>
                         </li>
                         <li className="flex items-start gap-3">
                             <CheckCircle2 className="text-purple-500 mt-1 shrink-0" />
-                            <span className="text-gray-300">Mentores que vivem o que ensinam todos os dias.</span>
+                            <span className="text-gray-300">Mentores que ensinam o que vivem todos os dias.</span>
                         </li>
                         <li className="flex items-start gap-3">
                             <CheckCircle2 className="text-purple-500 mt-1 shrink-0" />

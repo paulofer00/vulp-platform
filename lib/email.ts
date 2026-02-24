@@ -41,7 +41,7 @@ export async function sendWelcomeEmail(email: string, name: string, password?: s
           <div style="background-color: #f8f9fa; padding: 25px; border-radius: 8px; margin: 30px 0; border-left: 4px solid #6b21a8;">
             <p style="margin: 0 0 15px 0; font-size: 16px;">
               <strong>🔗 Link de Acesso:</strong> <br/>
-              <a href="https://vulp.cademi.com.br" style="color: #6b21a8; font-weight: bold; text-decoration: none;">vulp.cademi.com.br</a>
+              <a href="https://vulpacademy.cademi.com.br" style="color: #6b21a8; font-weight: bold; text-decoration: none;">vulp.cademi.com.br</a>
             </p>
             <p style="margin: 0 0 15px 0; font-size: 16px;">
               <strong>👤 O teu Login (E-mail):</strong> <br/>

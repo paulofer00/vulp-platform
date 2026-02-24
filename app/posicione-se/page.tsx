@@ -8,11 +8,25 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
+// 👇 IMPORTS DO GSAP
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import dynamic from "next/dynamic";
+
+// Isto obriga o Next.js a carregar o 3D só quando a página já abriu no cliente
+const VulpCoinScene = dynamic(() => import("@/components/VulpCoinScene"), { ssr: false });
+
+// Regista o plugin ScrollTrigger de forma segura no Next.js
+if (typeof window !== "undefined") {
+  gsap.registerPlugin(ScrollTrigger, useGSAP);
+}
+
 // --- CONFIGURAÇÃO INFINITEPAY ---
 const CHECKOUT_CONFIG = {
     infiniteTag: "upeup", 
     productName: "Curso Posicione-se Agora",
-    price: 9090, // R$ 90,90 (Em centavos)
+    price: 49700, // R$ 497,00 (Em centavos)
 };
 
 // --- DADOS DOS ASTRONAUTAS ---
@@ -23,7 +37,7 @@ const astronauts = [
     title: "A Voz do Engajamento",
     role: "Influenciadora (+70k seguidores)",
     description: "Sabe exatamente como prender a atenção e transformar seguidores engajados numa comunidade fiel e compradora.",
-    image: "/beatriz.png", 
+    image: "/bea.png", // Usa o nome real do teu ficheiro
     color: "from-pink-500 to-purple-500"
   },
   {
@@ -53,6 +67,9 @@ export default function PosicioneSeLP() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [paymentLink, setPaymentLink] = useState(""); 
 
+  // Referência para o contentor principal onde o GSAP vai atuar
+  const mainRef = useRef<HTMLDivElement>(null);
+
   // Supabase Client
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -71,24 +88,69 @@ export default function PosicioneSeLP() {
     }, 300);
   };
 
+  // --- ANIMAÇÕES GSAP ---
+  useGSAP(() => {
+    // 1. Hero Section (Animação de Entrada)
+    gsap.from(".hero-bg img", { scale: 1.15, duration: 2.5, ease: "power2.out" });
+    gsap.from(".hero-button", { y: 80, opacity: 0, duration: 1.2, delay: 0.5, ease: "back.out(1.5)" });
+
+    // 2. Título da Secção dos Astronautas
+    gsap.from(".astro-header", {
+      scrollTrigger: {
+        trigger: ".astro-section",
+        start: "top 80%", // Ativa quando o topo da secção atinge 80% da altura do ecrã
+      },
+      y: 50,
+      opacity: 0,
+      duration: 1,
+      ease: "power3.out"
+    });
+
+    // 3. Card/Carrossel dos Astronautas
+    gsap.from(".astro-card", {
+      scrollTrigger: {
+        trigger: ".astro-section",
+        start: "top 65%",
+      },
+      y: 100,
+      opacity: 0,
+      scale: 0.95,
+      duration: 1.2,
+      ease: "power4.out"
+    });
+
+    // 4. Módulos do Curso (Efeito Stagger - Um de cada vez)
+    gsap.from(".modulo-card", {
+      scrollTrigger: {
+        trigger: ".modulos-section",
+        start: "top 75%",
+      },
+      y: 60,
+      opacity: 0,
+      duration: 0.8,
+      stagger: 0.2, // O atraso entre cada um a aparecer!
+      ease: "back.out(1.2)"
+    });
+
+    // 5. Oferta/Preço
+    gsap.from(".oferta-card", {
+      scrollTrigger: {
+        trigger: ".oferta-section",
+        start: "top 70%",
+      },
+      scale: 0.9,
+      opacity: 0,
+      duration: 1,
+      ease: "power3.out"
+    });
+
+  }, { scope: mainRef });
+
   // --- GERADOR DE LINK INTELIGENTE ---
   const generateCheckoutUrl = (leadId: string) => {
     const baseUrl = typeof window !== "undefined" ? window.location.origin : "https://vulp.vc";
-    
-    const items = JSON.stringify([
-        {
-            name: CHECKOUT_CONFIG.productName,
-            price: CHECKOUT_CONFIG.price,
-            quantity: 1
-        }
-    ]);
-
-    const params = new URLSearchParams({
-        items: items,
-        order_nsu: leadId,
-        redirect_url: `${baseUrl}/obrigado` 
-    });
-
+    const items = JSON.stringify([{ name: CHECKOUT_CONFIG.productName, price: CHECKOUT_CONFIG.price, quantity: 1 }]);
+    const params = new URLSearchParams({ items: items, order_nsu: leadId, redirect_url: `${baseUrl}/obrigado` });
     return `https://checkout.infinitepay.io/${CHECKOUT_CONFIG.infiniteTag}?${params.toString()}`;
   };
 
@@ -102,36 +164,27 @@ export default function PosicioneSeLP() {
         name: formData.get("name") as string,
         email: formData.get("email") as string,
         phone: formData.get("phone") as string,
-        origin: "posicione-se-agora" // Identificador da campanha
+        origin: "posicione-se-agora"
     };
 
     let leadId = `temp_${Date.now()}`;
     
     try {
-        // Agora fazemos um SELECT no insert para pegar o ID do Lead salvo no Supabase
-        const { data: lead, error } = await supabase
-            .from("leads")
-            .insert(data)
-            .select()
-            .single();
-
-        if (!error && lead) {
-            leadId = lead.id;
-        }
+        const { data: lead, error } = await supabase.from("leads").insert(data).select().single();
+        if (!error && lead) { leadId = lead.id; }
     } catch (err) {
         console.error("Erro ao salvar", err);
     }
 
-    // Gera o link e salva no estado
     const link = generateCheckoutUrl(leadId);
     setPaymentLink(link);
-    
     setIsLoading(false);
     setIsSuccess(true);
   }
 
   return (
-    <div className="min-h-screen bg-[#02000A] text-white font-sans selection:bg-indigo-500/30 relative overflow-hidden">
+    // Adicionámos o mainRef aqui para o GSAP conseguir "ver" toda a página
+    <div ref={mainRef} className="min-h-screen bg-[#02000A] text-white font-sans selection:bg-indigo-500/30 relative overflow-hidden">
       
       {/* BACKGROUND DE PARTÍCULAS NO ESPAÇO */}
       <ParticlesBackground />
@@ -151,54 +204,36 @@ export default function PosicioneSeLP() {
         </div>
       </nav>
 
-      {/* --- 1. HERO SECTION (IMAGEM + BOTÃO + TRANSIÇÃO ATUALIZADA) --- */}
+      {/* --- 1. HERO SECTION --- */}
       <header className="relative w-full h-[100svh] min-h-[600px] md:min-h-[700px] flex flex-col items-center justify-end pb-12 md:pb-10 z-10">
-        
-        {/* Imagem de fundo do curso */}
-        <div className="absolute inset-0 z-0">
-            {/* IMAGEM DESKTOP */}
-            <img 
-                src="/posicione-se-espaco-sideral.png" 
-                alt="Curso Posicione-se Desktop" 
-                className="hidden md:block w-full h-full object-cover object-top"
-            />
-            
-            {/* IMAGEM MOBILE */}
-            <img 
-                src="/posicione-se-espaco-sideral-mobile.png" 
-                alt="Curso Posicione-se Mobile" 
-                className="block md:hidden w-full h-full object-cover object-top"
-            />
-
-            {/* Overlay Gradient para a transição suave com a seção de baixo */}
+        <div className="absolute inset-0 z-0 hero-bg">
+            <img src="/posicione-se-espaco-sideral.png" alt="Desktop" className="hidden md:block w-full h-full object-cover object-top" />
+            <img src="/posicione-se-espaco-sideral-mobile.png" alt="Mobile" className="block md:hidden w-full h-full object-cover object-top" />
             <div className="absolute inset-0 bg-gradient-to-b from-[#02000A]/80 via-transparent via-75% to-[#02000A] pointer-events-none" />
         </div>
 
-        {/* Botão por cima da imagem */}
-        <div className="relative z-20 flex flex-col items-center animate-fade-in-up w-full px-6 md:px-0">
-            <button 
-                onClick={openModal}
-                className="bg-white text-black hover:bg-gray-200 font-black py-4 px-8 md:py-5 md:px-12 rounded-full text-lg md:text-xl transition-all duration-300 transform hover:scale-110 shadow-[0_0_50px_rgba(255,255,255,0.3)] flex items-center justify-center gap-3 w-full md:w-auto"
-            >
+        <div className="relative z-20 flex flex-col items-center w-full px-6 md:px-0 hero-button">
+            <button onClick={openModal} className="bg-white text-black hover:bg-gray-200 font-black py-4 px-8 md:py-5 md:px-12 rounded-full text-lg md:text-xl transition-all duration-300 transform hover:scale-110 shadow-[0_0_50px_rgba(255,255,255,0.3)] flex items-center justify-center gap-3 w-full md:w-auto">
                 Quero me Posicionar <ArrowRight size={24} />
             </button>
         </div>
       </header>
 
-      {/* --- SEÇÃO: OS 3 ASTRONAUTAS (CARROSSEL) --- */}
-      <section className="py-24 relative z-10 bg-gradient-to-b from-transparent to-[#050212]">
+      {/* --- SEÇÃO: OS 3 ASTRONAUTAS (COM SCROLLTRIGGER) --- */}
+      <section className="py-24 relative z-10 bg-gradient-to-b from-transparent to-[#050212] astro-section">
         <div className="max-w-6xl mx-auto px-6">
-            <div className="text-center mb-16">
+            <div className="text-center mb-16 astro-header">
                 <h2 className="text-3xl md:text-5xl font-black mb-4 text-white">Os Três Astronautas do Mercado</h2>
                 <p className="text-lg text-indigo-300">Quem vai guiar a sua jornada até o topo.</p>
             </div>
 
-            <div className="relative bg-[#0A051A] border border-white/10 rounded-3xl p-8 md:p-12 overflow-hidden shadow-2xl">
+            <div className="relative bg-[#0A051A] border border-white/10 rounded-3xl p-8 md:p-12 overflow-hidden shadow-2xl astro-card">
                 <div className={`absolute -top-20 -right-20 w-96 h-96 bg-gradient-to-br ${astronauts[currentAstro].color} opacity-20 blur-[100px] rounded-full transition-colors duration-700`} />
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center relative z-10">
                     <div className="relative aspect-square md:aspect-[4/5] bg-gradient-to-t from-[#110826] to-transparent rounded-2xl overflow-hidden border border-white/5 flex items-end justify-center">
                         <div className="absolute inset-0 flex items-center justify-center text-gray-800">
+                             {/* SE TIVER AS FOTOS REAIS, COLOQUE A TAG IMG AQUI como fizemos na vitrine! */}
                             <Star size={100} className="opacity-20" />
                         </div>
                     </div>
@@ -237,29 +272,29 @@ export default function PosicioneSeLP() {
         </div>
       </section>
 
-      {/* --- SEÇÃO: O QUE VAI APRENDER --- */}
-      <section className="py-24 relative z-10 bg-[#02000A] border-y border-white/5">
+      {/* --- SEÇÃO: O QUE VAI APRENDER (COM STAGGER) --- */}
+      <section className="py-24 relative z-10 bg-[#02000A] border-y border-white/5 modulos-section">
         <div className="max-w-6xl mx-auto px-6">
-            <h2 className="text-3xl md:text-5xl font-black mb-16 text-center text-white">
+            <h2 className="text-3xl md:text-5xl font-black mb-16 text-center text-white astro-header">
                 O seu plano de voo <span className="text-indigo-400">completo</span>
             </h2>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div className="p-8 rounded-3xl bg-[#0A051A] border border-white/5 hover:border-pink-500/50 transition-colors group">
+                <div className="p-8 rounded-3xl bg-[#0A051A] border border-white/5 hover:border-pink-500/50 transition-colors group modulo-card">
                     <div className="w-14 h-14 bg-pink-500/10 rounded-2xl flex items-center justify-center text-pink-400 mb-6 group-hover:scale-110 transition-transform"><Video size={28} /></div>
                     <h3 className="text-xl font-bold mb-3 text-white">Engajamento que Vende</h3>
                     <p className="text-gray-400 text-sm leading-relaxed">
                         Com a Beatriz, vai descobrir os segredos de criação de conteúdo que geram desejo imediato. Como usar os Stories e o Feed para criar uma tribo que consome o seu produto.
                     </p>
                 </div>
-                <div className="p-8 rounded-3xl bg-[#0A051A] border border-white/5 hover:border-cyan-500/50 transition-colors group">
+                <div className="p-8 rounded-3xl bg-[#0A051A] border border-white/5 hover:border-cyan-500/50 transition-colors group modulo-card">
                     <div className="w-14 h-14 bg-cyan-500/10 rounded-2xl flex items-center justify-center text-cyan-400 mb-6 group-hover:scale-110 transition-transform"><Target size={28} /></div>
                     <h3 className="text-xl font-bold mb-3 text-white">Domínio Físico e Digital</h3>
                     <p className="text-gray-400 text-sm leading-relaxed">
                         O Alarico vai mostrar na prática como a Tapajós Skate Shop atrai clientes da internet diretamente para a loja física. O verdadeiro conceito de omnicanalidade para negócios locais.
                     </p>
                 </div>
-                <div className="p-8 rounded-3xl bg-[#0A051A] border border-white/5 hover:border-indigo-500/50 transition-colors group">
+                <div className="p-8 rounded-3xl bg-[#0A051A] border border-white/5 hover:border-indigo-500/50 transition-colors group modulo-card">
                     <div className="w-14 h-14 bg-indigo-500/10 rounded-2xl flex items-center justify-center text-indigo-400 mb-6 group-hover:scale-110 transition-transform"><TrendingUp size={28} /></div>
                     <h3 className="text-xl font-bold mb-3 text-white">Estrutura de Alto Valor</h3>
                     <p className="text-gray-400 text-sm leading-relaxed">
@@ -270,23 +305,28 @@ export default function PosicioneSeLP() {
         </div>
       </section>
 
-      {/* --- SEÇÃO DE OFERTA / CHECKOUT --- */}
-      <section className="py-32 relative z-10 bg-gradient-to-t from-[#02000A] via-[#0A051A] to-[#02000A]">
+      {/* --- SEÇÃO DE OFERTA / CHECKOUT (CORRIGIDA) --- */}
+      <section className="py-32 relative z-10 bg-gradient-to-t from-[#02000A] via-[#0A051A] to-[#02000A] oferta-section">
         <div className="max-w-4xl mx-auto px-6 text-center">
-            <ShieldCheck size={48} className="mx-auto text-indigo-400 mb-6 opacity-80" />
-            <h2 className="text-4xl md:text-6xl font-black mb-6 text-white">
+            
+            {/* 👇 REDUZI A ALTURA PARA h-56 PARA APROXIMAR DO TEXTO 👇 */}
+            <div className="h-56 w-full mx-auto mb-2 relative z-20">
+                <VulpCoinScene />
+            </div>
+            
+            <h2 className="text-4xl md:text-6xl font-black mb-6 text-white relative z-30 drop-shadow-2xl">
                 Pronto para a descolagem?
             </h2>
-            <p className="text-xl text-gray-400 mb-10">
+            <p className="text-xl text-gray-400 mb-10 relative z-30">
                 Não é apenas um curso. É o acesso ao conhecimento daqueles que dominam o mercado digital e físico na região. 
             </p>
 
-            <div className="bg-[#110826] border border-indigo-500/30 p-10 md:p-14 rounded-[3rem] shadow-[0_0_50px_rgba(99,102,241,0.1)] relative">
+            <div className="bg-[#110826] border border-indigo-500/30 p-10 md:p-14 rounded-[3rem] shadow-[0_0_50px_rgba(99,102,241,0.1)] relative oferta-card z-30">
                 <div className="absolute top-0 right-0 left-0 h-1 bg-gradient-to-r from-transparent via-indigo-500 to-transparent opacity-50"></div>
                 
                 <p className="text-gray-400 uppercase tracking-widest text-sm font-bold mb-4">Investimento Único</p>
                 <div className="flex justify-center items-baseline gap-2 mb-8">
-                    <span className="text-6xl font-black text-white">R$ 90,90</span>
+                    <span className="text-6xl font-black text-white">R$ 497</span>
                     <span className="text-xl text-gray-500 font-medium">/ ou em 12x</span>
                 </div>
                 
@@ -321,7 +361,6 @@ export default function PosicioneSeLP() {
                             Para garantir sua vaga, finalize o pagamento seguro através da InfinitePay.
                         </p>
                         
-                        {/* BOTAO DA INFINITEPAY - DINÂMICO! */}
                         {paymentLink && (
                             <Link 
                                 href={paymentLink}
