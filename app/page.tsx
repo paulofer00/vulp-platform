@@ -58,7 +58,9 @@ export default async function Home() {
       <section className="pt-40 pb-20 px-6 relative flex flex-col items-center text-center z-10">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-purple-900/20 blur-[120px] rounded-full pointer-events-none" />
         
-        <div className="relative z-10 max-w-4xl mx-auto">
+        {/* max-w-5xl garante que o vídeo e os textos tenham a largura perfeita */}
+        <div className="relative z-10 max-w-5xl mx-auto w-full">
+            
             <ScrollReveal>
                 <h1 className="text-5xl md:text-7xl font-black tracking-tighter mb-6 leading-tight">
                     UMA ESCOLA <br />
@@ -69,14 +71,21 @@ export default async function Home() {
             </ScrollReveal>
 
             <ScrollReveal delay={0.2}>
-                <p className="text-xl text-gray-400 max-w-2xl mx-auto mb-12 font-medium">
+                <p className="text-xl text-gray-400 max-w-2xl mx-auto mb-16 font-medium">
                     Uma formação 100% prática e presencial, feita para quem quer entrar no mercado de verdade, não apenas ganhar um certificado.
                 </p>
             </ScrollReveal>
 
+            {/* VÍDEO NO MEIO DA HERO */}
             <ScrollReveal delay={0.4}>
+                <div className="w-full mb-16">
+                    <VideoManifesto />
+                </div>
+            </ScrollReveal>
+
+            {/* BOTÃO ABAIXO DO VÍDEO */}
+            <ScrollReveal delay={0.6}>
                 <div className="flex justify-center">
-                    {/* BOTÃO ALTERADO AQUI */}
                     <Link 
                         href="/posicione-se" 
                         className="group bg-purple-600 hover:bg-white text-white hover:text-purple-600 px-8 py-4 rounded-full font-bold text-xl transition-all duration-300 hover:scale-110 shadow-[0_0_40px_-10px_rgba(147,51,234,0.5)] flex items-center justify-center gap-3"
@@ -86,14 +95,9 @@ export default async function Home() {
                     </Link>
                 </div>
             </ScrollReveal>
+
         </div>
       </section>
-      {/* --- NOVA SEÇÃO: VÍDEO MANIFESTO --- */}
-      <ScrollReveal delay={0.2}>
-          <VideoManifesto />
-      </ScrollReveal>
-
-      {/* O RESTANTE DA PÁGINA CONTINUA IGUAL... */}
       
       {/* --- 2. PRA QUEM É --- */}
       <section className="py-20 bg-[#0A0A0A] border-y border-white/5 relative z-10">
