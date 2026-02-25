@@ -47,7 +47,6 @@ function Model({ path, startPos, endPos, expanded, scale = 1 }: any) {
 
   const handlePointerDown = (e: any) => {
     e.stopPropagation();
-    // 👇 A MÁGICA: O navegador "prende" o foco neste objeto até você soltar o dedo! 👇
     e.target.setPointerCapture(e.pointerId);
     setIsDragging(true);
     previousMouse.current = { x: e.clientX, y: e.clientY };
@@ -55,7 +54,6 @@ function Model({ path, startPos, endPos, expanded, scale = 1 }: any) {
 
   const handlePointerUp = (e: any) => {
     e.stopPropagation();
-    // Solta o objeto quando levantar o dedo/rato
     e.target.releasePointerCapture(e.pointerId);
     setIsDragging(false);
   };
@@ -66,7 +64,6 @@ function Model({ path, startPos, endPos, expanded, scale = 1 }: any) {
       const deltaX = e.clientX - previousMouse.current.x;
       const deltaY = e.clientY - previousMouse.current.y;
 
-      // Dividimos por 80 (antes era 50) para deixar a rotação mais macia e controlada
       rotRef.current.rotation.y += deltaX / 80;
       rotRef.current.rotation.x += deltaY / 80;
 
@@ -110,10 +107,13 @@ function Scene({ expanded }: { expanded: boolean }) {
       <spotLight position={[10, 15, 10]} intensity={3} castShadow />
       <spotLight position={[-10, -15, -10]} intensity={1} color="#a855f7" />
 
-      <Model path={MODELS.macbook} startPos={[-1, 0, 0]} endPos={[-2.8, 1.2, -1]} expanded={expanded} scale={0.06} />
-      <Model path={MODELS.camera} startPos={[-0.3, 0, 0]} endPos={[2.8, 1.2, -1]} expanded={expanded} scale={0.3} />
-      <Model path={MODELS.coin} startPos={[0.3, 0, 0]} endPos={[-2.5, -1.2, 0]} expanded={expanded} scale={0.8} />
-      <Model path={MODELS.instagram} startPos={[1, 0, 0]} endPos={[2.5, -1.2, 0]} expanded={expanded} scale={1} />
+      {/* 👇 AFASTAMENTO DOS OBJETOS 👇 
+          Aumentei os valores de endPos (X e Y) para empurrá-los mais para os cantos da tela.
+      */}
+      <Model path={MODELS.macbook} startPos={[-1, 0, 0]} endPos={[-4.0, 1.8, -1]} expanded={expanded} scale={0.06} />
+      <Model path={MODELS.camera} startPos={[-0.3, 0, 0]} endPos={[4.0, 1.8, -1]} expanded={expanded} scale={0.3} />
+      <Model path={MODELS.coin} startPos={[0.3, 0, 0]} endPos={[-3.8, -2.0, 0]} expanded={expanded} scale={0.8} />
+      <Model path={MODELS.instagram} startPos={[1, 0, 0]} endPos={[3.8, -2.0, 0]} expanded={expanded} scale={1} />
     </group>
   );
 }
@@ -138,16 +138,17 @@ export function ExplodingBrands() {
       
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-purple-900/20 blur-[150px] rounded-full pointer-events-none" />
 
-      {/* REFORÇO NO TEXTO: O texto inteiro agota tem pointer-events-none cravado! */}
       <div className="absolute z-30 text-center pointer-events-none flex flex-col items-center justify-center w-full">
         <motion.h2
           initial={{ scale: 0.3, opacity: 0, filter: "blur(10px)" }}
           animate={expanded ? { scale: 1, opacity: 1, filter: "blur(0px)" } : { scale: 0.3, opacity: 0, filter: "blur(10px)" }}
           transition={{ duration: 1, ease: "easeOut", delay: 0.1 }}
-          className="text-6xl md:text-8xl font-black leading-[0.9] tracking-tighter drop-shadow-2xl pointer-events-none"
+          // 👇 AUMENTO DO TEXTO 👇
+          // Passei de text-8xl para text-[10rem] (tamanho brutal) no desktop, e text-7xl no mobile.
+          className="text-7xl md:text-[10rem] font-black leading-[0.9] tracking-tighter drop-shadow-2xl pointer-events-none"
         >
           PRA QUEM É<br />
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-500 via-fuchsia-400 to-purple-500 pointer-events-none pr-2 pb-2">
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-500 via-fuchsia-400 to-purple-500 pointer-events-none pr-4 pb-2">
             A VULP?
           </span>
         </motion.h2>

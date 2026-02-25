@@ -98,7 +98,7 @@ function MeteorBackground() {
   );
 }
 
-// --- 3. CARROSSEL DE VÍDEOS (HÍBRIDO: AUTO + SCROLL) ---
+// --- 3. CARROSSEL DE VÍDEOS ---
 function VideoCard({ url, angle, radius }: { url: string, angle: number, radius: number }) {
   const texture = useVideoTexture(url, { muted: true, loop: true, start: true });
   return (
@@ -140,10 +140,7 @@ function PortfolioCylinder() {
   });
 
   return (
-    // 👇 AJUSTES AQUI:
-    // 1. scale={1.15} -> Aumenta o tamanho geral do carrossel
-    // 2. position={[-2.5, 0, 0]} -> Move o carrossel para a ESQUERDA (perto do texto)
-    <group ref={groupRef} rotation={[0.05, 0, 0]} scale={1.5} position={[-2.5, 0, 0]}>
+    <group ref={groupRef} rotation={[0.05, 0, 0]} scale={1.5}>
       {videos.map((url, i) => {
          const angle = (i / videos.length) * Math.PI * 2;
          return <VideoCard key={i} url={url} angle={angle} radius={radius} />;
@@ -165,8 +162,8 @@ const cards = [
     title: "Presencial",
     desc: "Networking olho no olho. A energia da sala de aula te força a evoluir.",
     type: "3d",
-    modelPath: "/cadeira.glb", 
-    scale: 0.09, 
+    modelPath: "/fachada.glb", 
+    scale: 1.3, 
   },
   {
     title: "Feedback Real",
@@ -185,14 +182,14 @@ const cards = [
     desc: "Conecte-se com empresários que já estão no topo e que contratam.",
     type: "3d",
     modelPath: "/xadrez.glb",
-    scale: 0.1, 
+    scale: 0.15, 
   },
   {
     title: "Soft Skills",
     desc: "Aprenda a negociar, a portar-se e a vender o seu valor de verdade.",
     type: "3d",
     modelPath: "/cerebro.glb",
-    scale: 3,
+    scale: 2.5,
   },
 ];
 
@@ -201,10 +198,13 @@ export function DiferenciaisScroll() {
   const targetRef = useRef<HTMLDivElement>(null);
 
   const { scrollYProgress } = useScroll({ target: targetRef });
-  const x = useTransform(scrollYProgress, [0, 1], ["0vw", "-600vw"]);
+  
+  // 👇 MATEMÁTICA VULP: Agora o scroll para no lugar exato do último item (-490vw)
+  const x = useTransform(scrollYProgress, [0, 1], ["0vw", "-490vw"]);
 
   return (
-    <section ref={targetRef} className="relative h-[700vh] bg-[#050505] border-t border-white/5">
+    // 👇 SCROLL MAIS RÁPIDO: h-[500vh] em vez de 700vh
+    <section ref={targetRef} className="relative h-[500vh] bg-[#050505] border-t border-white/5">
       
       <div className="sticky top-0 flex h-screen items-center overflow-hidden">
         
@@ -224,8 +224,8 @@ export function DiferenciaisScroll() {
           <div className="absolute inset-0 bg-black/40 pointer-events-none" />
         </div>
 
-        {/* TRILHA HORIZONTAL */}
-        <motion.div style={{ x }} className="flex h-full w-[700vw] relative z-10">
+        {/* 👇 TRILHA HORIZONTAL AJUSTADA (Mais curta e compacta) */}
+        <motion.div style={{ x }} className="flex h-full w-[600vw] relative z-10">
           
           <div className="w-screen h-screen shrink-0 flex flex-col items-center justify-center p-6 text-center">
              <motion.h2 
@@ -233,10 +233,11 @@ export function DiferenciaisScroll() {
                 whileInView={{ opacity: 1, scale: 1, y: 0 }}
                 transition={{ type: "spring", bounce: 0.5, duration: 1 }}
                 viewport={{ once: false }}
-                className="text-5xl md:text-8xl font-black mb-6 tracking-tighter leading-none drop-shadow-2xl"
+                className="text-6xl md:text-8xl font-black mb-6 tracking-tighter leading-none drop-shadow-2xl"
              >
                 Por que a <br />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-indigo-400">
+                {/* 👇 PR-4 E PB-2 AQUI RESOLVEM O CORTE DA INTERROGAÇÃO 👇 */}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-indigo-400 pr-4 pb-2">
                    VULP é diferente?
                 </span>
              </motion.h2>
@@ -245,36 +246,20 @@ export function DiferenciaisScroll() {
                 whileInView={{ opacity: 1 }}
                 transition={{ delay: 0.3, duration: 1 }}
                 viewport={{ once: false }}
-                className="text-xl md:text-3xl text-gray-400 font-medium"
+                className="text-2xl md:text-4xl text-purple-400 font-bold"
              >
                 Esqueça a lousa e o caderno. Continue descendo.
              </motion.p>
           </div>
 
           {cards.map((card, index) => (
-            <div key={index} className="w-screen h-screen shrink-0 flex items-center justify-center p-8 md:p-24">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center w-full max-w-7xl h-full">
-                
-                <motion.div 
-                    initial={{ opacity: 0, x: -100, scale: 0.8 }}
-                    whileInView={{ opacity: 1, x: 0, scale: 1 }}
-                    transition={{ type: "spring", bounce: 0.4, duration: 1.2 }}
-                    viewport={{ once: false, margin: "-100px" }}
-                    className="flex flex-col justify-center"
-                >
-                  <h2 className="text-5xl md:text-8xl font-black mb-6 tracking-tighter leading-none drop-shadow-xl">
-                    {card.title}
-                  </h2>
-                  <p className="text-xl md:text-3xl text-gray-400 font-medium max-w-xl">
-                    {card.desc}
-                  </p>
-                </motion.div>
-
-                <div className="h-[55vh] md:h-[75vh] w-full flex items-center justify-center relative">
-                  
+            // 👇 W-[80VW]: Isso tira o espaço vazio e "cola" as seções umas nas outras!
+            <div key={index} className="w-[80vw] h-screen shrink-0 flex items-center justify-center relative overflow-hidden">
+              
+              {/* O CONTAINER 3D FICA TOTALMENTE AO FUNDO */}
+              <div className="absolute inset-0 w-full h-full flex items-center justify-center z-0">
                   {card.type === "cylinder" && (
                     <div className="absolute inset-0 cursor-ew-resize">
-                      {/* 👇 Afastei a câmara para 19 para compensar o aumento do cilindro 👇 */}
                       <Canvas camera={{ position: [0, 0, 19], fov: 45 }}>
                         <Suspense fallback={null}>
                           <ambientLight intensity={1} />
@@ -296,10 +281,24 @@ export function DiferenciaisScroll() {
                       </Canvas>
                     </div>
                   )}
-
-                </div>
-
               </div>
+
+              {/* O TEXTO FICA NA FRENTE E CENTRALIZADO */}
+              <motion.div 
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  transition={{ type: "spring", bounce: 0.4, duration: 1.2 }}
+                  viewport={{ once: false, margin: "-100px" }}
+                  className="relative z-10 flex flex-col items-center justify-center text-center p-6 pointer-events-none"
+              >
+                <h2 className="text-6xl md:text-9xl font-black mb-6 tracking-tighter leading-none text-white [text-shadow:_0_10px_40px_rgb(0_0_0_/_100%)]">
+                  {card.title}
+                </h2>
+                <p className="text-2xl md:text-4xl text-purple-400 font-bold max-w-3xl [text-shadow:_0_5px_20px_rgb(0_0_0_/_100%)]">
+                  {card.desc}
+                </p>
+              </motion.div>
+
             </div>
           ))}
 
@@ -314,4 +313,4 @@ useGLTF.preload("/xadrez.glb");
 useGLTF.preload("/cerebro.glb");
 useGLTF.preload("/engrenagem.glb");
 useGLTF.preload("/comentario.glb");
-useGLTF.preload("/cadeira.glb");
+useGLTF.preload("/fachada.glb");

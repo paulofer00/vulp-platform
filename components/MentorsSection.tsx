@@ -37,7 +37,7 @@ const partners = [
     { name: "QG", area: "Loja de Iphone", image: "/qg.png" },
     { name: "Tapajós", area: "Skate Shop", image: "/tss.png" },
     // Deixei mais uma vazia caso entre mais um parceiro no futuro!
-    { name: "Masa", area: "Distribuidora", image: "/masa.png", skipFilter: true }, 
+    { name: "Masa", area: "Distribuidora", image: "/masa.png"}, 
 ];
 
 // --- SVG PATHS DA RAPOSA ---
@@ -160,18 +160,15 @@ export function MentorsSection() {
                     >
                         <div className="relative z-10 flex flex-col items-center w-full">
                              
-                             {/* 👇 SISTEMA INTELIGENTE DE LOGOS 👇 */}
+                             {/* 👇 SISTEMA DE LOGOS PURO (SEM FILTROS) 👇 */}
 {p.image ? (
     <img 
         src={p.image} 
         alt={p.name} 
-        // 👇 A MÁGICA ACONTECE NESTA LINHA ABAIXO 👇
-        // Usamos uma condicional ternária:
-        // SE p.skipFilter for verdadeiro (caso da Masa) -> aplica só 'opacity-90' (fica natural)
-        // SE NÃO (outras empresas) -> aplica 'brightness-0 opacity-70' (fica silhueta preta)
-        className={`w-20 h-20 object-contain mb-2 transition-all duration-300 
-        ${p.skipFilter ? 'opacity-90' : 'brightness-0 opacity-70'} 
-        group-hover:brightness-100 group-hover:opacity-100 group-hover:drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]`} 
+        // 1. Removemos o brightness-0 e opacity-70.
+        // 2. Agora ela aparece 100% original sempre.
+        // 3. Mantivemos o efeito de brilho branco no hover!
+        className="w-20 h-20 object-contain mb-2 transition-all duration-300 group-hover:scale-110 group-hover:drop-shadow-[0_0_15px_rgba(255,255,255,0.4)]" 
     />
 ) : (
                                 // Se não tiver imagem, mostra o nome em texto como fallback
