@@ -6,7 +6,6 @@ import { useGLTF, Float, Environment } from "@react-three/drei";
 import * as THREE from "three";
 import { motion, useInView } from "framer-motion";
 
-// 👇 OS NOMES DOS SEUS ARQUIVOS .GLB 👇
 const MODELS = {
   macbook: "/macbook.glb",
   camera: "/camera.glb",
@@ -16,7 +15,6 @@ const MODELS = {
 
 Object.values(MODELS).forEach((path) => useGLTF.preload(path));
 
-// --- COMPONENTE DE CADA MODELO 3D (BLINDADO CONTRA TRAVADAS) ---
 function Model({ path, startPos, endPos, expanded, scale = 1 }: any) {
   const { scene } = useGLTF(path as string) as any;
   const posRef = useRef<THREE.Group>(null);
@@ -63,10 +61,8 @@ function Model({ path, startPos, endPos, expanded, scale = 1 }: any) {
       e.stopPropagation();
       const deltaX = e.clientX - previousMouse.current.x;
       const deltaY = e.clientY - previousMouse.current.y;
-
       rotRef.current.rotation.y += deltaX / 80;
       rotRef.current.rotation.x += deltaY / 80;
-
       previousMouse.current = { x: e.clientX, y: e.clientY };
     }
   };
@@ -77,7 +73,7 @@ function Model({ path, startPos, endPos, expanded, scale = 1 }: any) {
         <group
           ref={rotRef}
           onPointerOver={(e) => { e.stopPropagation(); setHovered(true); }}
-          onPointerOut={(e) => { e.stopPropagation(); setHovered(false); }}
+          onPointerOut={(e) => { e.stopPropagation(); setHovered(false); setIsDragging(false); }}
           onPointerDown={handlePointerDown}
           onPointerUp={handlePointerUp}
           onPointerMove={handlePointerMove}
@@ -89,8 +85,8 @@ function Model({ path, startPos, endPos, expanded, scale = 1 }: any) {
   );
 }
 
-// --- CENA 3D PRINCIPAL ---
-function Scene({ expanded }: { expanded: boolean }) {
+// Recebe isMobile para saber qual tamanho usar!
+function Scene({ expanded, isMobile }: { expanded: boolean, isMobile: boolean }) {
   const groupRef = useRef<THREE.Group>(null);
 
   useFrame((state) => {
@@ -107,22 +103,52 @@ function Scene({ expanded }: { expanded: boolean }) {
       <spotLight position={[10, 15, 10]} intensity={3} castShadow />
       <spotLight position={[-10, -15, -10]} intensity={1} color="#a855f7" />
 
-      {/* 👇 AFASTAMENTO DOS OBJETOS 👇 
-          Aumentei os valores de endPos (X e Y) para empurrá-los mais para os cantos da tela.
-      */}
-      <Model path={MODELS.macbook} startPos={[-1, 0, 0]} endPos={[-4.0, 1.8, -1]} expanded={expanded} scale={0.06} />
-      <Model path={MODELS.camera} startPos={[-0.3, 0, 0]} endPos={[4.0, 1.8, -1]} expanded={expanded} scale={0.3} />
-      <Model path={MODELS.coin} startPos={[0.3, 0, 0]} endPos={[-3.8, -2.0, 0]} expanded={expanded} scale={0.8} />
-      <Model path={MODELS.instagram} startPos={[1, 0, 0]} endPos={[3.8, -2.0, 0]} expanded={expanded} scale={1} />
+      {/* 👇 A MAGIA AQUI: Operador ternário (isMobile ? valorMobile : valorPC) 👇 */}
+      <Model 
+        path={MODELS.macbook} 
+        startPos={[-1, 0, 0]} 
+        endPos={isMobile ? [-2.9, 1.4, -1] : [-4.0, 1.8, -1]} 
+        expanded={expanded} 
+        scale={isMobile ? 0.04 : 0.06} 
+      />
+      <Model 
+        path={MODELS.camera} 
+        startPos={[-0.3, 0, 0]} 
+        endPos={isMobile ? [3.0, 1.4, -1] : [4.0, 1.8, -1]} 
+        expanded={expanded} 
+        scale={isMobile ? 0.2 : 0.3} 
+      />
+      <Model 
+        path={MODELS.coin} 
+        startPos={[0.3, 0, 0]} 
+        endPos={isMobile ? [-2.7, -1.5, 0] : [-3.8, -2.0, 0]} 
+        expanded={expanded} 
+        scale={isMobile ? 0.5 : 0.8} 
+      />
+      <Model 
+        path={MODELS.instagram} 
+        startPos={[1, 0, 0]} 
+        endPos={isMobile ? [2.7, -1.5, 0] : [3.8, -2.0, 0]} 
+        expanded={expanded} 
+        scale={isMobile ? 0.7 : 1} 
+      />
     </group>
   );
 }
 
-// --- COMPONENTE FINAL EXPORTADO ---
 export function ExplodingBrands() {
   const containerRef = useRef(null);
   const isInView = useInView(containerRef, { once: false, amount: 0.4 });
   const [expanded, setExpanded] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detetor de Telemóvel Inteligente
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    handleResize(); // Checa na primeira vez que abre
+    window.addEventListener("resize", handleResize); // Fica a ouvir caso o utilizador gire a tela
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     if (isInView) {
@@ -136,15 +162,13 @@ export function ExplodingBrands() {
   return (
     <section ref={containerRef} className="relative h-[80vh] min-h-[600px] w-full bg-[#050505] flex items-center justify-center overflow-hidden border-t border-white/5">
       
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-purple-900/20 blur-[150px] rounded-full pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] max-w-full h-[500px] bg-purple-900/20 blur-[150px] rounded-full pointer-events-none" />
 
       <div className="absolute z-30 text-center pointer-events-none flex flex-col items-center justify-center w-full">
         <motion.h2
           initial={{ scale: 0.3, opacity: 0, filter: "blur(10px)" }}
           animate={expanded ? { scale: 1, opacity: 1, filter: "blur(0px)" } : { scale: 0.3, opacity: 0, filter: "blur(10px)" }}
           transition={{ duration: 1, ease: "easeOut", delay: 0.1 }}
-          // 👇 AUMENTO DO TEXTO 👇
-          // Passei de text-8xl para text-[10rem] (tamanho brutal) no desktop, e text-7xl no mobile.
           className="text-7xl md:text-[10rem] font-black leading-[0.9] tracking-tighter drop-shadow-2xl pointer-events-none"
         >
           PRA QUEM É<br />
@@ -154,10 +178,11 @@ export function ExplodingBrands() {
         </motion.h2>
       </div>
 
-      <div className="absolute inset-0 z-10">
-        <Canvas camera={{ position: [0, 0, 8], fov: 45 }}>
+      <div className="absolute inset-0 z-10 touch-pan-y">
+        <Canvas camera={{ position: [0, 0, 8], fov: 45 }} dpr={[1, 2]}>
           <Suspense fallback={null}>
-            <Scene expanded={expanded} />
+            {/* Passamos a informação para dentro da cena! */}
+            <Scene expanded={expanded} isMobile={isMobile} />
           </Suspense>
         </Canvas>
       </div>

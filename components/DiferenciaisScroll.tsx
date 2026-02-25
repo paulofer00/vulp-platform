@@ -100,12 +100,13 @@ function MeteorBackground() {
 
 // --- 3. CARROSSEL DE VÍDEOS ---
 function VideoCard({ url, angle, radius }: { url: string, angle: number, radius: number }) {
+  // 👇 Adicionei um start: true para tentar forçar o play caso o navegador bloqueie
   const texture = useVideoTexture(url, { muted: true, loop: true, start: true });
   return (
     <group position={[Math.sin(angle) * radius, 0, Math.cos(angle) * radius]} rotation={[0, angle, 0]}>
       <mesh>
         <planeGeometry args={[2.5, 4.4]} />
-        <meshBasicMaterial map={texture} toneMapped={false} side={THREE.DoubleSide} />
+        <meshBasicMaterial map={texture} toneMapped={false} side={THREE.DoubleSide} color="#ffffff" />
       </mesh>
     </group>
   );
@@ -140,7 +141,8 @@ function PortfolioCylinder() {
   });
 
   return (
-    <group ref={groupRef} rotation={[0.05, 0, 0]} scale={1.5}>
+    // 👇 Reduzi o scale do carrossel (estava enorme e pesava a tela)
+    <group ref={groupRef} rotation={[0.05, 0, 0]} scale={0.9}>
       {videos.map((url, i) => {
          const angle = (i / videos.length) * Math.PI * 2;
          return <VideoCard key={i} url={url} angle={angle} radius={radius} />;
@@ -149,28 +151,28 @@ function PortfolioCylinder() {
   );
 }
 
-// --- 4. DADOS DAS SEÇÕES ---
+// --- 4. DADOS DAS SEÇÕES (COM ESCALAS AJUSTADAS) ---
 const cards = [
   {
     title: "80% Prática",
     desc: "Menos teoria, mais execução. Você não vai só ouvir, você vai fazer.",
     type: "3d",
     modelPath: "/engrenagem.glb",
-    scale: 0.018,
+    scale: 0.01, // 👇 Muito menor
   },
   {
     title: "Presencial",
     desc: "Networking olho no olho. A energia da sala de aula te força a evoluir.",
     type: "3d",
     modelPath: "/fachada.glb", 
-    scale: 1.3, 
+    scale: 0.7, // 👇 Muito menor
   },
   {
     title: "Feedback Real",
     desc: "Sem rodeios, direto ao ponto. O mercado não passa a mão na cabeça.",
     type: "3d",
     modelPath: "/comentario.glb", 
-    scale: 0.3, 
+    scale: 0.15, // 👇 Muito menor
   },
   {
     title: "Portfólio",
@@ -182,14 +184,14 @@ const cards = [
     desc: "Conecte-se com empresários que já estão no topo e que contratam.",
     type: "3d",
     modelPath: "/xadrez.glb",
-    scale: 0.15, 
+    scale: 0.08, // 👇 Muito menor
   },
   {
     title: "Soft Skills",
     desc: "Aprenda a negociar, a portar-se e a vender o seu valor de verdade.",
     type: "3d",
     modelPath: "/cerebro.glb",
-    scale: 2.5,
+    scale: 1.5, // 👇 Muito menor
   },
 ];
 
@@ -199,18 +201,18 @@ export function DiferenciaisScroll() {
 
   const { scrollYProgress } = useScroll({ target: targetRef });
   
-  // 👇 MATEMÁTICA VULP: Agora o scroll para no lugar exato do último item (-490vw)
-  const x = useTransform(scrollYProgress, [0, 1], ["0vw", "-490vw"]);
+  // 👇 RESTAURAÇÃO: Voltou para -600vw para que cada item tenha o seu ecrã inteiro
+  const x = useTransform(scrollYProgress, [0, 1], ["0vw", "-600vw"]);
 
   return (
-    // 👇 SCROLL MAIS RÁPIDO: h-[500vh] em vez de 700vh
-    <section ref={targetRef} className="relative h-[500vh] bg-[#050505] border-t border-white/5">
+    // 👇 Ajustei a altura para h-[600vh] para o scroll ficar suave mas não longo demais
+    <section ref={targetRef} className="relative h-[600vh] bg-[#050505] border-t border-white/5">
       
       <div className="sticky top-0 flex h-screen items-center overflow-hidden">
         
         {/* FUNDO ESPACIAL */}
         <div className="absolute inset-0 z-0 bg-gradient-to-b from-[#050505] via-[#0a0a0a] to-[#050505]">
-          <Canvas camera={{ position: [0, 0, 10], fov: 50 }}>
+          <Canvas camera={{ position: [0, 0, 10], fov: 50 }} dpr={[1, 1.5]}>
             <Suspense fallback={null}>
               <Environment preset="city" />
               <ambientLight intensity={0.5} />
@@ -224,8 +226,8 @@ export function DiferenciaisScroll() {
           <div className="absolute inset-0 bg-black/40 pointer-events-none" />
         </div>
 
-        {/* 👇 TRILHA HORIZONTAL AJUSTADA (Mais curta e compacta) */}
-        <motion.div style={{ x }} className="flex h-full w-[600vw] relative z-10">
+        {/* 👇 TRILHA HORIZONTAL: Restaurada para 700vw totais */}
+        <motion.div style={{ x }} className="flex h-full w-[700vw] relative z-10 touch-pan-y">
           
           <div className="w-screen h-screen shrink-0 flex flex-col items-center justify-center p-6 text-center">
              <motion.h2 
@@ -236,7 +238,6 @@ export function DiferenciaisScroll() {
                 className="text-6xl md:text-8xl font-black mb-6 tracking-tighter leading-none drop-shadow-2xl"
              >
                 Por que a <br />
-                {/* 👇 PR-4 E PB-2 AQUI RESOLVEM O CORTE DA INTERROGAÇÃO 👇 */}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-indigo-400 pr-4 pb-2">
                    VULP é diferente?
                 </span>
@@ -253,14 +254,14 @@ export function DiferenciaisScroll() {
           </div>
 
           {cards.map((card, index) => (
-            // 👇 W-[80VW]: Isso tira o espaço vazio e "cola" as seções umas nas outras!
-            <div key={index} className="w-[80vw] h-screen shrink-0 flex items-center justify-center relative overflow-hidden">
+            // 👇 Restaurado para w-screen (100vw). Fim do encavalamento!
+            <div key={index} className="w-screen h-screen shrink-0 flex items-center justify-center relative overflow-hidden">
               
-              {/* O CONTAINER 3D FICA TOTALMENTE AO FUNDO */}
               <div className="absolute inset-0 w-full h-full flex items-center justify-center z-0">
                   {card.type === "cylinder" && (
                     <div className="absolute inset-0 cursor-ew-resize">
-                      <Canvas camera={{ position: [0, 0, 19], fov: 45 }}>
+                      {/* 👇 dpr={[1, 1.5]} otimiza performance! Câmara afastada para 16 */}
+                      <Canvas camera={{ position: [0, 0, 16], fov: 45 }} dpr={[1, 1.5]}>
                         <Suspense fallback={null}>
                           <ambientLight intensity={1} />
                           <PortfolioCylinder />
@@ -271,7 +272,8 @@ export function DiferenciaisScroll() {
 
                   {card.type === "3d" && card.modelPath && (
                     <div className="absolute inset-0">
-                      <Canvas camera={{ position: [0, 0, 5], fov: 45 }}>
+                      {/* 👇 Câmara afastada para 8 para os objetos não baterem nas bordas */}
+                      <Canvas camera={{ position: [0, 0, 8], fov: 45 }} dpr={[1, 1.5]}>
                         <Suspense fallback={null}>
                           <Environment preset="city" />
                           <ambientLight intensity={1} />
@@ -283,7 +285,6 @@ export function DiferenciaisScroll() {
                   )}
               </div>
 
-              {/* O TEXTO FICA NA FRENTE E CENTRALIZADO */}
               <motion.div 
                   initial={{ opacity: 0, scale: 0.8 }}
                   whileInView={{ opacity: 1, scale: 1 }}
