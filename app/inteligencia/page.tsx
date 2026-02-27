@@ -20,7 +20,7 @@ const formatarBRL = (valor: number) => {
 };
 
 export default function VulpIntelligence() {
-  // --- SISTEMA DE SEGURANÇA (O COFRE) ---
+  // --- SISTEMA DE SEGURANÇA ---
   const [isLogged, setIsLogged] = useState(false);
   const [senhaInput, setSenhaInput] = useState("");
   const [erroLogin, setErroLogin] = useState(false);
@@ -33,50 +33,88 @@ export default function VulpIntelligence() {
   const [loading, setLoading] = useState(true);
   const [abaAtiva, setAbaAtiva] = useState("dashboard");
 
-  // --- ESTADOS DO SIMULADOR DE CENÁRIOS (AGORA COM 4 RECEITAS E CENÁRIOS) ---
+  // --- ESTADOS DO SIMULADOR (AJUSTADOS CONFORME TABELA VULP) ---
   const [alunosPresencial, setAlunosPresencial] = useState(160);
   const [ticketPresencial, setTicketPresencial] = useState(497);
   
   const [alunosOnline, setAlunosOnline] = useState(250);
   const [ticketOnline, setTicketOnline] = useState(49.90);
 
-  const [clientesCoworking, setClientesCoworking] = useState(10);
-  const [ticketCoworking, setTicketCoworking] = useState(600);
+  const [clientesCoworking, setClientesCoworking] = useState(3);
+  const [ticketCoworking, setTicketCoworking] = useState(2000);
 
-  const [clientesB2B, setClientesB2B] = useState(5);
-  const [ticketB2B, setTicketB2B] = useState(3200);
+  const [clientesB2B, setClientesB2B] = useState(4);
+  const [ticketB2B, setTicketB2B] = useState(4000);
 
-  // Controle de Cenário (Pessimista, Conservador, Otimista)
   const [tipoCenario, setTipoCenario] = useState<"pessimista" | "conservador" | "otimista">("conservador");
 
-  // Cálculos do Simulador (Ano 1)
-  const receitaPresencialAnual = alunosPresencial * ticketPresencial * 12;
-  const receitaOnlineAnual = alunosOnline * ticketOnline * 12;
-  const receitaCoworkingAnual = clientesCoworking * ticketCoworking * 12;
-  const receitaB2BAnual = clientesB2B * ticketB2B * 12;
-  
-  const receitaTotalSimuladaAno1 = receitaPresencialAnual + receitaOnlineAnual + receitaCoworkingAnual + receitaB2BAnual;
-
-  // Taxas de crescimento compostas (CAGR) por cenário
-  const taxasCrescimento = {
-      pessimista: 0.05, // 5% ao ano
-      conservador: 0.15, // 15% ao ano
-      otimista: 0.30  // 30% ao ano
+  // 🛑 O NOVO MOTOR MATEMÁTICO (CRESCIMENTO & CHURN) 🛑
+  const matrizCenarios = {
+      pessimista: { crescPresencial: 0.12, crescOnline: 0.30, churnPresencial: 0.05, churnOnline: 0.07 },
+      conservador: { crescPresencial: 0.15, crescOnline: 0.50, churnPresencial: 0.04, churnOnline: 0.04 },
+      otimista: { crescPresencial: 0.17, crescOnline: 0.70, churnPresencial: 0.02, churnOnline: 0.03 }
   };
 
-  // Gerar dados para o gráfico de 5 anos do simulador
-  const dadosSimulacao5Anos = [0, 1, 2, 3, 4].map(anoIndex => ({
-      name: `Ano ${anoIndex + 1}`,
-      Simulação: receitaTotalSimuladaAno1 * Math.pow(1 + taxasCrescimento[tipoCenario], anoIndex)
-  }));
+  const calcularProjecaoDinamica = () => {
+      const cenario = matrizCenarios[tipoCenario];
+      const projecao = [];
+      
+      let alunosPresAtual = alunosPresencial;
+      let alunosOnAtual = alunosOnline;
 
+      for (let ano = 1; ano <= 5; ano++) {
+          // Aplica juros compostos de crescimento subtraindo o churn (a partir do ano 2)
+          if (ano > 1) {
+              alunosPresAtual = alunosPresAtual * (1 + cenario.crescPresencial - cenario.churnPresencial);
+              alunosOnAtual = alunosOnAtual * (1 + cenario.crescOnline - cenario.churnOnline);
+          }
+
+          // Receitas
+          const recPresencial = alunosPresAtual * ticketPresencial * 12;
+          const recOnline = alunosOnAtual * ticketOnline * 12;
+          const recCoworking = clientesCoworking * ticketCoworking * 12; // Coworking Fixo conforme input
+          const recB2B = clientesB2B * ticketB2B * 12; // B2B Fixo conforme input
+          const receitaBruta = recPresencial + recOnline + recCoworking + recB2B;
+
+          // Custos Dinâmicos (DRE Vivo)
+          const custoFixoAno = (data?.capex_opex?.custo_fixo || 42305.60) * 12;
+          // Puxa o custo de R$ 84,49 por aluno presencial que vem do Python
+          const custoVarPresencialAno = (data?.capex_opex?.custo_var_presencial || 84.49) * alunosPresAtual * 12;
+          // Custo base de servidor/plataforma para alunos online (Estimado R$15/aluno)
+          const custoVarOnlineAno = 15 * alunosOnAtual * 12; 
+          
+          const custoOperacionalTotal = custoFixoAno + custoVarPresencialAno + custoVarOnlineAno;
+          const lucroLiquido = receitaBruta - custoOperacionalTotal;
+
+          projecao.push({
+              name: `Ano ${ano}`,
+              Simulação: receitaBruta, // Para o Gráfico do Simulador
+              receitaBruta,
+              recPresencial,
+              recOnline,
+              recCoworking,
+              recB2B,
+              custoOperacionalTotal,
+              custoFixoAno,
+              custoVarPresencialAno,
+              custoVarOnlineAno,
+              lucroLiquido,
+              // 👇 AS DUAS LINHAS SALVADORAS AQUI 👇
+              alunosPresenciaisVol: Math.round(alunosPresAtual),
+              alunosOnlineVol: Math.round(alunosOnAtual)
+          });
+      }
+      return projecao;
+  };
+
+  const projecaoDinamica = calcularProjecaoDinamica();
+  const dadosAno1 = projecaoDinamica[0];
 
   const fetchDados = async (forceRefresh = false) => {
     setLoading(true);
     try {
         if(forceRefresh) await fetch("https://vulp-motor.onrender.com/api/refresh");
         const res = await fetch("https://vulp-motor.onrender.com/api/dashboard");
-        
         if (!res.ok) throw new Error(`Erro na API: ${res.status}`);
         const json = await res.json();
         setData(json);
@@ -114,7 +152,6 @@ export default function VulpIntelligence() {
   };
 
   if (verificandoSessao) return <div className="min-h-screen bg-[#02000A]" />;
-  
   if (!isLogged) {
       return (
           <div className="min-h-screen bg-[#02000A] flex flex-col items-center justify-center p-6 selection:bg-indigo-500/30 relative">
@@ -128,10 +165,7 @@ export default function VulpIntelligence() {
                       <p className="text-gray-400 text-center text-sm mb-8 font-medium">Insira a chave de acesso para visualizar a inteligência financeira da VULP.</p>
                       <form onSubmit={handleLogin} className="space-y-6">
                           <div>
-                              <div className="relative">
-                                  <Key size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
-                                  <input type="password" placeholder="Senha Mestra" value={senhaInput} onChange={(e) => setSenhaInput(e.target.value)} className={`w-full bg-[#050212] border ${erroLogin ? 'border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.3)] animate-bounce' : 'border-white/10 focus:border-indigo-500'} rounded-xl py-4 pl-12 pr-4 text-white font-bold focus:outline-none transition-all`} autoFocus />
-                              </div>
+                              <div className="relative"><Key size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" /><input type="password" placeholder="Senha Mestra" value={senhaInput} onChange={(e) => setSenhaInput(e.target.value)} className={`w-full bg-[#050212] border ${erroLogin ? 'border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.3)] animate-bounce' : 'border-white/10 focus:border-indigo-500'} rounded-xl py-4 pl-12 pr-4 text-white font-bold focus:outline-none transition-all`} autoFocus /></div>
                               {erroLogin && <p className="text-red-500 text-xs font-bold mt-2 text-center uppercase tracking-widest animate-pulse">Acesso Negado</p>}
                           </div>
                           <button type="submit" className="w-full bg-gradient-to-r from-indigo-600 to-fuchsia-600 hover:from-indigo-500 hover:to-fuchsia-500 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 shadow-lg transition-transform hover:scale-[1.02]">Desbloquear Cofre <ArrowRight size={20} /></button>
@@ -150,20 +184,22 @@ export default function VulpIntelligence() {
     { id: "dre", label: "Projeção DRE", icon: <ReceiptText size={20} /> },
   ];
 
-  const dadosGanhos = data?.receitas?.projecao_5_anos ? [0, 1, 2, 3, 4].map(i => ({
-    name: `Ano ${i+1}`,
-    Presencial: data.receitas.projecao_5_anos.Presencial[i] || 0,
-    Online: data.receitas.projecao_5_anos.Online[i] || 0,
-    B2B: data.receitas.projecao_5_anos.B2B[i] || 0,
-    Coworking: data.receitas.projecao_5_anos.Coworking[i] || 0,
-  })) : [];
+  // Gráfico de Pizza no Menu Formas de Ganhos alimentado pelo Simulador!
+  const dadosGanhosPizza = [
+    { name: 'Presencial', value: dadosAno1.recPresencial, color: '#6366f1' }, 
+    { name: 'Online', value: dadosAno1.recOnline, color: '#d946ef' }, 
+    { name: 'B2B', value: dadosAno1.recB2B, color: '#3b82f6' }, 
+    { name: 'Coworking', value: dadosAno1.recCoworking, color: '#ec4899' }, 
+  ];
 
-  const dadosGanhosPizza = data?.receitas?.ano1 ? [
-    { name: 'Presencial', value: data.receitas.ano1.Presencial, color: '#6366f1' }, 
-    { name: 'Online', value: data.receitas.ano1.Online, color: '#d946ef' }, 
-    { name: 'B2B', value: data.receitas.ano1.B2B, color: '#3b82f6' }, 
-    { name: 'Coworking', value: data.receitas.ano1.Coworking, color: '#ec4899' }, 
-  ] : [];
+  // Gráfico de Barras alimentado pela projeção de 5 anos do Simulador!
+  const dadosGanhosBarras = projecaoDinamica.map(p => ({
+    name: p.name,
+    Presencial: p.recPresencial,
+    Online: p.recOnline,
+    B2B: p.recB2B,
+    Coworking: p.recCoworking,
+  }));
 
   const dadosPayback = data?.payback ? data.payback.periodos.map((p: number, i: number) => ({
     name: `Ano ${p}`,
@@ -215,9 +251,7 @@ export default function VulpIntelligence() {
                 <span className="text-sm text-gray-400 flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></div> IGP-M</span>
                 <span className="text-sm font-mono font-bold text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded-md border border-blue-500/20">{data?.indices?.igpm ? `${data.indices.igpm}%` : "..."}</span>
             </div>
-            <button onClick={handleLogout} className="w-full mt-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 text-xs font-bold uppercase tracking-widest py-2 rounded-lg border border-red-500/20 transition-colors relative z-10">
-                Travar Cofre (Sair)
-            </button>
+            <button onClick={handleLogout} className="w-full mt-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 text-xs font-bold uppercase tracking-widest py-2 rounded-lg border border-red-500/20 transition-colors relative z-10">Travar Cofre (Sair)</button>
         </div>
       </aside>
 
@@ -225,21 +259,22 @@ export default function VulpIntelligence() {
         <header className="flex justify-between items-center mb-12">
             <div><h1 className="text-3xl md:text-4xl font-black text-white">{menuItems.find(i => i.id === abaAtiva)?.label}</h1></div>
             <button onClick={() => fetchDados(true)} className="flex items-center gap-2 bg-[#110826] border border-indigo-500/30 hover:border-indigo-500 px-5 py-2.5 rounded-full text-indigo-400 transition-all text-sm font-bold shadow-[0_0_15px_rgba(99,102,241,0.1)]">
-                <RefreshCw size={16} className={loading ? "animate-spin" : ""} /> Sincronizar
+                <RefreshCw size={16} className={loading ? "animate-spin" : ""} /> Sincronizar API
             </button>
         </header>
 
         {loading ? (
-            <div className="flex flex-col items-center justify-center h-64 text-indigo-500"><Activity size={48} className="animate-bounce mb-4" /><p className="font-bold animate-pulse">Consultando o Motor Python...</p></div>
+            <div className="flex flex-col items-center justify-center h-64 text-indigo-500"><Activity size={48} className="animate-bounce mb-4" /><p className="font-bold animate-pulse">Consultando Motor Financeiro...</p></div>
         ) : data?.status === "error" ? (
             <div className="bg-red-500/10 border border-red-500/30 p-8 rounded-3xl max-w-4xl mx-auto">
-                <div className="flex items-center gap-4 mb-4"><AlertTriangle size={32} className="text-red-500" /><h3 className="text-2xl font-black text-white">Falha no Motor Python</h3></div>
+                <div className="flex items-center gap-4 mb-4"><AlertTriangle size={32} className="text-red-500" /><h3 className="text-2xl font-black text-white">Falha na API Python</h3></div>
                 <p className="text-gray-300 mb-6">{data.message}</p>
-                <div className="bg-[#050212] p-4 rounded-xl border border-red-500/20 overflow-x-auto"><p className="text-xs text-red-400 font-bold uppercase mb-2">Detalhes:</p><pre className="text-gray-400 text-sm whitespace-pre-wrap">{data.detalhes}</pre></div>
+                <div className="bg-[#050212] p-4 rounded-xl border border-red-500/20 overflow-x-auto"><p className="text-xs text-red-400 font-bold uppercase mb-2">Detalhes Técnicos:</p><pre className="text-gray-400 text-sm whitespace-pre-wrap">{data.detalhes}</pre></div>
             </div>
         ) : data ? (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
                 
+                {/* --- VISÃO GERAL --- */}
                 {abaAtiva === "dashboard" && (
                     <div className="space-y-12">
                         <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -258,22 +293,6 @@ export default function VulpIntelligence() {
                         </section>
 
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                            <div className="bg-[#0A051A] border border-white/5 rounded-3xl p-8 shadow-xl">
-                                <h3 className="text-2xl font-black mb-8 text-white">Receitas do Ano 1</h3>
-                                <div className="space-y-6">
-                                    {Object.entries(data.receitas.ano1).map(([nome, valor]: any, i) => {
-                                        const total = Object.values(data.receitas.ano1).reduce((a: any, b: any) => a + b, 0) as number;
-                                        const percent = ((valor / total) * 100).toFixed(1);
-                                        const cores = ["bg-indigo-500", "bg-fuchsia-500", "bg-blue-500", "bg-pink-500"];
-                                        return (
-                                            <div key={nome}>
-                                                <div className="flex justify-between text-sm mb-2 font-bold"><span className="text-gray-300">{nome}</span><span className="text-white">{formatarBRL(valor)} <span className="text-gray-500 font-normal">({percent}%)</span></span></div>
-                                                <div className="w-full bg-[#110826] rounded-full h-3 overflow-hidden"><div className={`${cores[i % cores.length]} h-3 rounded-full transition-all duration-1000 ease-out`} style={{ width: `${percent}%` }} /></div>
-                                            </div>
-                                        )
-                                    })}
-                                </div>
-                            </div>
                             <div className="bg-[#0A051A] border border-white/5 rounded-3xl p-8 shadow-xl flex flex-col justify-center">
                                 <h3 className="text-2xl font-black mb-2 text-white">Controle de CAPEX (Obra)</h3>
                                 <p className="text-gray-500 text-sm mb-8">Acompanhamento de orçamento vs executado.</p>
@@ -286,45 +305,53 @@ export default function VulpIntelligence() {
                                     <div className="bg-[#110826] rounded-xl p-4 border border-white/5"><p className="text-xs text-gray-500 font-bold uppercase">Custo Var. Presencial</p><p className="text-xl font-bold text-white mt-1">{formatarBRL(data.capex_opex.custo_var_presencial)}</p></div>
                                 </div>
                             </div>
+                            <div className="bg-gradient-to-br from-[#1A0B3B] to-[#0A051A] border border-purple-500/40 p-8 rounded-3xl relative overflow-hidden shadow-[0_0_30px_rgba(147,51,234,0.2)] flex flex-col justify-center items-center text-center">
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/20 blur-[50px] rounded-full pointer-events-none" />
+                                <SlidersHorizontal size={48} className="text-purple-400 mb-4" />
+                                <h3 className="text-2xl font-black text-white mb-2">Simulador Ativo</h3>
+                                <p className="text-gray-400 text-sm mb-6">As projeções de Receita e DRE agora obedecem às variáveis configuradas no simulador de cenários.</p>
+                                <button onClick={() => setAbaAtiva("cenarios")} className="bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 px-8 rounded-full transition-colors shadow-lg">Acessar Simulador</button>
+                            </div>
                         </div>
                     </div>
                 )}
 
-                {/* 👇 ABA 2: SIMULADOR DE CENÁRIOS ATUALIZADO 👇 */}
+                {/* --- SIMULADOR DE CENÁRIOS (AGORA AFETA TUDO) --- */}
                 {abaAtiva === "cenarios" && (
                     <div className="space-y-8">
                         <div className="bg-[#0A051A] border border-indigo-500/20 rounded-3xl p-8 shadow-[0_0_40px_rgba(99,102,241,0.05)]">
                             
                             <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-10 gap-6">
                                 <div>
-                                    <h3 className="text-2xl font-black text-white">Matriz de Simulação</h3>
-                                    <p className="text-gray-400 text-sm mt-1">Ajuste os controladores e escolha o cenário de crescimento para projetar 5 anos.</p>
+                                    <h3 className="text-2xl font-black text-white">Matriz de Simulação VULP</h3>
+                                    <p className="text-gray-400 text-sm mt-1">Integração viva: alterar estes dados afetará instantaneamente o DRE e os Gráficos.</p>
                                 </div>
 
-                                {/* SELETOR DE CENÁRIO */}
+                                {/* SELETOR DE CENÁRIO (APLICA CHURN E CRESCIMENTO DA TABELA) */}
                                 <div className="flex bg-[#110826] p-1.5 rounded-xl border border-white/10">
                                     <button onClick={() => setTipoCenario("pessimista")} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${tipoCenario === "pessimista" ? "bg-red-500/20 text-red-400 border border-red-500/30" : "text-gray-500 hover:text-gray-300"}`}>
-                                        <TrendingDown size={16} /> Pessimista (+5% a.a.)
+                                        <TrendingDown size={16} /> Pessimista
                                     </button>
                                     <button onClick={() => setTipoCenario("conservador")} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${tipoCenario === "conservador" ? "bg-blue-500/20 text-blue-400 border border-blue-500/30" : "text-gray-500 hover:text-gray-300"}`}>
-                                        <Minus size={16} /> Conservador (+15% a.a.)
+                                        <Minus size={16} /> Conservador
                                     </button>
                                     <button onClick={() => setTipoCenario("otimista")} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${tipoCenario === "otimista" ? "bg-green-500/20 text-green-400 border border-green-500/30" : "text-gray-500 hover:text-gray-300"}`}>
-                                        <TrendingUp size={16} /> Otimista (+30% a.a.)
+                                        <TrendingUp size={16} /> Otimista
                                     </button>
                                 </div>
                             </div>
                             
                             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                                 
-                                {/* LADO ESQUERDO: OS 4 CONTROLADORES (Ocupam 7 colunas) */}
+                                {/* CONTROLADORES */}
                                 <div className="lg:col-span-7 grid grid-cols-1 md:grid-cols-2 gap-6">
                                     {/* Presencial */}
                                     <div className="bg-[#110826] p-5 rounded-2xl border border-white/5">
-                                        <h4 className="text-lg font-bold text-indigo-400 mb-5 flex items-center gap-2"><Users size={18} /> Presencial</h4>
+                                        <h4 className="text-lg font-bold text-indigo-400 mb-5 flex items-center gap-2"><Users size={18} /> Presencial (Ano 1)</h4>
                                         <div className="mb-5">
-                                            <div className="flex justify-between mb-2"><label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Volume de Alunos</label><span className="text-lg font-black text-white">{alunosPresencial}</span></div>
-                                            <input type="range" min="50" max="500" value={alunosPresencial} onChange={(e) => setAlunosPresencial(Number(e.target.value))} className="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-indigo-500" />
+                                            <div className="flex justify-between mb-2"><label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Alunos</label><span className="text-lg font-black text-white">{alunosPresencial}</span></div>
+                                            {/* Max ajustado para 320 */}
+                                            <input type="range" min="50" max="320" value={alunosPresencial} onChange={(e) => setAlunosPresencial(Number(e.target.value))} className="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-indigo-500" />
                                         </div>
                                         <div>
                                             <label className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 block">Ticket Médio (R$)</label>
@@ -334,9 +361,9 @@ export default function VulpIntelligence() {
 
                                     {/* Online */}
                                     <div className="bg-[#110826] p-5 rounded-2xl border border-white/5">
-                                        <h4 className="text-lg font-bold text-fuchsia-400 mb-5 flex items-center gap-2"><CreditCard size={18} /> Online</h4>
+                                        <h4 className="text-lg font-bold text-fuchsia-400 mb-5 flex items-center gap-2"><CreditCard size={18} /> Online (Ano 1)</h4>
                                         <div className="mb-5">
-                                            <div className="flex justify-between mb-2"><label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Volume de Alunos</label><span className="text-lg font-black text-white">{alunosOnline}</span></div>
+                                            <div className="flex justify-between mb-2"><label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Alunos</label><span className="text-lg font-black text-white">{alunosOnline}</span></div>
                                             <input type="range" min="50" max="2000" step="50" value={alunosOnline} onChange={(e) => setAlunosOnline(Number(e.target.value))} className="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-fuchsia-500" />
                                         </div>
                                         <div>
@@ -350,7 +377,8 @@ export default function VulpIntelligence() {
                                         <h4 className="text-lg font-bold text-pink-400 mb-5 flex items-center gap-2"><Briefcase size={18} /> Coworking</h4>
                                         <div className="mb-5">
                                             <div className="flex justify-between mb-2"><label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Residentes</label><span className="text-lg font-black text-white">{clientesCoworking}</span></div>
-                                            <input type="range" min="0" max="100" value={clientesCoworking} onChange={(e) => setClientesCoworking(Number(e.target.value))} className="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-pink-500" />
+                                            {/* Max ajustado para 5 */}
+                                            <input type="range" min="0" max="5" value={clientesCoworking} onChange={(e) => setClientesCoworking(Number(e.target.value))} className="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-pink-500" />
                                         </div>
                                         <div>
                                             <label className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 block">Mensalidade (R$)</label>
@@ -363,7 +391,8 @@ export default function VulpIntelligence() {
                                         <h4 className="text-lg font-bold text-blue-400 mb-5 flex items-center gap-2"><Building2 size={18} /> Parceiros B2B</h4>
                                         <div className="mb-5">
                                             <div className="flex justify-between mb-2"><label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Empresas</label><span className="text-lg font-black text-white">{clientesB2B}</span></div>
-                                            <input type="range" min="0" max="30" value={clientesB2B} onChange={(e) => setClientesB2B(Number(e.target.value))} className="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-500" />
+                                            {/* Max ajustado para 5 */}
+                                            <input type="range" min="0" max="5" value={clientesB2B} onChange={(e) => setClientesB2B(Number(e.target.value))} className="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-500" />
                                         </div>
                                         <div>
                                             <label className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 block">Contrato Médio (R$)</label>
@@ -372,31 +401,27 @@ export default function VulpIntelligence() {
                                     </div>
                                 </div>
 
-                                {/* LADO DIREITO: RESULTADOS E GRÁFICO (Ocupam 5 colunas) */}
+                                {/* RESULTADOS DO SIMULADOR */}
                                 <div className="lg:col-span-5 flex flex-col gap-6">
-                                    
-                                    {/* Bloco de Valor Total Ano 1 */}
                                     <div className="bg-gradient-to-br from-[#1A0B3B] to-[#0A051A] border border-purple-500/40 p-6 rounded-3xl relative overflow-hidden shadow-[0_0_30px_rgba(147,51,234,0.2)]">
                                         <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/20 blur-[50px] rounded-full pointer-events-none" />
                                         <div className="flex items-center gap-2 mb-2 relative z-10"><Calculator size={20} className="text-green-400"/><h4 className="text-lg font-bold text-white">Faturamento Base (Ano 1)</h4></div>
                                         <p className="text-purple-300 text-xs font-bold uppercase tracking-widest mb-2 relative z-10">Receita Bruta Total Simulada</p>
-                                        <p className="text-4xl lg:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white to-purple-200 relative z-10">{formatarBRL(receitaTotalSimuladaAno1)}</p>
+                                        <p className="text-4xl lg:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white to-purple-200 relative z-10">{formatarBRL(dadosAno1.receitaBruta)}</p>
                                         
-                                        {/* Breakdown Minimalista */}
                                         <div className="mt-6 pt-4 border-t border-purple-500/20 grid grid-cols-2 gap-2 relative z-10">
-                                            <div><p className="text-[10px] text-gray-400 uppercase font-bold">Presencial</p><p className="text-sm font-bold text-indigo-300">{formatarBRL(receitaPresencialAnual)}</p></div>
-                                            <div><p className="text-[10px] text-gray-400 uppercase font-bold">Online</p><p className="text-sm font-bold text-fuchsia-300">{formatarBRL(receitaOnlineAnual)}</p></div>
-                                            <div><p className="text-[10px] text-gray-400 uppercase font-bold">Coworking</p><p className="text-sm font-bold text-pink-300">{formatarBRL(receitaCoworkingAnual)}</p></div>
-                                            <div><p className="text-[10px] text-gray-400 uppercase font-bold">B2B</p><p className="text-sm font-bold text-blue-300">{formatarBRL(receitaB2BAnual)}</p></div>
+                                            <div><p className="text-[10px] text-gray-400 uppercase font-bold">Presencial</p><p className="text-sm font-bold text-indigo-300">{formatarBRL(dadosAno1.recPresencial)}</p></div>
+                                            <div><p className="text-[10px] text-gray-400 uppercase font-bold">Online</p><p className="text-sm font-bold text-fuchsia-300">{formatarBRL(dadosAno1.recOnline)}</p></div>
+                                            <div><p className="text-[10px] text-gray-400 uppercase font-bold">Coworking</p><p className="text-sm font-bold text-pink-300">{formatarBRL(dadosAno1.recCoworking)}</p></div>
+                                            <div><p className="text-[10px] text-gray-400 uppercase font-bold">B2B</p><p className="text-sm font-bold text-blue-300">{formatarBRL(dadosAno1.recB2B)}</p></div>
                                         </div>
                                     </div>
 
-                                    {/* Gráfico de Crescimento 5 Anos baseado no Cenário */}
                                     <div className="bg-[#110826] border border-white/5 p-6 rounded-3xl flex-1 flex flex-col">
                                         <h4 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">Curva de Projeção (5 Anos)</h4>
                                         <div className="h-full min-h-[180px] w-full mt-auto">
                                             <ResponsiveContainer width="100%" height="100%">
-                                                <AreaChart data={dadosSimulacao5Anos} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                                <AreaChart data={projecaoDinamica} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                                                     <defs>
                                                         <linearGradient id="colorCrescimento" x1="0" y1="0" x2="0" y2="1">
                                                             <stop offset="5%" stopColor={tipoCenario === 'otimista' ? '#10b981' : tipoCenario === 'conservador' ? '#3b82f6' : '#ef4444'} stopOpacity={0.4}/>
@@ -406,23 +431,18 @@ export default function VulpIntelligence() {
                                                     <XAxis dataKey="name" stroke="#4b5563" tick={{fill: '#9ca3af', fontSize: 10}} axisLine={false} tickLine={false} />
                                                     <YAxis tickFormatter={(val) => `R$${(val/1000000).toFixed(1)}M`} stroke="#4b5563" tick={{fill: '#9ca3af', fontSize: 10}} axisLine={false} tickLine={false} />
                                                     <Tooltip content={<CustomTooltip />} />
-                                                    <Area 
-                                                        type="monotone" 
-                                                        dataKey="Simulação" 
-                                                        stroke={tipoCenario === 'otimista' ? '#10b981' : tipoCenario === 'conservador' ? '#3b82f6' : '#ef4444'} 
-                                                        strokeWidth={3} fillOpacity={1} fill="url(#colorCrescimento)" 
-                                                    />
+                                                    <Area type="monotone" dataKey="Simulação" stroke={tipoCenario === 'otimista' ? '#10b981' : tipoCenario === 'conservador' ? '#3b82f6' : '#ef4444'} strokeWidth={3} fillOpacity={1} fill="url(#colorCrescimento)" />
                                                 </AreaChart>
                                             </ResponsiveContainer>
                                         </div>
                                     </div>
-
                                 </div>
                             </div>
                         </div>
                     </div>
                 )}
 
+                {/* --- FORMAS DE GANHOS (AGORA OBEDECE AO SIMULADOR) --- */}
                 {abaAtiva === "ganhos" && (
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                         <div className="bg-[#0A051A] border border-white/5 rounded-3xl p-8 shadow-xl">
@@ -440,10 +460,10 @@ export default function VulpIntelligence() {
                             </div>
                         </div>
                         <div className="bg-[#0A051A] border border-white/5 rounded-3xl p-8 shadow-xl">
-                            <h3 className="text-xl font-black mb-6 text-white">Projeção de Crescimento (5 Anos)</h3>
+                            <h3 className="text-xl font-black mb-6 text-white">Projeção do Mix (5 Anos)</h3>
                             <div className="h-[300px] w-full">
                                 <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={dadosGanhos} margin={{ top: 20, right: 0, left: 0, bottom: 0 }}>
+                                    <BarChart data={dadosGanhosBarras} margin={{ top: 20, right: 0, left: 0, bottom: 0 }}>
                                         <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" vertical={false} />
                                         <XAxis dataKey="name" stroke="#6b7280" tick={{fill: '#9ca3af', fontSize: 12}} axisLine={false} tickLine={false} />
                                         <YAxis tickFormatter={(val) => `R$ ${(val/1000)}k`} stroke="#6b7280" tick={{fill: '#9ca3af', fontSize: 12}} axisLine={false} tickLine={false} />
@@ -460,6 +480,7 @@ export default function VulpIntelligence() {
                     </div>
                 )}
 
+                {/* --- VALUATION E PAYBACK --- */}
                 {abaAtiva === "viabilidade" && (
                     <div className="bg-[#0A051A] border border-white/5 rounded-3xl p-8 shadow-xl">
                         <div className="mb-8">
@@ -486,35 +507,51 @@ export default function VulpIntelligence() {
                     </div>
                 )}
 
+                {/* --- PROJEÇÃO DRE VIVA E DINÂMICA --- */}
                 {abaAtiva === "dre" && (
                     <div className="bg-[#0A051A] border border-white/5 rounded-3xl p-8 shadow-xl">
-                        <h3 className="text-2xl font-black mb-8 text-white flex items-center gap-2"><ReceiptText className="text-green-500"/> DRE Resumido (Ano 1 a Ano 5)</h3>
+                        <div className="flex justify-between items-end mb-8">
+                            <div>
+                                <h3 className="text-2xl font-black text-white flex items-center gap-2"><ReceiptText className="text-green-500"/> DRE Dinâmico (Ano 1 a Ano 5)</h3>
+                                <p className="text-gray-400 text-sm mt-1">Os custos variáveis acompanham o volume de alunos definido no Simulador de Cenários.</p>
+                            </div>
+                            <span className="bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 px-3 py-1 rounded-md text-xs font-bold uppercase tracking-widest">
+                                Cenário: {tipoCenario}
+                            </span>
+                        </div>
+                        
                         <div className="overflow-x-auto rounded-xl border border-white/10">
                             <table className="w-full text-left text-sm text-gray-400">
                                 <thead className="bg-[#110826] text-xs uppercase text-gray-300 font-bold">
-                                    <tr><th className="px-6 py-4">Categoria</th>{[1,2,3,4,5].map(i=><th key={i} className="px-6 py-4">Ano {i}</th>)}</tr>
+                                    <tr><th className="px-6 py-4">Categoria</th>{[1,2,3,4,5].map(i=><th key={i} className="px-6 py-4 text-right">Ano {i}</th>)}</tr>
                                 </thead>
                                 <tbody>
-                                    <tr className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                                    <tr className="border-b border-white/5 bg-indigo-900/10">
                                         <td className="px-6 py-4 font-bold text-indigo-400">Receitas Brutas Totais</td>
-                                        {[0,1,2,3,4].map(i => {
-                                            const total = (data.receitas.projecao_5_anos.Presencial[i]||0) + (data.receitas.projecao_5_anos.Online[i]||0) + (data.receitas.projecao_5_anos.B2B[i]||0) + (data.receitas.projecao_5_anos.Coworking[i]||0);
-                                            return <td key={i} className="px-6 py-4 text-white font-medium">{formatarBRL(total)}</td>
-                                        })}
+                                        {projecaoDinamica.map((p, i) => <td key={i} className="px-6 py-4 text-indigo-300 font-bold text-right">{formatarBRL(p.receitaBruta)}</td>)}
                                     </tr>
+                                    
+                                    {/* Linhas de Custos */}
                                     <tr className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                                        <td className="px-6 py-4 text-gray-500">- Custo Operacional (Estimativa 40%)</td>
-                                        {[0,1,2,3,4].map(i => {
-                                            const total = (data.receitas.projecao_5_anos.Presencial[i]||0) + (data.receitas.projecao_5_anos.Online[i]||0) + (data.receitas.projecao_5_anos.B2B[i]||0) + (data.receitas.projecao_5_anos.Coworking[i]||0);
-                                            return <td key={i} className="px-6 py-4 text-red-400">{formatarBRL(total * 0.40)}</td>
-                                        })}
+                                        <td className="px-6 py-4 text-red-400 font-bold">- Custos Operacionais Totais</td>
+                                        {projecaoDinamica.map((p, i) => <td key={i} className="px-6 py-4 text-red-400 font-bold text-right">{formatarBRL(p.custoOperacionalTotal)}</td>)}
                                     </tr>
-                                    <tr className="bg-gradient-to-r from-green-900/20 to-transparent">
-                                        <td className="px-6 py-4 font-black text-green-400 uppercase">Lucro Líquido Projetado</td>
-                                        {[0,1,2,3,4].map(i => {
-                                            const total = (data.receitas.projecao_5_anos.Presencial[i]||0) + (data.receitas.projecao_5_anos.Online[i]||0) + (data.receitas.projecao_5_anos.B2B[i]||0) + (data.receitas.projecao_5_anos.Coworking[i]||0);
-                                            return <td key={i} className="px-6 py-4 font-black text-green-400">{formatarBRL(total * 0.60)}</td>
-                                        })}
+                                    <tr className="border-b border-white/5 hover:bg-white/5 transition-colors text-xs">
+                                        <td className="px-6 py-2 text-gray-500 pl-10">↳ Custo Fixo (Anual)</td>
+                                        {projecaoDinamica.map((p, i) => <td key={i} className="px-6 py-2 text-gray-500 text-right">{formatarBRL(p.custoFixoAno)}</td>)}
+                                    </tr>
+                                    <tr className="border-b border-white/5 hover:bg-white/5 transition-colors text-xs">
+                                        <td className="px-6 py-2 text-gray-500 pl-10">↳ Custo Variável (Alunos Presencial)</td>
+                                        {projecaoDinamica.map((p, i) => <td key={i} className="px-6 py-2 text-gray-500 text-right">{formatarBRL(p.custoVarPresencialAno)} <span className="text-[10px] block text-gray-700">{p.alunosPresenciaisVol} un.</span></td>)}
+                                    </tr>
+                                    <tr className="border-b border-white/5 hover:bg-white/5 transition-colors text-xs">
+                                        <td className="px-6 py-2 text-gray-500 pl-10">↳ Custo Variável (Plataforma Online)</td>
+                                        {projecaoDinamica.map((p, i) => <td key={i} className="px-6 py-2 text-gray-500 text-right">{formatarBRL(p.custoVarOnlineAno)} <span className="text-[10px] block text-gray-700">{p.alunosOnlineVol} un.</span></td>)}
+                                    </tr>
+
+                                    <tr className="bg-gradient-to-r from-green-900/20 to-[#0A051A]">
+                                        <td className="px-6 py-5 font-black text-green-400 uppercase text-base">Lucro Líquido Projetado</td>
+                                        {projecaoDinamica.map((p, i) => <td key={i} className="px-6 py-5 font-black text-green-400 text-base text-right">{formatarBRL(p.lucroLiquido)}</td>)}
                                     </tr>
                                 </tbody>
                             </table>
