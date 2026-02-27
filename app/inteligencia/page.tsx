@@ -78,12 +78,13 @@ export default function VulpIntelligence() {
 
           // Custos Dinâmicos (DRE Vivo)
           const custoFixoAno = (data?.capex_opex?.custo_fixo || 42305.60) * 12;
-          // Puxa o custo de R$ 84,49 por aluno presencial que vem do Python
+          // Custo Variável Presencial puxa do Python multiplicado pelos alunos
           const custoVarPresencialAno = (data?.capex_opex?.custo_var_presencial || 84.49) * alunosPresAtual * 12;
-          // Custo base de servidor/plataforma para alunos online (Estimado R$15/aluno)
-          const custoVarOnlineAno = 15 * alunosOnAtual * 12; 
           
-          const custoOperacionalTotal = custoFixoAno + custoVarPresencialAno + custoVarOnlineAno;
+          // 👇 AQUI ESTÁ A CORREÇÃO: Custo Fixo da Plataforma Online (R$ 9.950,00/ano) cravado! 👇
+          const custoPlataformaOnlineAno = 9950; 
+          
+          const custoOperacionalTotal = custoFixoAno + custoVarPresencialAno + custoPlataformaOnlineAno;
           const lucroLiquido = receitaBruta - custoOperacionalTotal;
 
           projecao.push({
@@ -97,9 +98,8 @@ export default function VulpIntelligence() {
               custoOperacionalTotal,
               custoFixoAno,
               custoVarPresencialAno,
-              custoVarOnlineAno,
+              custoPlataformaOnlineAno, // Variável atualizada
               lucroLiquido,
-              // 👇 AS DUAS LINHAS SALVADORAS AQUI 👇
               alunosPresenciaisVol: Math.round(alunosPresAtual),
               alunosOnlineVol: Math.round(alunosOnAtual)
           });
@@ -544,9 +544,10 @@ export default function VulpIntelligence() {
                                         <td className="px-6 py-2 text-gray-500 pl-10">↳ Custo Variável (Alunos Presencial)</td>
                                         {projecaoDinamica.map((p, i) => <td key={i} className="px-6 py-2 text-gray-500 text-right">{formatarBRL(p.custoVarPresencialAno)} <span className="text-[10px] block text-gray-700">{p.alunosPresenciaisVol} un.</span></td>)}
                                     </tr>
+                                    {/* 👇 LINHA ATUALIZADA: Nome corrigido, valor fixo apontado e sem a tag "un." 👇 */}
                                     <tr className="border-b border-white/5 hover:bg-white/5 transition-colors text-xs">
-                                        <td className="px-6 py-2 text-gray-500 pl-10">↳ Custo Variável (Plataforma Online)</td>
-                                        {projecaoDinamica.map((p, i) => <td key={i} className="px-6 py-2 text-gray-500 text-right">{formatarBRL(p.custoVarOnlineAno)} <span className="text-[10px] block text-gray-700">{p.alunosOnlineVol} un.</span></td>)}
+                                        <td className="px-6 py-2 text-gray-500 pl-10">↳ Custo Plataforma Online (Fixo)</td>
+                                        {projecaoDinamica.map((p, i) => <td key={i} className="px-6 py-2 text-gray-500 text-right">{formatarBRL(p.custoPlataformaOnlineAno)}</td>)}
                                     </tr>
 
                                     <tr className="bg-gradient-to-r from-green-900/20 to-[#0A051A]">
