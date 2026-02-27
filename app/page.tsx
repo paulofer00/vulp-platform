@@ -11,6 +11,7 @@ import VideoManifesto from "@/components/VideoManifesto";
 import { ExplodingBrands } from "@/components/ExplodingBrands";
 import { InfiniteAnswers } from "@/components/InfiniteAnswers";
 import { DiferenciaisScroll } from "@/components/DiferenciaisScroll";
+import Preloader from "@/components/Preloader"; // 🛑 1. IMPORTAMOS O PRELOADER AQUI
 
 export default async function Home() {
   const cookieStore = await cookies();
@@ -31,6 +32,9 @@ export default async function Home() {
   return (
     <main className="min-h-screen bg-[#050505] text-white selection:bg-purple-500/30 font-sans relative">
       
+      {/* 🛑 2. A CORTINA DE TEATRO (Sempre no topo de tudo) 🛑 */}
+      <Preloader />
+
       <MouseTrail />
       <FoxLottie />
 
@@ -64,10 +68,8 @@ export default async function Home() {
         <div className="relative z-10 max-w-5xl mx-auto w-full">
             
             <ScrollReveal>
-                {/* 👇 AJUSTE AQUI: text-4xl no mobile, text-5xl em telas médias, text-7xl no PC */}
                 <h1 className="text-4xl sm:text-5xl md:text-7xl font-black tracking-tighter mb-6 leading-tight">
                     UMA ESCOLA <br />
-                    {/* 👇 AJUSTE AQUI: whitespace-nowrap impede a quebra de linha! 👇 */}
                     <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-purple-300 whitespace-nowrap">
                         NADA CONVENCIONAL
                     </span>

@@ -6,8 +6,8 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import { useGLTF, Float, Environment, Stars, useVideoTexture } from "@react-three/drei";
 import * as THREE from "three";
 
-// --- 1. MODELO 3D INTERATIVO ---
-function InteractiveModel({ path, scale = 1, rotationSpeed = 0.5 }: { path: string, scale?: number, rotationSpeed?: number }) {
+// --- 1. MODELO 3D INTERATIVO (AGORA COM POSIÇÃO DINÂMICA) ---
+function InteractiveModel({ path, scale = 1, rotationSpeed = 0.5, position = [0, 0.5, 0] }: { path: string, scale?: number, rotationSpeed?: number, position?: [number, number, number] }) {
   const { scene } = useGLTF(path as string) as any;
   const rotRef = useRef<THREE.Group>(null);
   const scaleRef = useRef<THREE.Group>(null);
@@ -56,7 +56,8 @@ function InteractiveModel({ path, scale = 1, rotationSpeed = 0.5 }: { path: stri
   };
 
   return (
-    <group>
+    // 👇 AJUSTE AQUI: O modelo agora obedece à propriedade 'position' enviada pelo Card
+    <group position={position}>
       <Float speed={2} rotationIntensity={0} floatIntensity={1.5}>
         <group ref={scaleRef} scale={scale}>
           <group
@@ -90,9 +91,9 @@ function MeteorBackground() {
   });
 
   return (
-    <group ref={ref} position={[0, -8, -35]}>
+    <group ref={ref} position={[15, 10, -60]}>
       <Float speed={1} rotationIntensity={1} floatIntensity={2}>
-        <primitive object={scene} scale={0.15} /> 
+        <primitive object={scene} scale={0.05} /> 
       </Float>
     </group>
   );
@@ -100,7 +101,6 @@ function MeteorBackground() {
 
 // --- 3. CARROSSEL DE VÍDEOS ---
 function VideoCard({ url, angle, radius }: { url: string, angle: number, radius: number }) {
-  // 👇 Adicionei um start: true para tentar forçar o play caso o navegador bloqueie
   const texture = useVideoTexture(url, { muted: true, loop: true, start: true });
   return (
     <group position={[Math.sin(angle) * radius, 0, Math.cos(angle) * radius]} rotation={[0, angle, 0]}>
@@ -141,8 +141,7 @@ function PortfolioCylinder() {
   });
 
   return (
-    // 👇 Reduzi o scale do carrossel (estava enorme e pesava a tela)
-    <group ref={groupRef} rotation={[0.05, 0, 0]} scale={0.9}>
+    <group ref={groupRef} position={[0, 1.5, 0]} rotation={[0.05, 0, 0]} scale={0.8}>
       {videos.map((url, i) => {
          const angle = (i / videos.length) * Math.PI * 2;
          return <VideoCard key={i} url={url} angle={angle} radius={radius} />;
@@ -151,28 +150,31 @@ function PortfolioCylinder() {
   );
 }
 
-// --- 4. DADOS DAS SEÇÕES (COM ESCALAS AJUSTADAS) ---
+// --- 4. DADOS DAS SEÇÕES (COM CONTROLE INDIVIDUAL DE ALTURA posY) ---
 const cards = [
   {
     title: "80% Prática",
     desc: "Menos teoria, mais execução. Você não vai só ouvir, você vai fazer.",
     type: "3d",
     modelPath: "/engrenagem.glb",
-    scale: 0.01, // 👇 Muito menor
+    scale: 0.015, 
+    posY: 0.5, // 👇 AJUSTE AQUI A ALTURA DA ENGRENAGEM (Maior = Sobe, Menor = Desce)
   },
   {
     title: "Presencial",
     desc: "Networking olho no olho. A energia da sala de aula te força a evoluir.",
     type: "3d",
     modelPath: "/fachada.glb", 
-    scale: 0.7, // 👇 Muito menor
+    scale: 1, 
+    posY: 0.5, // 👇 AJUSTE AQUI A ALTURA DA FACHADA
   },
   {
     title: "Feedback Real",
     desc: "Sem rodeios, direto ao ponto. O mercado não passa a mão na cabeça.",
     type: "3d",
     modelPath: "/comentario.glb", 
-    scale: 0.15, // 👇 Muito menor
+    scale: 0.35, 
+    posY: 0.5, // 👇 AJUSTE AQUI A ALTURA DO COMENTÁRIO
   },
   {
     title: "Portfólio",
@@ -184,14 +186,16 @@ const cards = [
     desc: "Conecte-se com empresários que já estão no topo e que contratam.",
     type: "3d",
     modelPath: "/xadrez.glb",
-    scale: 0.08, // 👇 Muito menor
+    scale: 0.15, 
+    posY: 0.5, // 👇 AJUSTE AQUI A ALTURA DO XADREZ
   },
   {
     title: "Soft Skills",
     desc: "Aprenda a negociar, a portar-se e a vender o seu valor de verdade.",
     type: "3d",
     modelPath: "/cerebro.glb",
-    scale: 1.5, // 👇 Muito menor
+    scale: 2.5, 
+    posY: 0.5, // 👇 AJUSTE AQUI A ALTURA DO CÉREBRO
   },
 ];
 
@@ -201,11 +205,9 @@ export function DiferenciaisScroll() {
 
   const { scrollYProgress } = useScroll({ target: targetRef });
   
-  // 👇 RESTAURAÇÃO: Voltou para -600vw para que cada item tenha o seu ecrã inteiro
   const x = useTransform(scrollYProgress, [0, 1], ["0vw", "-600vw"]);
 
   return (
-    // 👇 Ajustei a altura para h-[600vh] para o scroll ficar suave mas não longo demais
     <section ref={targetRef} className="relative h-[600vh] bg-[#050505] border-t border-white/5">
       
       <div className="sticky top-0 flex h-screen items-center overflow-hidden">
@@ -226,7 +228,7 @@ export function DiferenciaisScroll() {
           <div className="absolute inset-0 bg-black/40 pointer-events-none" />
         </div>
 
-        {/* 👇 TRILHA HORIZONTAL: Restaurada para 700vw totais */}
+        {/* TRILHA HORIZONTAL */}
         <motion.div style={{ x }} className="flex h-full w-[700vw] relative z-10 touch-pan-y">
           
           <div className="w-screen h-screen shrink-0 flex flex-col items-center justify-center p-6 text-center">
@@ -254,13 +256,11 @@ export function DiferenciaisScroll() {
           </div>
 
           {cards.map((card, index) => (
-            // 👇 Restaurado para w-screen (100vw). Fim do encavalamento!
             <div key={index} className="w-screen h-screen shrink-0 flex items-center justify-center relative overflow-hidden">
               
               <div className="absolute inset-0 w-full h-full flex items-center justify-center z-0">
                   {card.type === "cylinder" && (
                     <div className="absolute inset-0 cursor-ew-resize">
-                      {/* 👇 dpr={[1, 1.5]} otimiza performance! Câmara afastada para 16 */}
                       <Canvas camera={{ position: [0, 0, 16], fov: 45 }} dpr={[1, 1.5]}>
                         <Suspense fallback={null}>
                           <ambientLight intensity={1} />
@@ -272,13 +272,13 @@ export function DiferenciaisScroll() {
 
                   {card.type === "3d" && card.modelPath && (
                     <div className="absolute inset-0">
-                      {/* 👇 Câmara afastada para 8 para os objetos não baterem nas bordas */}
-                      <Canvas camera={{ position: [0, 0, 8], fov: 45 }} dpr={[1, 1.5]}>
+                      <Canvas camera={{ position: [0, 0, 6], fov: 45 }} dpr={[1, 1.5]}>
                         <Suspense fallback={null}>
                           <Environment preset="city" />
                           <ambientLight intensity={1} />
                           <spotLight position={[5, 5, 5]} intensity={2} color="#fff" />
-                          <InteractiveModel path={card.modelPath} scale={card.scale} />
+                          {/* 👇 AJUSTE AQUI: O componente agora recebe o position com o posY do array */}
+                          <InteractiveModel path={card.modelPath} scale={card.scale} position={[0, card.posY ?? 0.5, 0]} />
                         </Suspense>
                       </Canvas>
                     </div>
@@ -290,9 +290,9 @@ export function DiferenciaisScroll() {
                   whileInView={{ opacity: 1, scale: 1 }}
                   transition={{ type: "spring", bounce: 0.4, duration: 1.2 }}
                   viewport={{ once: false, margin: "-100px" }}
-                  className="relative z-10 flex flex-col items-center justify-center text-center p-6 pointer-events-none"
+                  className="relative z-10 flex flex-col items-center justify-center text-center p-6 mt-48 pointer-events-none"
               >
-                <h2 className="text-6xl md:text-9xl font-black mb-6 tracking-tighter leading-none text-white [text-shadow:_0_10px_40px_rgb(0_0_0_/_100%)]">
+                <h2 className="text-6xl md:text-9xl font-black mb-2 tracking-tighter leading-none text-white [text-shadow:_0_10px_40px_rgb(0_0_0_/_100%)]">
                   {card.title}
                 </h2>
                 <p className="text-2xl md:text-4xl text-purple-400 font-bold max-w-3xl [text-shadow:_0_5px_20px_rgb(0_0_0_/_100%)]">
