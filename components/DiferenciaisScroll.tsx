@@ -6,7 +6,7 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import { useGLTF, Float, Stars, useVideoTexture } from "@react-three/drei";
 import * as THREE from "three";
 
-// --- 1. MODELO 3D INTERATIVO (OTIMIZADO PARA MOBILE) ---
+// --- 1. MODELO 3D INTERATIVO ---
 function InteractiveModel({ path, scale = 1, rotationSpeed = 0.5, position = [0, 0.5, 0] }: { path: string, scale?: number, rotationSpeed?: number, position?: [number, number, number] }) {
   const { scene } = useGLTF(path as string) as any;
   const rotRef = useRef<THREE.Group>(null);
@@ -68,7 +68,6 @@ function InteractiveModel({ path, scale = 1, rotationSpeed = 0.5, position = [0,
             onPointerMove={handlePointerMove}
             onPointerMissed={() => setIsDragging(false)}
           >
-            {/* OTIMIZAÇÃO: Luz de interação muito mais leve */}
             {hovered && <pointLight distance={3} intensity={3} color="#a855f7" />}
             <primitive object={scene} />
           </group>
@@ -99,7 +98,7 @@ function MeteorBackground() {
   );
 }
 
-// --- 3. CARROSSEL DE VÍDEOS (OTIMIZADO - APENAS 5 VÍDEOS) ---
+// --- 3. CARROSSEL DE VÍDEOS (3D) ---
 function VideoCard({ url, angle, radius }: { url: string, angle: number, radius: number }) {
   const texture = useVideoTexture(url, { muted: true, loop: true, start: true });
   return (
@@ -112,13 +111,11 @@ function VideoCard({ url, angle, radius }: { url: string, angle: number, radius:
   );
 }
 
-function PortfolioCylinder() {
+function PortfolioCylinder({ mobile = false }: { mobile?: boolean }) {
   const groupRef = useRef<THREE.Group>(null);
-  const radius = 3.5; // OTIMIZAÇÃO: Raio menor para caberem 5 vídeos perfeitamente
-  
+  const radius = mobile ? 2.5 : 3.5; 
   const baseAngle = useRef(0);
   
-  // OTIMIZAÇÃO EXTREMA: Cortei os vídeos duplicados. O telemóvel não aguenta 10 decodificadores mp4 simultâneos.
   const videos = [
     "/qg mov.mp4",
     "/qg atacadao.mp4",
@@ -130,14 +127,14 @@ function PortfolioCylinder() {
   useFrame((state, delta) => {
     if (groupRef.current) {
       baseAngle.current += delta * 0.15; 
-      const scrollRotation = window.scrollY * 0.0025; 
+      const scrollRotation = mobile ? 0 : window.scrollY * 0.0025; 
       const targetRotation = baseAngle.current + scrollRotation;
       groupRef.current.rotation.y = THREE.MathUtils.lerp(groupRef.current.rotation.y, targetRotation, 0.1);
     }
   });
 
   return (
-    <group ref={groupRef} position={[0, 1.5, 0]} rotation={[0.05, 0, 0]} scale={0.8}>
+    <group ref={groupRef} position={[0, mobile ? 0 : 1.5, 0]} rotation={[0.05, 0, 0]} scale={mobile ? 0.6 : 0.8}>
       {videos.map((url, i) => {
          const angle = (i / videos.length) * Math.PI * 2;
          return <VideoCard key={i} url={url} angle={angle} radius={radius} />;
@@ -195,27 +192,21 @@ const cards = [
   },
 ];
 
-// --- COMPONENTE PRINCIPAL DO SCROLL ---
-export function DiferenciaisScroll() {
+// 🚀 VERSÃO 1: DESKTOP (SCROLL TRAVADO CINEMATOGRÁFICO)
+function DiferenciaisDesktop() {
   const targetRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({ target: targetRef });
   const x = useTransform(scrollYProgress, [0, 1], ["0vw", "-600vw"]);
 
   return (
     <section ref={targetRef} className="relative h-[600vh] bg-[#050505] border-t border-white/5">
-      
       <div className="sticky top-0 flex h-screen items-center overflow-hidden">
-        
-        {/* FUNDO ESPACIAL (OTIMIZADO) */}
         <div className="absolute inset-0 z-0 bg-gradient-to-b from-[#050505] via-[#0a0a0a] to-[#050505]">
-          {/* OTIMIZAÇÃO: dpr={1} salva a bateria e o framerate no mobile */}
           <Canvas camera={{ position: [0, 0, 10], fov: 50 }} dpr={1}>
             <Suspense fallback={null}>
               <ambientLight intensity={0.5} />
               <directionalLight position={[10, 20, 10]} intensity={3} color="#ffffff" /> 
               <directionalLight position={[-10, -10, -10]} intensity={1.5} color="#a855f7" /> 
-              
-              {/* OTIMIZAÇÃO: Estrelas reduzidas de 5000 para 1500 */}
               <Stars radius={100} depth={50} count={1500} factor={4} saturation={0} fade speed={1} />
               <MeteorBackground />
             </Suspense>
@@ -223,89 +214,121 @@ export function DiferenciaisScroll() {
           <div className="absolute inset-0 bg-black/40 pointer-events-none" />
         </div>
 
-        {/* TRILHA HORIZONTAL */}
         <motion.div style={{ x }} className="flex h-full w-[700vw] relative z-10 touch-pan-y">
-          
           <div className="w-screen h-screen shrink-0 flex flex-col items-center justify-center p-6 text-center">
-             <motion.h2 
-                initial={{ opacity: 0, scale: 0.5, y: 50 }}
-                whileInView={{ opacity: 1, scale: 1, y: 0 }}
-                transition={{ type: "spring", bounce: 0.5, duration: 1 }}
-                viewport={{ once: false }}
-                className="text-6xl md:text-8xl font-black mb-6 tracking-tighter leading-none drop-shadow-2xl"
-             >
-                Por que a <br />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-indigo-400 pr-4 pb-2">
-                   VULP é diferente?
-                </span>
+             <motion.h2 initial={{ opacity: 0, scale: 0.5, y: 50 }} whileInView={{ opacity: 1, scale: 1, y: 0 }} transition={{ type: "spring", bounce: 0.5, duration: 1 }} viewport={{ once: false }} className="text-6xl md:text-8xl font-black mb-6 tracking-tighter leading-none drop-shadow-2xl">
+                Por que a <br /><span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-indigo-400 pr-4 pb-2">VULP é diferente?</span>
              </motion.h2>
-             <motion.p 
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
-                transition={{ delay: 0.3, duration: 1 }}
-                viewport={{ once: false }}
-                className="text-2xl md:text-4xl text-purple-400 font-bold"
-             >
+             <motion.p initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} transition={{ delay: 0.3, duration: 1 }} viewport={{ once: false }} className="text-2xl md:text-4xl text-purple-400 font-bold">
                 Esqueça a lousa e o caderno. Continue descendo.
              </motion.p>
           </div>
 
           {cards.map((card, index) => (
             <div key={index} className="w-screen h-screen shrink-0 flex items-center justify-center relative overflow-hidden">
-              
               <div className="absolute inset-0 w-full h-full flex items-center justify-center z-0">
                   {card.type === "cylinder" && (
                     <div className="absolute inset-0 cursor-ew-resize">
-                      {/* OTIMIZAÇÃO: dpr={1} */}
-                      <Canvas camera={{ position: [0, 0, 16], fov: 45 }} dpr={1}>
-                        <Suspense fallback={null}>
-                          <ambientLight intensity={1} />
-                          <PortfolioCylinder />
-                        </Suspense>
-                      </Canvas>
+                      <Canvas camera={{ position: [0, 0, 16], fov: 45 }} dpr={1}><Suspense fallback={null}><ambientLight intensity={1} /><PortfolioCylinder /></Suspense></Canvas>
                     </div>
                   )}
-
                   {card.type === "3d" && card.modelPath && (
                     <div className="absolute inset-0">
-                      {/* OTIMIZAÇÃO: dpr={1} e iluminação estática leve em vez de HDRI (Environment) */}
                       <Canvas camera={{ position: [0, 0, 6], fov: 45 }} dpr={1}>
                         <Suspense fallback={null}>
-                          <ambientLight intensity={2.5} />
-                          <directionalLight position={[10, 10, 5]} intensity={2} color="#ffffff" />
-                          <spotLight position={[-5, 5, 5]} intensity={2} color="#a855f7" />
+                          <ambientLight intensity={2.5} /><directionalLight position={[10, 10, 5]} intensity={2} color="#ffffff" /><spotLight position={[-5, 5, 5]} intensity={2} color="#a855f7" />
                           <InteractiveModel path={card.modelPath} scale={card.scale} position={[0, card.posY ?? 0.5, 0]} />
                         </Suspense>
                       </Canvas>
                     </div>
                   )}
               </div>
-
-              <motion.div 
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  whileInView={{ opacity: 1, scale: 1 }}
-                  transition={{ type: "spring", bounce: 0.4, duration: 1.2 }}
-                  viewport={{ once: false, margin: "-100px" }}
-                  className="relative z-10 flex flex-col items-center justify-center text-center p-6 mt-48 pointer-events-none"
-              >
-                <h2 className="text-6xl md:text-9xl font-black mb-2 tracking-tighter leading-none text-white [text-shadow:_0_10px_40px_rgb(0_0_0_/_100%)]">
-                  {card.title}
-                </h2>
-                <p className="text-2xl md:text-4xl text-purple-400 font-bold max-w-3xl [text-shadow:_0_5px_20px_rgb(0_0_0_/_100%)]">
-                  {card.desc}
-                </p>
+              <motion.div initial={{ opacity: 0, scale: 0.8 }} whileInView={{ opacity: 1, scale: 1 }} transition={{ type: "spring", bounce: 0.4, duration: 1.2 }} viewport={{ once: false, margin: "-100px" }} className="relative z-10 flex flex-col items-center justify-center text-center p-6 mt-48 pointer-events-none">
+                <h2 className="text-6xl md:text-9xl font-black mb-2 tracking-tighter leading-none text-white [text-shadow:_0_10px_40px_rgb(0_0_0_/_100%)]">{card.title}</h2>
+                <p className="text-2xl md:text-4xl text-purple-400 font-bold max-w-3xl [text-shadow:_0_5px_20px_rgb(0_0_0_/_100%)]">{card.desc}</p>
               </motion.div>
-
             </div>
           ))}
-
         </motion.div>
       </div>
     </section>
   );
 }
 
-// Preload mantém o site rápido nas trocas de tela
+// 📱 VERSÃO 2: MOBILE (CARROSSEL NATIVO LEVE)
+function DiferenciaisMobile() {
+  return (
+    <section className="relative py-24 bg-[#050505] border-t border-white/5 overflow-hidden">
+        {/* Fundo estrelado leve em CSS (sem Canvas 3D para fundo) */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-purple-900/10 via-[#050505] to-[#050505] pointer-events-none" />
+        
+        <div className="relative z-10 px-6 mb-12 text-center">
+            <h2 className="text-5xl font-black tracking-tighter leading-none mb-4">
+                Por que a <br />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-indigo-400">VULP é diferente?</span>
+            </h2>
+            <p className="text-lg text-purple-400 font-bold">Deslize para o lado <span className="animate-pulse">→</span></p>
+        </div>
+
+        {/* CARROSSEL SNAP NATIVO (Super fluído) */}
+        <div className="relative z-10 flex overflow-x-auto snap-x snap-mandatory gap-4 px-6 pb-12 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+            {cards.map((card, index) => (
+                <div key={index} className="min-w-[85vw] snap-center shrink-0 bg-gradient-to-b from-[#110826] to-[#0A051A] border border-white/10 rounded-[40px] p-6 flex flex-col h-[60vh] relative shadow-2xl">
+                    
+                    {/* Metade Superior: O Ícone 3D Leve */}
+                    <div className="w-full flex-1 relative flex items-center justify-center">
+                        {card.type === "cylinder" ? (
+                            <Canvas camera={{ position: [0, 0, 10], fov: 45 }} dpr={1} frameloop="always">
+                                <Suspense fallback={null}><ambientLight intensity={1.5} /><PortfolioCylinder mobile={true} /></Suspense>
+                            </Canvas>
+                        ) : (
+                            <Canvas camera={{ position: [0, 0, 6], fov: 45 }} dpr={1} frameloop="always">
+                                <Suspense fallback={null}>
+                                    <ambientLight intensity={2.5} />
+                                    <directionalLight position={[5, 5, 5]} intensity={2} color="#ffffff" />
+                                    {/* Ajustado para [0, -0.5, 0] no mobile para ficar centrado no Card */}
+                                    <InteractiveModel path={card.modelPath as string} scale={card.scale} position={[0, -0.5, 0]} rotationSpeed={1} />
+                                </Suspense>
+                            </Canvas>
+                        )}
+                    </div>
+
+                    {/* Metade Inferior: Textos */}
+                    <div className="mt-4 text-center pb-4">
+                        <h3 className="text-3xl font-black mb-3 text-white tracking-tight">{card.title}</h3>
+                        <p className="text-gray-400 text-base leading-relaxed font-medium px-2">{card.desc}</p>
+                    </div>
+                </div>
+            ))}
+        </div>
+    </section>
+  );
+}
+
+// 🧠 O CÉREBRO: O COMPONENTE PRINCIPAL QUE ESCOLHE QUAL MOSTRAR
+export function DiferenciaisScroll() {
+  const [isMounted, setIsMounted] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true); // Garante que só renderiza no navegador (evita erros do Next.js)
+    
+    const checkScreenSize = () => setIsMobile(window.innerWidth < 768); // 768px é a quebra para iPad/Mobile
+    checkScreenSize(); // Checa na hora que a página carrega
+    
+    window.addEventListener("resize", checkScreenSize); // Checa se o usuário redimensionar a tela
+    return () => window.removeEventListener("resize", checkScreenSize);
+  }, []);
+
+  // Se a página ainda está a carregar, não mostra nada para evitar flashes na tela
+  if (!isMounted) return <div className="h-screen bg-[#050505]" />;
+
+  // A MAGIA ACONTECE AQUI: 
+  // Se for Telemóvel, chama o Carrossel Nativo. Se for PC, chama a Experiência Cinematográfica!
+  return isMobile ? <DiferenciaisMobile /> : <DiferenciaisDesktop />;
+}
+
+// Pré-carregamento dos modelos para não ter engasgos
 useGLTF.preload("/meteoro.glb");
 useGLTF.preload("/xadrez.glb");
 useGLTF.preload("/cerebro.glb");
