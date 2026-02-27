@@ -45,14 +45,15 @@ export default function VulpIntelligence() {
   const fetchDados = async (forceRefresh = false) => {
     setLoading(true);
     try {
-        if(forceRefresh) await fetch("http://localhost:8080/api/refresh");
-        const res = await fetch("http://localhost:8080/api/dashboard");
+        // 👇 O NEXT.JS AGORA FALA DIRETAMENTE COM A NUVEM 👇
+        if(forceRefresh) await fetch("https://vulp-motor.onrender.com/api/refresh");
+        const res = await fetch("https://vulp-motor.onrender.com/api/dashboard");
+        
         if (!res.ok) throw new Error(`Erro na API: ${res.status}`);
         const json = await res.json();
         setData(json);
     } catch (error) {
-        console.error("Erro ao conectar com o motor Python VULP:", error);
-        setData({ status: "error", message: "Servidor Python Offline", detalhes: "Certifique-se de que o uvicorn está rodando na porta 8080." });
+        setData({ status: "error", message: "Servidor Python Offline", detalhes: "O motor na Render pode estar a reiniciar. Tente novamente em 30 segundos." });
     }
     setLoading(false);
   };
