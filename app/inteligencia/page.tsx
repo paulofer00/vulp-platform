@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import { 
     Activity, TrendingUp, DollarSign, Target, RefreshCw, AlertTriangle, 
     LayoutDashboard, SlidersHorizontal, PieChart, ReceiptText, LineChart,
-    Users, CreditCard, Calculator, Lock, Key, ArrowRight
+    Users, CreditCard, Calculator, Lock, Key, ArrowRight,
+    Briefcase, Building2, TrendingDown, Minus
 } from "lucide-react";
 
 import { 
@@ -32,20 +33,47 @@ export default function VulpIntelligence() {
   const [loading, setLoading] = useState(true);
   const [abaAtiva, setAbaAtiva] = useState("dashboard");
 
-  // --- ESTADOS DO SIMULADOR (SPRINT 3) ---
+  // --- ESTADOS DO SIMULADOR DE CENÁRIOS (AGORA COM 4 RECEITAS E CENÁRIOS) ---
   const [alunosPresencial, setAlunosPresencial] = useState(160);
-  const [alunosOnline, setAlunosOnline] = useState(250);
   const [ticketPresencial, setTicketPresencial] = useState(497);
+  
+  const [alunosOnline, setAlunosOnline] = useState(250);
   const [ticketOnline, setTicketOnline] = useState(49.90);
 
+  const [clientesCoworking, setClientesCoworking] = useState(10);
+  const [ticketCoworking, setTicketCoworking] = useState(600);
+
+  const [clientesB2B, setClientesB2B] = useState(5);
+  const [ticketB2B, setTicketB2B] = useState(3200);
+
+  // Controle de Cenário (Pessimista, Conservador, Otimista)
+  const [tipoCenario, setTipoCenario] = useState<"pessimista" | "conservador" | "otimista">("conservador");
+
+  // Cálculos do Simulador (Ano 1)
   const receitaPresencialAnual = alunosPresencial * ticketPresencial * 12;
   const receitaOnlineAnual = alunosOnline * ticketOnline * 12;
-  const receitaTotalSimulada = receitaPresencialAnual + receitaOnlineAnual;
+  const receitaCoworkingAnual = clientesCoworking * ticketCoworking * 12;
+  const receitaB2BAnual = clientesB2B * ticketB2B * 12;
+  
+  const receitaTotalSimuladaAno1 = receitaPresencialAnual + receitaOnlineAnual + receitaCoworkingAnual + receitaB2BAnual;
+
+  // Taxas de crescimento compostas (CAGR) por cenário
+  const taxasCrescimento = {
+      pessimista: 0.05, // 5% ao ano
+      conservador: 0.15, // 15% ao ano
+      otimista: 0.30  // 30% ao ano
+  };
+
+  // Gerar dados para o gráfico de 5 anos do simulador
+  const dadosSimulacao5Anos = [0, 1, 2, 3, 4].map(anoIndex => ({
+      name: `Ano ${anoIndex + 1}`,
+      Simulação: receitaTotalSimuladaAno1 * Math.pow(1 + taxasCrescimento[tipoCenario], anoIndex)
+  }));
+
 
   const fetchDados = async (forceRefresh = false) => {
     setLoading(true);
     try {
-        // 👇 O NEXT.JS AGORA FALA DIRETAMENTE COM A NUVEM 👇
         if(forceRefresh) await fetch("https://vulp-motor.onrender.com/api/refresh");
         const res = await fetch("https://vulp-motor.onrender.com/api/dashboard");
         
@@ -85,48 +113,28 @@ export default function VulpIntelligence() {
     setData(null);
   };
 
-  // --- TELA DE LOGIN (COM LOGO) ---
   if (verificandoSessao) return <div className="min-h-screen bg-[#02000A]" />;
   
   if (!isLogged) {
       return (
           <div className="min-h-screen bg-[#02000A] flex flex-col items-center justify-center p-6 selection:bg-indigo-500/30 relative">
-              
-              {/* 👇 1. ADIÇÃO DA LOGO NA TELA DE LOGIN 👇 */}
-              <div className="mb-12">
-                  <img src="/logo-white.png" alt="VULP" className="h-12 w-auto mx-auto" />
-              </div>
-
+              <div className="mb-12"><img src="/logo-white.png" alt="VULP" className="h-12 w-auto mx-auto" /></div>
               <div className="w-full max-w-md bg-[#0A051A] border border-white/5 rounded-3xl p-10 shadow-[0_0_50px_rgba(99,102,241,0.1)] relative overflow-hidden">
                   <div className="absolute -top-20 -right-20 w-40 h-40 bg-fuchsia-500/20 blur-[60px] rounded-full pointer-events-none" />
                   <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-indigo-500/20 blur-[60px] rounded-full pointer-events-none" />
-                  
                   <div className="relative z-10">
-                      <div className="w-16 h-16 bg-[#110826] border border-indigo-500/30 rounded-2xl flex items-center justify-center mb-6 text-indigo-400 mx-auto shadow-inner">
-                          <Lock size={32} />
-                      </div>
-                      
+                      <div className="w-16 h-16 bg-[#110826] border border-indigo-500/30 rounded-2xl flex items-center justify-center mb-6 text-indigo-400 mx-auto shadow-inner"><Lock size={32} /></div>
                       <h2 className="text-3xl font-black text-center text-white mb-2 tracking-tight">Acesso Restrito</h2>
                       <p className="text-gray-400 text-center text-sm mb-8 font-medium">Insira a chave de acesso para visualizar a inteligência financeira da VULP.</p>
-                      
                       <form onSubmit={handleLogin} className="space-y-6">
                           <div>
                               <div className="relative">
                                   <Key size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
-                                  <input 
-                                      type="password" 
-                                      placeholder="Senha Mestra"
-                                      value={senhaInput}
-                                      onChange={(e) => setSenhaInput(e.target.value)}
-                                      className={`w-full bg-[#050212] border ${erroLogin ? 'border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.3)] animate-bounce' : 'border-white/10 focus:border-indigo-500'} rounded-xl py-4 pl-12 pr-4 text-white font-bold focus:outline-none transition-all`}
-                                      autoFocus
-                                  />
+                                  <input type="password" placeholder="Senha Mestra" value={senhaInput} onChange={(e) => setSenhaInput(e.target.value)} className={`w-full bg-[#050212] border ${erroLogin ? 'border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.3)] animate-bounce' : 'border-white/10 focus:border-indigo-500'} rounded-xl py-4 pl-12 pr-4 text-white font-bold focus:outline-none transition-all`} autoFocus />
                               </div>
                               {erroLogin && <p className="text-red-500 text-xs font-bold mt-2 text-center uppercase tracking-widest animate-pulse">Acesso Negado</p>}
                           </div>
-                          <button type="submit" className="w-full bg-gradient-to-r from-indigo-600 to-fuchsia-600 hover:from-indigo-500 hover:to-fuchsia-500 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 shadow-lg transition-transform hover:scale-[1.02]">
-                              Desbloquear Cofre <ArrowRight size={20} />
-                          </button>
+                          <button type="submit" className="w-full bg-gradient-to-r from-indigo-600 to-fuchsia-600 hover:from-indigo-500 hover:to-fuchsia-500 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 shadow-lg transition-transform hover:scale-[1.02]">Desbloquear Cofre <ArrowRight size={20} /></button>
                       </form>
                   </div>
               </div>
@@ -134,7 +142,6 @@ export default function VulpIntelligence() {
       );
   }
 
-  // --- TELA DO DASHBOARD LOGADO (COM LOGO NA SIDEBAR) ---
   const menuItems = [
     { id: "dashboard", label: "Visão Geral", icon: <LayoutDashboard size={20} /> },
     { id: "cenarios", label: "Simulador de Cenários", icon: <SlidersHorizontal size={20} /> },
@@ -143,7 +150,6 @@ export default function VulpIntelligence() {
     { id: "dre", label: "Projeção DRE", icon: <ReceiptText size={20} /> },
   ];
 
-  // --- TRATAMENTO DE DADOS PARA OS GRÁFICOS (SPRINT 4) ---
   const dadosGanhos = data?.receitas?.projecao_5_anos ? [0, 1, 2, 3, 4].map(i => ({
     name: `Ano ${i+1}`,
     Presencial: data.receitas.projecao_5_anos.Presencial[i] || 0,
@@ -183,14 +189,11 @@ export default function VulpIntelligence() {
   return (
     <div className="flex h-screen bg-[#02000A] text-white font-sans selection:bg-indigo-500/30 overflow-hidden">
       
-      {/* 👇 2. AJUSTE NA SIDEBAR: REMOVEMOS O TEXTO E ADICIONAMOS A IMAGEM 👇 */}
       <aside className="w-72 bg-[#050212] border-r border-white/5 flex flex-col hidden md:flex shrink-0">
         <div className="p-8 pb-4 flex flex-col items-center">
-            {/* 👇 LOGO DA VULP COMO IMAGEM 👇 */}
             <img src="/logo-white.png" alt="VULP" className="h-10 w-auto mb-2" />
             <p className="text-xs text-gray-500 font-bold uppercase tracking-widest text-center">Intelligence</p>
         </div>
-
         <nav className="flex-1 px-4 py-6 space-y-2">
             {menuItems.map((item) => {
                 const isActive = abaAtiva === item.id;
@@ -201,7 +204,6 @@ export default function VulpIntelligence() {
                 )
             })}
         </nav>
-
         <div className="p-6 bg-[#0A051A] border-t border-white/5 mt-auto relative overflow-hidden group">
             <div className="absolute inset-0 bg-gradient-to-t from-green-500/5 to-transparent pointer-events-none" />
             <p className="text-xs text-gray-500 font-bold uppercase tracking-widest mb-4 text-center relative z-10">Índices de Mercado (12m)</p>
@@ -237,6 +239,7 @@ export default function VulpIntelligence() {
             </div>
         ) : data ? (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
+                
                 {abaAtiva === "dashboard" && (
                     <div className="space-y-12">
                         <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -287,44 +290,133 @@ export default function VulpIntelligence() {
                     </div>
                 )}
 
+                {/* 👇 ABA 2: SIMULADOR DE CENÁRIOS ATUALIZADO 👇 */}
                 {abaAtiva === "cenarios" && (
                     <div className="space-y-8">
                         <div className="bg-[#0A051A] border border-indigo-500/20 rounded-3xl p-8 shadow-[0_0_40px_rgba(99,102,241,0.05)]">
-                            <p className="text-gray-400 text-lg mb-8">Arraste os controladores ou altere os valores para visualizar o impacto no faturamento do Ano 1 em tempo real.</p>
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-                                <div className="space-y-8">
-                                    <div className="bg-[#110826] p-6 rounded-2xl border border-white/5">
-                                        <h4 className="text-xl font-bold text-indigo-400 mb-6 flex items-center gap-2"><Users size={20} /> Presencial</h4>
-                                        <div className="mb-6">
-                                            <div className="flex justify-between mb-2"><label className="text-sm font-bold text-gray-400 uppercase tracking-widest">Volume de Alunos</label><span className="text-xl font-black text-white">{alunosPresencial}</span></div>
-                                            <input type="range" min="50" max="500" value={alunosPresencial} onChange={(e) => setAlunosPresencial(Number(e.target.value))} className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-indigo-500" />
+                            
+                            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-10 gap-6">
+                                <div>
+                                    <h3 className="text-2xl font-black text-white">Matriz de Simulação</h3>
+                                    <p className="text-gray-400 text-sm mt-1">Ajuste os controladores e escolha o cenário de crescimento para projetar 5 anos.</p>
+                                </div>
+
+                                {/* SELETOR DE CENÁRIO */}
+                                <div className="flex bg-[#110826] p-1.5 rounded-xl border border-white/10">
+                                    <button onClick={() => setTipoCenario("pessimista")} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${tipoCenario === "pessimista" ? "bg-red-500/20 text-red-400 border border-red-500/30" : "text-gray-500 hover:text-gray-300"}`}>
+                                        <TrendingDown size={16} /> Pessimista (+5% a.a.)
+                                    </button>
+                                    <button onClick={() => setTipoCenario("conservador")} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${tipoCenario === "conservador" ? "bg-blue-500/20 text-blue-400 border border-blue-500/30" : "text-gray-500 hover:text-gray-300"}`}>
+                                        <Minus size={16} /> Conservador (+15% a.a.)
+                                    </button>
+                                    <button onClick={() => setTipoCenario("otimista")} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${tipoCenario === "otimista" ? "bg-green-500/20 text-green-400 border border-green-500/30" : "text-gray-500 hover:text-gray-300"}`}>
+                                        <TrendingUp size={16} /> Otimista (+30% a.a.)
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                                
+                                {/* LADO ESQUERDO: OS 4 CONTROLADORES (Ocupam 7 colunas) */}
+                                <div className="lg:col-span-7 grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    {/* Presencial */}
+                                    <div className="bg-[#110826] p-5 rounded-2xl border border-white/5">
+                                        <h4 className="text-lg font-bold text-indigo-400 mb-5 flex items-center gap-2"><Users size={18} /> Presencial</h4>
+                                        <div className="mb-5">
+                                            <div className="flex justify-between mb-2"><label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Volume de Alunos</label><span className="text-lg font-black text-white">{alunosPresencial}</span></div>
+                                            <input type="range" min="50" max="500" value={alunosPresencial} onChange={(e) => setAlunosPresencial(Number(e.target.value))} className="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-indigo-500" />
                                         </div>
                                         <div>
-                                            <label className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-2 block">Ticket Médio (R$)</label>
-                                            <div className="relative"><span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-bold">R$</span><input type="number" value={ticketPresencial} onChange={(e) => setTicketPresencial(Number(e.target.value))} className="w-full bg-[#050212] border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white font-bold focus:outline-none focus:border-indigo-500 transition-colors" /></div>
+                                            <label className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 block">Ticket Médio (R$)</label>
+                                            <div className="relative"><span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-bold text-sm">R$</span><input type="number" value={ticketPresencial} onChange={(e) => setTicketPresencial(Number(e.target.value))} className="w-full bg-[#050212] border border-white/10 rounded-xl py-2 pl-10 pr-3 text-white font-bold text-sm focus:outline-none focus:border-indigo-500 transition-colors" /></div>
                                         </div>
                                     </div>
-                                    <div className="bg-[#110826] p-6 rounded-2xl border border-white/5">
-                                        <h4 className="text-xl font-bold text-fuchsia-400 mb-6 flex items-center gap-2"><CreditCard size={20} /> Online</h4>
-                                        <div className="mb-6">
-                                            <div className="flex justify-between mb-2"><label className="text-sm font-bold text-gray-400 uppercase tracking-widest">Volume de Alunos</label><span className="text-xl font-black text-white">{alunosOnline}</span></div>
-                                            <input type="range" min="100" max="2000" step="50" value={alunosOnline} onChange={(e) => setAlunosOnline(Number(e.target.value))} className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-fuchsia-500" />
+
+                                    {/* Online */}
+                                    <div className="bg-[#110826] p-5 rounded-2xl border border-white/5">
+                                        <h4 className="text-lg font-bold text-fuchsia-400 mb-5 flex items-center gap-2"><CreditCard size={18} /> Online</h4>
+                                        <div className="mb-5">
+                                            <div className="flex justify-between mb-2"><label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Volume de Alunos</label><span className="text-lg font-black text-white">{alunosOnline}</span></div>
+                                            <input type="range" min="50" max="2000" step="50" value={alunosOnline} onChange={(e) => setAlunosOnline(Number(e.target.value))} className="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-fuchsia-500" />
                                         </div>
                                         <div>
-                                            <label className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-2 block">Ticket Médio (R$)</label>
-                                            <div className="relative"><span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-bold">R$</span><input type="number" value={ticketOnline} onChange={(e) => setTicketOnline(Number(e.target.value))} className="w-full bg-[#050212] border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white font-bold focus:outline-none focus:fuchsia-500 transition-colors" /></div>
+                                            <label className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 block">Ticket Médio (R$)</label>
+                                            <div className="relative"><span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-bold text-sm">R$</span><input type="number" value={ticketOnline} onChange={(e) => setTicketOnline(Number(e.target.value))} className="w-full bg-[#050212] border border-white/10 rounded-xl py-2 pl-10 pr-3 text-white font-bold text-sm focus:outline-none focus:border-fuchsia-500 transition-colors" /></div>
+                                        </div>
+                                    </div>
+
+                                    {/* Coworking */}
+                                    <div className="bg-[#110826] p-5 rounded-2xl border border-white/5">
+                                        <h4 className="text-lg font-bold text-pink-400 mb-5 flex items-center gap-2"><Briefcase size={18} /> Coworking</h4>
+                                        <div className="mb-5">
+                                            <div className="flex justify-between mb-2"><label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Residentes</label><span className="text-lg font-black text-white">{clientesCoworking}</span></div>
+                                            <input type="range" min="0" max="100" value={clientesCoworking} onChange={(e) => setClientesCoworking(Number(e.target.value))} className="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-pink-500" />
+                                        </div>
+                                        <div>
+                                            <label className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 block">Mensalidade (R$)</label>
+                                            <div className="relative"><span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-bold text-sm">R$</span><input type="number" value={ticketCoworking} onChange={(e) => setTicketCoworking(Number(e.target.value))} className="w-full bg-[#050212] border border-white/10 rounded-xl py-2 pl-10 pr-3 text-white font-bold text-sm focus:outline-none focus:border-pink-500 transition-colors" /></div>
+                                        </div>
+                                    </div>
+
+                                    {/* Parceiros B2B */}
+                                    <div className="bg-[#110826] p-5 rounded-2xl border border-white/5">
+                                        <h4 className="text-lg font-bold text-blue-400 mb-5 flex items-center gap-2"><Building2 size={18} /> Parceiros B2B</h4>
+                                        <div className="mb-5">
+                                            <div className="flex justify-between mb-2"><label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Empresas</label><span className="text-lg font-black text-white">{clientesB2B}</span></div>
+                                            <input type="range" min="0" max="30" value={clientesB2B} onChange={(e) => setClientesB2B(Number(e.target.value))} className="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-500" />
+                                        </div>
+                                        <div>
+                                            <label className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 block">Contrato Médio (R$)</label>
+                                            <div className="relative"><span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-bold text-sm">R$</span><input type="number" value={ticketB2B} onChange={(e) => setTicketB2B(Number(e.target.value))} className="w-full bg-[#050212] border border-white/10 rounded-xl py-2 pl-10 pr-3 text-white font-bold text-sm focus:outline-none focus:border-blue-500 transition-colors" /></div>
                                         </div>
                                     </div>
                                 </div>
-                                <div className="flex flex-col gap-6">
-                                    <h4 className="text-xl font-bold text-white mb-2 flex items-center gap-2"><Calculator size={20} className="text-green-400"/> Projeção Anual Gerada</h4>
-                                    <div className="bg-[#110826] border-l-4 border-indigo-500 p-6 rounded-r-2xl"><p className="text-gray-400 text-sm font-bold uppercase tracking-widest mb-1">Receita Presencial Anual</p><p className="text-3xl font-black text-white">{formatarBRL(receitaPresencialAnual)}</p></div>
-                                    <div className="bg-[#110826] border-l-4 border-fuchsia-500 p-6 rounded-r-2xl"><p className="text-gray-400 text-sm font-bold uppercase tracking-widest mb-1">Receita Online Anual</p><p className="text-3xl font-black text-white">{formatarBRL(receitaOnlineAnual)}</p></div>
-                                    <div className="mt-auto bg-gradient-to-br from-[#1A0B3B] to-[#0A051A] border border-purple-500/40 p-8 rounded-3xl relative overflow-hidden shadow-[0_0_30px_rgba(147,51,234,0.2)]">
+
+                                {/* LADO DIREITO: RESULTADOS E GRÁFICO (Ocupam 5 colunas) */}
+                                <div className="lg:col-span-5 flex flex-col gap-6">
+                                    
+                                    {/* Bloco de Valor Total Ano 1 */}
+                                    <div className="bg-gradient-to-br from-[#1A0B3B] to-[#0A051A] border border-purple-500/40 p-6 rounded-3xl relative overflow-hidden shadow-[0_0_30px_rgba(147,51,234,0.2)]">
                                         <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/20 blur-[50px] rounded-full pointer-events-none" />
-                                        <p className="text-purple-300 text-sm font-bold uppercase tracking-widest mb-2 relative z-10">Receita Total Bruta Simulada</p>
-                                        <p className="text-4xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white to-purple-200 relative z-10">{formatarBRL(receitaTotalSimulada)}</p>
+                                        <div className="flex items-center gap-2 mb-2 relative z-10"><Calculator size={20} className="text-green-400"/><h4 className="text-lg font-bold text-white">Faturamento Base (Ano 1)</h4></div>
+                                        <p className="text-purple-300 text-xs font-bold uppercase tracking-widest mb-2 relative z-10">Receita Bruta Total Simulada</p>
+                                        <p className="text-4xl lg:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white to-purple-200 relative z-10">{formatarBRL(receitaTotalSimuladaAno1)}</p>
+                                        
+                                        {/* Breakdown Minimalista */}
+                                        <div className="mt-6 pt-4 border-t border-purple-500/20 grid grid-cols-2 gap-2 relative z-10">
+                                            <div><p className="text-[10px] text-gray-400 uppercase font-bold">Presencial</p><p className="text-sm font-bold text-indigo-300">{formatarBRL(receitaPresencialAnual)}</p></div>
+                                            <div><p className="text-[10px] text-gray-400 uppercase font-bold">Online</p><p className="text-sm font-bold text-fuchsia-300">{formatarBRL(receitaOnlineAnual)}</p></div>
+                                            <div><p className="text-[10px] text-gray-400 uppercase font-bold">Coworking</p><p className="text-sm font-bold text-pink-300">{formatarBRL(receitaCoworkingAnual)}</p></div>
+                                            <div><p className="text-[10px] text-gray-400 uppercase font-bold">B2B</p><p className="text-sm font-bold text-blue-300">{formatarBRL(receitaB2BAnual)}</p></div>
+                                        </div>
                                     </div>
+
+                                    {/* Gráfico de Crescimento 5 Anos baseado no Cenário */}
+                                    <div className="bg-[#110826] border border-white/5 p-6 rounded-3xl flex-1 flex flex-col">
+                                        <h4 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">Curva de Projeção (5 Anos)</h4>
+                                        <div className="h-full min-h-[180px] w-full mt-auto">
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <AreaChart data={dadosSimulacao5Anos} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                                    <defs>
+                                                        <linearGradient id="colorCrescimento" x1="0" y1="0" x2="0" y2="1">
+                                                            <stop offset="5%" stopColor={tipoCenario === 'otimista' ? '#10b981' : tipoCenario === 'conservador' ? '#3b82f6' : '#ef4444'} stopOpacity={0.4}/>
+                                                            <stop offset="95%" stopColor={tipoCenario === 'otimista' ? '#10b981' : tipoCenario === 'conservador' ? '#3b82f6' : '#ef4444'} stopOpacity={0}/>
+                                                        </linearGradient>
+                                                    </defs>
+                                                    <XAxis dataKey="name" stroke="#4b5563" tick={{fill: '#9ca3af', fontSize: 10}} axisLine={false} tickLine={false} />
+                                                    <YAxis tickFormatter={(val) => `R$${(val/1000000).toFixed(1)}M`} stroke="#4b5563" tick={{fill: '#9ca3af', fontSize: 10}} axisLine={false} tickLine={false} />
+                                                    <Tooltip content={<CustomTooltip />} />
+                                                    <Area 
+                                                        type="monotone" 
+                                                        dataKey="Simulação" 
+                                                        stroke={tipoCenario === 'otimista' ? '#10b981' : tipoCenario === 'conservador' ? '#3b82f6' : '#ef4444'} 
+                                                        strokeWidth={3} fillOpacity={1} fill="url(#colorCrescimento)" 
+                                                    />
+                                                </AreaChart>
+                                            </ResponsiveContainer>
+                                        </div>
+                                    </div>
+
                                 </div>
                             </div>
                         </div>
