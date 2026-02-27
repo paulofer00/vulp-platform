@@ -19,13 +19,12 @@ const formatarBRL = (valor: number) => {
 };
 
 export default function VulpIntelligence() {
-  // 🛑 SISTEMA DE SEGURANÇA (O COFRE) 🛑
+  // --- SISTEMA DE SEGURANÇA (O COFRE) ---
   const [isLogged, setIsLogged] = useState(false);
   const [senhaInput, setSenhaInput] = useState("");
   const [erroLogin, setErroLogin] = useState(false);
   const [verificandoSessao, setVerificandoSessao] = useState(true);
   
-  // A SENHA MESTRA DOS SÓCIOS DA VULP
   const SENHA_MESTRA = "vulp2026";
 
   // --- ESTADOS GERAIS DO DASHBOARD ---
@@ -33,7 +32,7 @@ export default function VulpIntelligence() {
   const [loading, setLoading] = useState(true);
   const [abaAtiva, setAbaAtiva] = useState("dashboard");
 
-  // Simulador
+  // --- ESTADOS DO SIMULADOR (SPRINT 3) ---
   const [alunosPresencial, setAlunosPresencial] = useState(160);
   const [alunosOnline, setAlunosOnline] = useState(250);
   const [ticketPresencial, setTicketPresencial] = useState(497);
@@ -46,39 +45,36 @@ export default function VulpIntelligence() {
   const fetchDados = async (forceRefresh = false) => {
     setLoading(true);
     try {
-        // 👇 O NEXT.JS AGORA FALA DIRETAMENTE COM A NUVEM 👇
-        if(forceRefresh) await fetch("https://vulp-motor.onrender.com/api/refresh");
-        const res = await fetch("https://vulp-motor.onrender.com/api/dashboard");
-        
+        if(forceRefresh) await fetch("http://localhost:8080/api/refresh");
+        const res = await fetch("http://localhost:8080/api/dashboard");
         if (!res.ok) throw new Error(`Erro na API: ${res.status}`);
         const json = await res.json();
         setData(json);
     } catch (error) {
-        setData({ status: "error", message: "Servidor Python Offline", detalhes: "O motor na Render pode estar a reiniciar. Tente novamente em 30 segundos." });
+        console.error("Erro ao conectar com o motor Python VULP:", error);
+        setData({ status: "error", message: "Servidor Python Offline", detalhes: "Certifique-se de que o uvicorn está rodando na porta 8080." });
     }
     setLoading(false);
   };
 
-  // 1. Verifica se já está logado ao entrar na página
   useEffect(() => {
     const sessao = sessionStorage.getItem("vulp_auth");
     if (sessao === "true") {
         setIsLogged(true);
-        fetchDados(); // Só busca os dados se estiver logado
+        fetchDados();
     }
     setVerificandoSessao(false);
   }, []);
 
-  // 2. Função de Login
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     if (senhaInput === SENHA_MESTRA) {
         setIsLogged(true);
-        sessionStorage.setItem("vulp_auth", "true"); // Salva a sessão para o F5 não deslogar
+        sessionStorage.setItem("vulp_auth", "true");
         fetchDados();
     } else {
         setErroLogin(true);
-        setTimeout(() => setErroLogin(false), 2000); // Treme a tela e reseta o erro
+        setTimeout(() => setErroLogin(false), 2000);
     }
   };
 
@@ -88,12 +84,18 @@ export default function VulpIntelligence() {
     setData(null);
   };
 
-  // --- TELA DE LOGIN (SE NÃO ESTIVER LOGADO) ---
-  if (verificandoSessao) return <div className="min-h-screen bg-[#02000A]" />; // Tela preta rápida
+  // --- TELA DE LOGIN (COM LOGO) ---
+  if (verificandoSessao) return <div className="min-h-screen bg-[#02000A]" />;
   
   if (!isLogged) {
       return (
-          <div className="min-h-screen bg-[#02000A] flex flex-col items-center justify-center p-6 selection:bg-indigo-500/30">
+          <div className="min-h-screen bg-[#02000A] flex flex-col items-center justify-center p-6 selection:bg-indigo-500/30 relative">
+              
+              {/* 👇 1. ADIÇÃO DA LOGO NA TELA DE LOGIN 👇 */}
+              <div className="mb-12">
+                  <img src="/logo-white.png" alt="VULP" className="h-12 w-auto mx-auto" />
+              </div>
+
               <div className="w-full max-w-md bg-[#0A051A] border border-white/5 rounded-3xl p-10 shadow-[0_0_50px_rgba(99,102,241,0.1)] relative overflow-hidden">
                   <div className="absolute -top-20 -right-20 w-40 h-40 bg-fuchsia-500/20 blur-[60px] rounded-full pointer-events-none" />
                   <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-indigo-500/20 blur-[60px] rounded-full pointer-events-none" />
@@ -131,7 +133,7 @@ export default function VulpIntelligence() {
       );
   }
 
-  // --- TELA DO DASHBOARD (SE ESTIVER LOGADO) ---
+  // --- TELA DO DASHBOARD LOGADO (COM LOGO NA SIDEBAR) ---
   const menuItems = [
     { id: "dashboard", label: "Visão Geral", icon: <LayoutDashboard size={20} /> },
     { id: "cenarios", label: "Simulador de Cenários", icon: <SlidersHorizontal size={20} /> },
@@ -140,6 +142,7 @@ export default function VulpIntelligence() {
     { id: "dre", label: "Projeção DRE", icon: <ReceiptText size={20} /> },
   ];
 
+  // --- TRATAMENTO DE DADOS PARA OS GRÁFICOS (SPRINT 4) ---
   const dadosGanhos = data?.receitas?.projecao_5_anos ? [0, 1, 2, 3, 4].map(i => ({
     name: `Ano ${i+1}`,
     Presencial: data.receitas.projecao_5_anos.Presencial[i] || 0,
@@ -179,12 +182,12 @@ export default function VulpIntelligence() {
   return (
     <div className="flex h-screen bg-[#02000A] text-white font-sans selection:bg-indigo-500/30 overflow-hidden">
       
+      {/* 👇 2. AJUSTE NA SIDEBAR: REMOVEMOS O TEXTO E ADICIONAMOS A IMAGEM 👇 */}
       <aside className="w-72 bg-[#050212] border-r border-white/5 flex flex-col hidden md:flex shrink-0">
-        <div className="p-8 pb-4">
-            <h2 className="text-3xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-fuchsia-500 mb-1">
-                VULP
-            </h2>
-            <p className="text-xs text-gray-500 font-bold uppercase tracking-widest">Intelligence</p>
+        <div className="p-8 pb-4 flex flex-col items-center">
+            {/* 👇 LOGO DA VULP COMO IMAGEM 👇 */}
+            <img src="/logo-white.png" alt="VULP" className="h-10 w-auto mb-2" />
+            <p className="text-xs text-gray-500 font-bold uppercase tracking-widest text-center">Intelligence</p>
         </div>
 
         <nav className="flex-1 px-4 py-6 space-y-2">
@@ -209,7 +212,6 @@ export default function VulpIntelligence() {
                 <span className="text-sm text-gray-400 flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></div> IGP-M</span>
                 <span className="text-sm font-mono font-bold text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded-md border border-blue-500/20">{data?.indices?.igpm ? `${data.indices.igpm}%` : "..."}</span>
             </div>
-            {/* BOTÃO DE SAIR DO COFRE */}
             <button onClick={handleLogout} className="w-full mt-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 text-xs font-bold uppercase tracking-widest py-2 rounded-lg border border-red-500/20 transition-colors relative z-10">
                 Travar Cofre (Sair)
             </button>
@@ -234,8 +236,6 @@ export default function VulpIntelligence() {
             </div>
         ) : data ? (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
-                {/* As abas do conteúdo vão aqui exatamente como estavam (Visão Geral, Cenários, etc) */}
-                
                 {abaAtiva === "dashboard" && (
                     <div className="space-y-12">
                         <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
