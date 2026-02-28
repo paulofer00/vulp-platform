@@ -6,12 +6,12 @@ import FoxLottie from "@/components/FoxLottie";
 import { MentorsSection } from "@/components/MentorsSection";
 import MouseTrail from "@/components/MouseTrail";
 import { ScrollReveal } from "@/components/ScrollReveal";
-import { ArrowRight, CheckCircle2, MessageCircle, Target, Zap, Users } from "lucide-react";
+import { ArrowRight, MessageCircle } from "lucide-react";
 import VideoManifesto from "@/components/VideoManifesto";
 import { ExplodingBrands } from "@/components/ExplodingBrands";
 import { InfiniteAnswers } from "@/components/InfiniteAnswers";
 import { DiferenciaisScroll } from "@/components/DiferenciaisScroll";
-import Preloader from "@/components/Preloader"; // 🛑 1. IMPORTAMOS O PRELOADER AQUI
+import Preloader from "@/components/Preloader";
 
 export default async function Home() {
   const cookieStore = await cookies();
@@ -30,11 +30,9 @@ export default async function Home() {
   const { data: { session } } = await supabase.auth.getSession();
   
   return (
-    <main className="min-h-screen bg-[#050505] text-white selection:bg-purple-500/30 font-sans relative">
+    <main className="min-h-screen bg-[#050505] text-white selection:bg-purple-500/30 font-sans relative w-full">
       
-      {/* 🛑 2. A CORTINA DE TEATRO (Sempre no topo de tudo) 🛑 */}
       <Preloader />
-
       <MouseTrail />
       <FoxLottie />
 
@@ -62,11 +60,10 @@ export default async function Home() {
       </nav>
 
       {/* --- 1. HERO SECTION --- */}
-      <section className="pt-40 pb-20 px-6 relative flex flex-col items-center text-center z-10">
+      <section className="pt-40 pb-20 px-6 relative flex flex-col items-center text-center z-10 overflow-hidden w-full">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-purple-900/20 blur-[120px] rounded-full pointer-events-none" />
         
         <div className="relative z-10 max-w-5xl mx-auto w-full">
-            
             <ScrollReveal>
                 <h1 className="text-4xl sm:text-5xl md:text-7xl font-black tracking-tighter mb-6 leading-tight">
                     UMA ESCOLA <br />
@@ -82,14 +79,12 @@ export default async function Home() {
                 </p>
             </ScrollReveal>
 
-            {/* VÍDEO NO MEIO DA HERO */}
             <ScrollReveal delay={0.4}>
                 <div className="w-full mb-16">
                     <VideoManifesto />
                 </div>
             </ScrollReveal>
 
-            {/* BOTÃO ABAIXO DO VÍDEO */}
             <ScrollReveal delay={0.6}>
                 <div className="flex justify-center">
                     <Link 
@@ -101,23 +96,23 @@ export default async function Home() {
                     </Link>
                 </div>
             </ScrollReveal>
-
         </div>
       </section>
       
-      {/* --- 2. PRA QUEM É (EXPLOSÃO 3D + CARROSSEL) --- */}
+      {/* --- 2. PRA QUEM É --- */}
       <ExplodingBrands />
-      <InfiniteAnswers />
+      <div className="overflow-hidden w-full">
+         <InfiniteAnswers />
+      </div>
 
       {/* --- 3. ESCOLHA SEU CAMINHO --- */}
-      <section className="py-24 px-6 relative z-10">
+      <section className="py-24 px-6 relative z-10 overflow-hidden w-full">
         <div className="max-w-6xl mx-auto">
             <ScrollReveal>
                 <h2 className="text-center text-3xl md:text-5xl font-bold mb-16">Escolha seu caminho</h2>
             </ScrollReveal>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                
                 <ScrollReveal delay={0.1}>
                     <Link href="/marketing" className="group relative block bg-[#0F0F0F] border border-white/10 rounded-3xl p-8 md:p-10 hover:border-purple-500 transition-all duration-300 overflow-hidden h-full">
                         <div className="absolute top-0 right-0 w-64 h-64 bg-purple-600/10 blur-[80px] rounded-full group-hover:bg-purple-600/20 transition-all" />
@@ -139,12 +134,11 @@ export default async function Home() {
                         </div>
                     </Link>
                 </ScrollReveal>
-
             </div>
         </div>
       </section>
 
-      {/* --- 4. DIFERENCIAIS (SCROLL HORIZONTAL 3D) --- */}
+      {/* --- 4. DIFERENCIAIS (LIVRE PARA O SCROLL TRAVAR) --- */}
       <DiferenciaisScroll />
 
       {/* --- 5. MENTORES --- */}
@@ -153,7 +147,7 @@ export default async function Home() {
       </ScrollReveal>
 
       {/* --- 6. CTA WHATSAPP --- */}
-      <section className="py-24 px-6 text-center relative z-10">
+      <section className="py-24 px-6 text-center relative z-10 overflow-hidden w-full">
         <div className="max-w-2xl mx-auto">
             <ScrollReveal>
                 <h2 className="text-3xl font-bold mb-8">Ainda com dúvida de qual caminho seguir?</h2>
@@ -170,7 +164,7 @@ export default async function Home() {
       </section>
 
       {/* FOOTER */}
-      <footer className="py-12 border-t border-white/5 text-center text-gray-600 text-sm relative z-10">
+      <footer className="py-12 border-t border-white/5 text-center text-gray-600 text-sm relative z-10 w-full overflow-hidden">
         <p>© 2026 VULP. Todos os direitos reservados.</p>
       </footer>
 

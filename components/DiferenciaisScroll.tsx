@@ -167,7 +167,7 @@ const cards = [
     type: "3d",
     modelPath: "/comentario.glb", 
     scale: 0.35, 
-    posY: 0.5,
+    posY: 0.1,
   },
   {
     title: "Portfólio",
@@ -178,16 +178,16 @@ const cards = [
     title: "Networking Elite",
     desc: "Conecte-se com empresários que já estão no topo e que contratam.",
     type: "3d",
-    modelPath: "/xadrez.glb",
-    scale: 0.15, 
-    posY: 0.5,
+    modelPath: "/network.glb",
+    scale: 0.8, // Ajustado porque a câmera recuou
+    posY: -1,   // 👇 SUBIMOS BASTANTE AQUI PARA ELE DESCOLAR DO TEXTO 👇
   },
   {
     title: "Soft Skills",
     desc: "Aprenda a negociar, a portar-se e a vender o seu valor de verdade.",
     type: "3d",
     modelPath: "/cerebro.glb",
-    scale: 2.5, 
+    scale: 2, 
     posY: 0.5,
   },
 ];
@@ -202,7 +202,7 @@ function DiferenciaisDesktop() {
     <section ref={targetRef} className="relative h-[600vh] bg-[#050505] border-t border-white/5">
       <div className="sticky top-0 flex h-screen items-center overflow-hidden">
         <div className="absolute inset-0 z-0 bg-gradient-to-b from-[#050505] via-[#0a0a0a] to-[#050505]">
-          <Canvas camera={{ position: [0, 0, 10], fov: 50 }} dpr={1}>
+          <Canvas camera={{ position: [0, 0, 12], fov: 45 }} dpr={1}>
             <Suspense fallback={null}>
               <ambientLight intensity={0.5} />
               <directionalLight position={[10, 20, 10]} intensity={3} color="#ffffff" /> 
@@ -234,7 +234,7 @@ function DiferenciaisDesktop() {
                   )}
                   {card.type === "3d" && card.modelPath && (
                     <div className="absolute inset-0">
-                      <Canvas camera={{ position: [0, 0, 6], fov: 45 }} dpr={1}>
+                      <Canvas camera={{ position: [0, 0, 8], fov: 45 }} dpr={1}>
                         <Suspense fallback={null}>
                           <ambientLight intensity={2.5} /><directionalLight position={[10, 10, 5]} intensity={2} color="#ffffff" /><spotLight position={[-5, 5, 5]} intensity={2} color="#a855f7" />
                           <InteractiveModel path={card.modelPath} scale={card.scale} position={[0, card.posY ?? 0.5, 0]} />
@@ -271,7 +271,8 @@ function DiferenciaisMobile() {
         </div>
 
         {/* CARROSSEL SNAP NATIVO (Super fluído) */}
-        <div className="relative z-10 flex overflow-x-auto snap-x snap-mandatory gap-4 px-6 pb-12 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+        {/* 👇 Adicionado 'overscroll-x-contain' e 'w-full' 👇 */}
+        <div className="relative z-10 flex w-full overflow-x-auto overscroll-x-contain snap-x snap-mandatory gap-4 px-6 pb-12 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             {cards.map((card, index) => (
                 <div key={index} className="min-w-[85vw] snap-center shrink-0 bg-gradient-to-b from-[#110826] to-[#0A051A] border border-white/10 rounded-[40px] p-6 flex flex-col h-[60vh] relative shadow-2xl">
                     
@@ -286,7 +287,7 @@ function DiferenciaisMobile() {
                                 <Suspense fallback={null}>
                                     <ambientLight intensity={2.5} />
                                     <directionalLight position={[5, 5, 5]} intensity={2} color="#ffffff" />
-                                    {/* Ajustado para [0, -0.5, 0] no mobile para ficar centrado no Card */}
+                                    {/* Ajustado para [0, -0.5, 0] no mobile para ficar centrado no Card */}  
                                     <InteractiveModel path={card.modelPath as string} scale={card.scale} position={[0, -0.5, 0]} rotationSpeed={1} />
                                 </Suspense>
                             </Canvas>
@@ -330,7 +331,7 @@ export function DiferenciaisScroll() {
 
 // Pré-carregamento dos modelos para não ter engasgos
 useGLTF.preload("/meteoro.glb");
-useGLTF.preload("/xadrez.glb");
+useGLTF.preload("/network.glb");
 useGLTF.preload("/cerebro.glb");
 useGLTF.preload("/engrenagem.glb");
 useGLTF.preload("/comentario.glb");
