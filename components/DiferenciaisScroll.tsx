@@ -5,8 +5,9 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { useGLTF, Float, Stars, useVideoTexture } from "@react-three/drei";
 import * as THREE from "three";
+import Image from "next/image";
 
-// --- 1. MODELO 3D INTERATIVO ---
+// --- 1. MODELO 3D INTERATIVO (DESKTOP) ---
 function InteractiveModel({ path, scale = 1, rotationSpeed = 0.5, position = [0, 0.5, 0] }: { path: string, scale?: number, rotationSpeed?: number, position?: [number, number, number] }) {
   const { scene } = useGLTF(path as string) as any;
   const rotRef = useRef<THREE.Group>(null);
@@ -77,7 +78,7 @@ function InteractiveModel({ path, scale = 1, rotationSpeed = 0.5, position = [0,
   );
 }
 
-// --- 2. FUNDO COM METEOROS ---
+// --- 2. FUNDO COM METEOROS (DESKTOP) ---
 function MeteorBackground() {
   const { scene } = useGLTF("/meteoro.glb" as string) as any;
   const ref = useRef<THREE.Group>(null);
@@ -98,7 +99,7 @@ function MeteorBackground() {
   );
 }
 
-// --- 3. CARROSSEL DE VÍDEOS (3D) ---
+// --- 3. CARROSSEL DE VÍDEOS (3D - DESKTOP) ---
 function VideoCard({ url, angle, radius }: { url: string, angle: number, radius: number }) {
   const texture = useVideoTexture(url, { muted: true, loop: true, start: true });
   return (
@@ -144,49 +145,80 @@ function PortfolioCylinder({ mobile = false }: { mobile?: boolean }) {
 }
 
 // --- 4. DADOS DAS SEÇÕES ---
+// 👇 O 'desc' agora é um array de strings. Cada string é uma linha! 👇
 const cards = [
   {
     title: "80% Prática",
-    desc: "Menos teoria, mais execução. Você não vai só ouvir, você vai fazer.",
+    desc: [
+      "Menos teoria, mais execução.",
+      "Você não vai só ouvir,",
+      "você vai fazer."
+    ],
     type: "3d",
     modelPath: "/engrenagem.glb",
+    imagePath: "/engrenagem.png", 
     scale: 0.015, 
     posY: 0.5,
   },
   {
     title: "Presencial",
-    desc: "Networking olho no olho. A energia da sala de aula te força a evoluir.",
+    desc: [
+      "Networking olho no olho.",
+      "A energia da sala de aula",
+      "te força a evoluir."
+    ],
     type: "3d",
     modelPath: "/fachada.glb", 
+    imagePath: "/vulp-fechada-3d.png", 
     scale: 1, 
     posY: 0.5,
   },
   {
     title: "Feedback Real",
-    desc: "Sem rodeios, direto ao ponto. O mercado não passa a mão na cabeça.",
+    desc: [
+      "Sem rodeios, direto ao ponto.",
+      "O mercado não passa",
+      "a mão na cabeça."
+    ],
     type: "3d",
     modelPath: "/comentario.glb", 
+    imagePath: "/comentario-vulp.png", 
     scale: 0.35, 
     posY: 0.1,
   },
   {
     title: "Portfólio",
-    desc: "Saia com projetos reais prontos para apresentar aos grandes tubarões.",
+    desc: [
+      "Saia com projetos reais",
+      "prontos para apresentar",
+      "aos grandes tubarões."
+    ],
     type: "cylinder",
+    imagePath: "/portfolio.png", 
   },
   {
     title: "Networking Elite",
-    desc: "Conecte-se com empresários que já estão no topo e que contratam.",
+    desc: [
+      "Conecte-se com empresários",
+      "que já estão no topo",
+      "e que contratam."
+    ],
     type: "3d",
     modelPath: "/network.glb",
-    scale: 0.8, // Ajustado porque a câmera recuou
-    posY: -1,   // 👇 SUBIMOS BASTANTE AQUI PARA ELE DESCOLAR DO TEXTO 👇
+    imagePath: "/networking.png", 
+    scale: 0.8, 
+    posY: -1,   
   },
   {
     title: "Soft Skills",
-    desc: "Aprenda a negociar, a portar-se e a vender o seu valor de verdade.",
+    desc: [
+      "Aprenda a negociar,",
+      "a portar-se e a vender",
+      "o seu valor de verdade."
+    ],
     type: "3d",
     modelPath: "/cerebro.glb",
+    imagePath: "/cerebro-icon.png", 
     scale: 2, 
     posY: 0.5,
   },
@@ -245,7 +277,10 @@ function DiferenciaisDesktop() {
               </div>
               <motion.div initial={{ opacity: 0, scale: 0.8 }} whileInView={{ opacity: 1, scale: 1 }} transition={{ type: "spring", bounce: 0.4, duration: 1.2 }} viewport={{ once: false, margin: "-100px" }} className="relative z-10 flex flex-col items-center justify-center text-center p-6 mt-48 pointer-events-none">
                 <h2 className="text-6xl md:text-9xl font-black mb-2 tracking-tighter leading-none text-white [text-shadow:_0_10px_40px_rgb(0_0_0_/_100%)]">{card.title}</h2>
-                <p className="text-2xl md:text-4xl text-purple-400 font-bold max-w-3xl [text-shadow:_0_5px_20px_rgb(0_0_0_/_100%)]">{card.desc}</p>
+                <p className="text-2xl md:text-4xl text-purple-400 font-bold max-w-3xl [text-shadow:_0_5px_20px_rgb(0_0_0_/_100%)]">
+                    {/* Renderizando as linhas do desktop coladas num parágrafo só, ou com espaços */}
+                    {card.desc.join(" ")}
+                </p>
               </motion.div>
             </div>
           ))}
@@ -255,13 +290,12 @@ function DiferenciaisDesktop() {
   );
 }
 
-// 📱 VERSÃO 2: MOBILE (CARROSSEL NATIVO LEVE)
+// 📱 VERSÃO 2: MOBILE (CARROSSEL NATIVO LEVE, APENAS PNGs NOS CARDS)
 function DiferenciaisMobile() {
   return (
     <section className="relative py-24 bg-[#050505] border-t border-white/5 overflow-hidden">
-        {/* Fundo estrelado leve em CSS (sem Canvas 3D para fundo) */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-purple-900/10 via-[#050505] to-[#050505] pointer-events-none" />
         
+        {/* CABEÇALHO */}
         <div className="relative z-10 px-6 mb-12 text-center">
             <h2 className="text-5xl font-black tracking-tighter leading-none mb-4">
                 Por que a <br />
@@ -270,34 +304,52 @@ function DiferenciaisMobile() {
             <p className="text-lg text-purple-400 font-bold">Deslize para o lado <span className="animate-pulse">→</span></p>
         </div>
 
-        {/* CARROSSEL SNAP NATIVO (Super fluído) */}
-        {/* 👇 Adicionado 'overscroll-x-contain' e 'w-full' 👇 */}
-        <div className="relative z-10 flex w-full overflow-x-auto overscroll-x-contain snap-x snap-mandatory gap-4 px-6 pb-12 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+        {/* CARROSSEL SNAP NATIVO */}
+        <div className="relative z-10 flex w-full overflow-x-auto overscroll-x-contain snap-x snap-mandatory gap-6 px-6 pb-12 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             {cards.map((card, index) => (
-                <div key={index} className="min-w-[85vw] snap-center shrink-0 bg-gradient-to-b from-[#110826] to-[#0A051A] border border-white/10 rounded-[40px] p-6 flex flex-col h-[60vh] relative shadow-2xl">
+                <div key={index} className="min-w-[85vw] snap-center shrink-0 flex flex-col items-center justify-center min-h-[65vh] relative">
                     
-                    {/* Metade Superior: O Ícone 3D Leve */}
-                    <div className="w-full flex-1 relative flex items-center justify-center">
-                        {card.type === "cylinder" ? (
-                            <Canvas camera={{ position: [0, 0, 10], fov: 45 }} dpr={1} frameloop="always">
-                                <Suspense fallback={null}><ambientLight intensity={1.5} /><PortfolioCylinder mobile={true} /></Suspense>
-                            </Canvas>
-                        ) : (
-                            <Canvas camera={{ position: [0, 0, 6], fov: 45 }} dpr={1} frameloop="always">
-                                <Suspense fallback={null}>
-                                    <ambientLight intensity={2.5} />
-                                    <directionalLight position={[5, 5, 5]} intensity={2} color="#ffffff" />
-                                    {/* Ajustado para [0, -0.5, 0] no mobile para ficar centrado no Card */}  
-                                    <InteractiveModel path={card.modelPath as string} scale={card.scale} position={[0, -0.5, 0]} rotationSpeed={1} />
-                                </Suspense>
-                            </Canvas>
-                        )}
-                    </div>
+                    <div className="w-full h-full bg-[#110826] border border-purple-500/20 rounded-[40px] p-6 flex flex-col items-center justify-center shadow-2xl relative overflow-hidden">
+                        
+                        <div className="absolute inset-0 bg-gradient-to-b from-purple-500/10 to-transparent pointer-events-none" />
 
-                    {/* Metade Inferior: Textos */}
-                    <div className="mt-4 text-center pb-4">
-                        <h3 className="text-3xl font-black mb-3 text-white tracking-tight">{card.title}</h3>
-                        <p className="text-gray-400 text-base leading-relaxed font-medium px-2">{card.desc}</p>
+                        {/* ÍCONE PNG (Aumentado) */}
+                        {card.imagePath && (
+                             <div className="flex-1 flex items-center justify-center w-full mt-4">
+                               <motion.div
+                                  animate={{ y: [0, -12, 0] }}
+                                  transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
+                                  className="relative w-64 h-64 md:w-72 md:h-72 drop-shadow-[0_0_20px_rgba(168,85,247,0.3)] z-10"
+                               >
+                                 <Image 
+                                   src={card.imagePath} 
+                                   alt={card.title}
+                                   fill
+                                   className="object-contain"
+                                   priority={index < 2}
+                                 />
+                               </motion.div>
+                             </div>
+                        )}
+
+                        {/* TEXTOS CENTRALIZADOS COM QUEBRA DE LINHA PERFEITA */}
+                        <div className="text-center z-10 w-full px-2 pb-6 mt-auto">
+                            {/* Título maior */}
+                            <h3 className="text-4xl sm:text-5xl font-black mb-6 text-white tracking-tight leading-tight">
+                                {card.title}
+                            </h3>
+                            
+                            {/* Renderizando o array de linhas com <br/> entre elas */}
+                            <p className="text-gray-400 text-lg sm:text-xl leading-relaxed font-medium">
+                                {card.desc.map((linha, i) => (
+                                    <span key={i}>
+                                        {linha}
+                                        {i !== card.desc.length - 1 && <br />}
+                                    </span>
+                                ))}
+                            </p>
+                        </div>
+
                     </div>
                 </div>
             ))}
@@ -312,24 +364,19 @@ export function DiferenciaisScroll() {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    setIsMounted(true); // Garante que só renderiza no navegador (evita erros do Next.js)
-    
-    const checkScreenSize = () => setIsMobile(window.innerWidth < 768); // 768px é a quebra para iPad/Mobile
-    checkScreenSize(); // Checa na hora que a página carrega
-    
-    window.addEventListener("resize", checkScreenSize); // Checa se o usuário redimensionar a tela
+    setIsMounted(true); 
+    const checkScreenSize = () => setIsMobile(window.innerWidth < 768); 
+    checkScreenSize(); 
+    window.addEventListener("resize", checkScreenSize); 
     return () => window.removeEventListener("resize", checkScreenSize);
   }, []);
 
-  // Se a página ainda está a carregar, não mostra nada para evitar flashes na tela
   if (!isMounted) return <div className="h-screen bg-[#050505]" />;
 
-  // A MAGIA ACONTECE AQUI: 
-  // Se for Telemóvel, chama o Carrossel Nativo. Se for PC, chama a Experiência Cinematográfica!
   return isMobile ? <DiferenciaisMobile /> : <DiferenciaisDesktop />;
 }
 
-// Pré-carregamento dos modelos para não ter engasgos
+// Pré-carregamento dos modelos 3D apenas para o Desktop
 useGLTF.preload("/meteoro.glb");
 useGLTF.preload("/network.glb");
 useGLTF.preload("/cerebro.glb");

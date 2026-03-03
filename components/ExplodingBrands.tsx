@@ -13,8 +13,12 @@ const MODELS = {
   instagram: "/instagram.glb",
 };
 
+// Pré-carregamento apenas para quando precisar rodar em 3D
 Object.values(MODELS).forEach((path) => useGLTF.preload(path));
 
+// ==========================================
+// COMPONENTES 3D (APENAS PARA DESKTOP)
+// ==========================================
 function Model({ path, startPos, endPos, expanded, scale = 1 }: any) {
   const { scene } = useGLTF(path as string) as any;
   const posRef = useRef<THREE.Group>(null);
@@ -85,8 +89,7 @@ function Model({ path, startPos, endPos, expanded, scale = 1 }: any) {
   );
 }
 
-// Recebe isMobile para saber qual tamanho usar!
-function Scene({ expanded, isMobile }: { expanded: boolean, isMobile: boolean }) {
+function Scene({ expanded }: { expanded: boolean }) {
   const groupRef = useRef<THREE.Group>(null);
 
   useFrame((state) => {
@@ -103,56 +106,37 @@ function Scene({ expanded, isMobile }: { expanded: boolean, isMobile: boolean })
       <spotLight position={[10, 15, 10]} intensity={3} castShadow />
       <spotLight position={[-10, -15, -10]} intensity={1} color="#a855f7" />
 
-      {/* 👇 A MAGIA AQUI: Operador ternário (isMobile ? valorMobile : valorPC) 👇 */}
-      <Model 
-        path={MODELS.macbook} 
-        startPos={[-1, 0, 0]} 
-        endPos={isMobile ? [-2.9, 1.4, -1] : [-4.0, 1.8, -1]} 
-        expanded={expanded} 
-        scale={isMobile ? 0.04 : 0.06} 
-      />
-      <Model 
-        path={MODELS.camera} 
-        startPos={[-0.3, 0, 0]} 
-        endPos={isMobile ? [3.0, 1.4, -1] : [4.0, 1.8, -1]} 
-        expanded={expanded} 
-        scale={isMobile ? 0.2 : 0.3} 
-      />
-      <Model 
-        path={MODELS.coin} 
-        startPos={[0.3, 0, 0]} 
-        endPos={isMobile ? [-2.7, -1.5, 0] : [-3.8, -2.0, 0]} 
-        expanded={expanded} 
-        scale={isMobile ? 0.5 : 0.8} 
-      />
-      <Model 
-        path={MODELS.instagram} 
-        startPos={[1, 0, 0]} 
-        endPos={isMobile ? [2.7, -1.5, 0] : [3.8, -2.0, 0]} 
-        expanded={expanded} 
-        scale={isMobile ? 0.7 : 1} 
-      />
+      {/* Versão Desktop (Tamanhos e posições de PC) */}
+      <Model path={MODELS.macbook} startPos={[-1, 0, 0]} endPos={[-4.0, 1.8, -1]} expanded={expanded} scale={0.06} />
+      <Model path={MODELS.camera} startPos={[-0.3, 0, 0]} endPos={[4.0, 1.8, -1]} expanded={expanded} scale={0.3} />
+      <Model path={MODELS.coin} startPos={[0.3, 0, 0]} endPos={[-3.8, -2.0, 0]} expanded={expanded} scale={0.8} />
+      <Model path={MODELS.instagram} startPos={[1, 0, 0]} endPos={[3.8, -2.0, 0]} expanded={expanded} scale={1} />
     </group>
   );
 }
 
+// ==========================================
+// O COMPONENTE PRINCIPAL
+// ==========================================
 export function ExplodingBrands() {
   const containerRef = useRef(null);
-  const isInView = useInView(containerRef, { once: false, amount: 0.4 });
+  const isInView = useInView(containerRef, { once: false, amount: 0 });
   const [expanded, setExpanded] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   // Detetor de Telemóvel Inteligente
   useEffect(() => {
+    setMounted(true);
     const handleResize = () => setIsMobile(window.innerWidth < 768);
-    handleResize(); // Checa na primeira vez que abre
-    window.addEventListener("resize", handleResize); // Fica a ouvir caso o utilizador gire a tela
+    handleResize(); 
+    window.addEventListener("resize", handleResize); 
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   useEffect(() => {
     if (isInView) {
-      const timer = setTimeout(() => setExpanded(true), 300);
+      const timer = setTimeout(() => setExpanded(true), 150); 
       return () => clearTimeout(timer);
     } else {
       setExpanded(false);
@@ -160,16 +144,22 @@ export function ExplodingBrands() {
   }, [isInView]);
 
   return (
-    <section ref={containerRef} className="relative h-[80vh] min-h-[600px] w-full bg-[#050505] flex items-center justify-center overflow-hidden border-t border-white/5">
+    // Altura controlada. Py-24 dá um bom respiro ao texto no mobile. Desktop mantém md:h-[80vh]
+    <section ref={containerRef} className="relative w-full bg-[#050505] flex flex-col items-center justify-center overflow-hidden border-t border-white/5 py-24 md:py-0 md:h-[80vh] md:min-h-[600px]">
       
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] max-w-full h-[500px] bg-purple-900/20 blur-[150px] rounded-full pointer-events-none" />
 
-      <div className="absolute z-30 text-center pointer-events-none flex flex-col items-center justify-center w-full">
+      {/* ======================= TEXTO CENTRAL ======================= */}
+      <div className="relative z-30 text-center pointer-events-none w-full px-4">
         <motion.h2
-          initial={{ scale: 0.3, opacity: 0, filter: "blur(10px)" }}
-          animate={expanded ? { scale: 1, opacity: 1, filter: "blur(0px)" } : { scale: 0.3, opacity: 0, filter: "blur(10px)" }}
-          transition={{ duration: 1, ease: "easeOut", delay: 0.1 }}
-          className="text-7xl md:text-[10rem] font-black leading-[0.9] tracking-tighter drop-shadow-2xl pointer-events-none"
+          initial={{ scale: 0.9, opacity: 0, filter: "blur(5px)" }}
+          animate={
+             isMobile 
+             ? (isInView ? { scale: 1, opacity: 1, filter: "blur(0px)" } : { scale: 0.9, opacity: 0, filter: "blur(5px)" })
+             : (expanded ? { scale: 1, opacity: 1, filter: "blur(0px)" } : { scale: 0.5, opacity: 0, filter: "blur(10px)" })
+          }
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="text-6xl sm:text-7xl md:text-[10rem] font-black leading-[0.9] tracking-tighter drop-shadow-2xl pointer-events-none relative z-20"
         >
           PRA QUEM É<br />
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-500 via-fuchsia-400 to-purple-500 pointer-events-none pr-4 pb-2">
@@ -178,14 +168,17 @@ export function ExplodingBrands() {
         </motion.h2>
       </div>
 
-      <div className="absolute inset-0 z-10 touch-pan-y">
-        <Canvas camera={{ position: [0, 0, 8], fov: 45 }} dpr={[1, 2]}>
-          <Suspense fallback={null}>
-            {/* Passamos a informação para dentro da cena! */}
-            <Scene expanded={expanded} isMobile={isMobile} />
-          </Suspense>
-        </Canvas>
-      </div>
+      {/* ======================= MODO DESKTOP (3D) ======================= */}
+      {/* O Canvas só é renderizado se NÃO for mobile */}
+      {mounted && !isMobile && (
+          <div className="absolute inset-0 z-10 touch-pan-y">
+            <Canvas camera={{ position: [0, 0, 8], fov: 45 }} dpr={[1, 2]}>
+              <Suspense fallback={null}>
+                <Scene expanded={expanded} />
+              </Suspense>
+            </Canvas>
+          </div>
+      )}
 
     </section>
   );
