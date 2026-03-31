@@ -28,7 +28,7 @@ const CHECKOUT_CONFIG = {
 };
 
 const astronauts = [
-  { id: 1, name: "Beatriz Fernandes", title: "A Voz do Engajamento", role: "Influenciadora (+70k)", description: "Sabe exatamente como prender a atenção e transformar seguidores engajados numa comunidade fiel e compradora.", image: "/bea.png", color: "from-pink-500 to-purple-500" },
+  { id: 1, name: "Beatriz Fernandes", title: "A Voz do Engajamento", role: "Influenciadora (+70k)", description: "Sabe exatamente como prender a attention e transformar seguidores engajados numa comunidade fiel e compradora.", image: "/bea.png", color: "from-pink-500 to-purple-500" },
   { id: 2, name: "Alarico Neto", title: "O Estrategista Híbrido", role: "Tapajós Skate Shop", description: "Transformou a maior loja da região numa máquina de vendas presenciais usando o poder massivo do posicionamento online.", image: "/alarico.png", color: "from-blue-500 to-cyan-500" },
   { id: 3, name: "Nelson Jr.", title: "O Arquiteto Digital", role: "CEO Agência Up&Up", description: "O cérebro por trás da maior agência de marketing. Traz o método validado por grandes empresas para o seu negócio.", image: "/nelson.png", color: "from-purple-500 to-indigo-500" }
 ];
@@ -36,7 +36,7 @@ const astronauts = [
 const courseModules = [
   { id: "01", title: "Mentalidade e Coragem", subtitle: "Quebra de Bloqueio com Beatriz Fernandes", description: "Supere a vergonha de aparecer, organize seu conteúdo e posicione-se de forma prática usando storytelling e roteirização simples.", color: "from-pink-500 to-purple-500", iconColor: "text-pink-400", lessons: ["Aula 1: Começar sem estar pronto", "Aula 2: Perdendo a vergonha", "Aula 3: Mostrar o que você faz", "Aula 4: Constância e Calendário de Postagens", "Aula 5: Criando Conexão e Interação"] },
   { id: "02", title: "Transformando Imagem em Negócio", subtitle: "Visão Prática com Alarico Neto", description: "Saia do 'eu queria' para o 'eu comecei'. Conecte propósito, valide seu negócio gastando pouco (MVP) e construa uma comunidade forte.", color: "from-blue-500 to-cyan-500", iconColor: "text-cyan-400", lessons: ["Aula 1: Você já está conectado com seu objetivo?", "Aula 2: Não tenho estrutura, como começo? (MVP)", "Aula 3: Oportunidade: buscando quem financie seu sonho", "Aula 4: Valor da marca: conexão com a comunidade", "Aula 5: Mantenha-se firme: criando raízes", "Bônus: Missão, Visão e Valores na Prática"] },
-  { id: "03", title: "Execução e Operação", subtitle: "Estrutura e Escala com Nelson Jr.", description: "Trate o seu posicionamento como parte real do trabalho. Entenda onde investir e como medir resultados concretos.", color: "from-purple-500 to-indigo-500", iconColor: "text-indigo-400", lessons: ["Aula 1: Sair do anonimato: o custo de não aparecer", "Aula 2: Tratar posicionamento como parte do trabalho", "Aula 3: Não burocratizar a operação antes do resultado", "Aula 4: Quais investimentos realmente fazem sentido", "Aula 5: Como metrificar resultados do posicionamento"] }
+  { id: "03", title: "Execução e Operação", subtitle: "Estrutura e Escala com Nelson Jr.", description: "Trate o seu posicionamento como parte real do trabalho. Entenda onde investir e como medir resultados concretos.", color: "from-purple-500 to-indigo-500", iconColor: "text-indigo-400", lessons: ["Aula 1: Sair do anonimato: o custo de não aparecer", "Aula 2: Tratar posicionamento como parte do trabalho", "Aula 3: Não burocratizar a operation antes do resultado", "Aula 4: Quais investimentos realmente fazem sentido", "Aula 5: Como metrificar resultados do posicionamento"] }
 ];
 
 const objections = [
@@ -48,8 +48,8 @@ const objections = [
 ];
 
 const faqs = [
-    { q: "O curso é online ou presencial?", a: "O formato da VULP é presencial. Acreditamos que o networking olho no olho e a energia da sala de aula forçam a sua evolução de forma muito mais rápida que vídeos gravados." },
-    { q: "Preciso já ter uma empresa estruturada?", a: "Não. No Módulo 2, o Alarico vai te ensinar exatamente como começar do zero testando um Produto Mínimo Viável (MVP) com pouquíssimo ou nenhum investimento." },
+    { q: "O curso é online ou presencial?", a: "O formato da VULP é presencial. Acreditamos que o networking olho no olho e a energia da sala de aula forçam a sua evolution de forma muito mais rápida que vídeos gravados." },
+    { q: "Preciso já ter uma empresa estruturada?", a: "Não. No Módulo 2, o Alarico vai te ensinar exatamente como começar do zero testando um Produto Mínimo Viável (MVP) com pouquíssimo ou nenhum investment." },
     { q: "E se eu tiver muita vergonha de aparecer?", a: "O Módulo 1 inteiro, comandado pela Beatriz Fernandes, é dedicado a destravar esse medo. Você aprenderá técnicas de roteirização e gravação em partes para perder a inibição sem pressão." },
     { q: "Quais as formas de pagamento?", a: "Você pode parcelar o valor em até 12x no cartão de crédito através do nosso checkout 100% seguro pela InfinitePay. Também aceitamos Pix." }
 ];
@@ -248,14 +248,24 @@ export default function PosicioneSeLP() {
         </div>
       </nav>
 
-      <header className="relative w-full h-[100svh] min-h-[600px] md:min-h-[700px] flex flex-col items-center justify-end pb-12 md:pb-10 z-10">
+      {/* 🛑 MODIFICAÇÃO DE ELITE AQUI 👇 */}
+      {/* 1. Mudei 'h-[100svh]' para 'min-h-[130svh]' -> A nave está mais alta para mostrar os pés! */}
+      <header className="relative w-full h-[100svh] min-h-[130svh] md:min-h-[130svh] flex flex-col items-center justify-end pb-16 md:pb-14 z-10">
         <div className="absolute inset-0 z-0 hero-bg">
-            <img src="/posicione-se-espaco-sideral.png" alt="Desktop" className="hidden md:block w-full h-full object-cover object-top" />
-            <img src="/posicione-se-espaco-sideral-mobile.png" alt="Mobile" className="block md:hidden w-full h-full object-cover object-top" />
-            <div className="absolute inset-0 bg-gradient-to-b from-[#02000A]/80 via-transparent via-75% to-[#02000A] pointer-events-none" />
+            <img src="/capa-curso-lp-posicionese.jpg" alt="Desktop" className="hidden md:block w-full h-full object-cover object-top" />
+            <img src="/capa-curso-lp-posicionese-vertical.jpg" alt="Mobile" className="block md:hidden w-full h-full object-cover object-top" />
+            
+            {/* 🛑 CALIBRAÇÃO DOS DEGRADÊS AQUI 👇 */}
+            
+            {/* Degradê SUPERIOR: Mistura suave no topo para leitura do Nav */}
+            <div className="absolute top-0 left-0 w-full h-1/4 bg-gradient-to-b from-[#02000A]/80 via-transparent via-80% to-transparent pointer-events-none" />
+
+            {/* Degradê INFERIOR: Mergulho profundo no preto, que começa BEM BAIXO para não cobrir a imagem! */}
+            <div className="absolute bottom-0 left-0 w-full h-1/4 bg-gradient-to-t from-[#02000A] to-transparent pointer-events-none" />
         </div>
 
         <div className="relative z-20 flex flex-col items-center w-full px-6 md:px-0 hero-button">
+            {/* O botão rebaixou naturalmente porque o header está mais alto e usamos 'justify-end' */}
             <button onClick={openModal} className="bg-white text-black hover:bg-gray-200 font-black py-4 px-8 md:py-5 md:px-12 rounded-full text-lg md:text-xl transition-all duration-300 transform hover:scale-110 shadow-[0_0_50px_rgba(255,255,255,0.3)] flex items-center justify-center gap-3 w-full md:w-auto">
                 Quero me Posicionar <ArrowRight size={24} />
             </button>
@@ -269,7 +279,6 @@ export default function PosicioneSeLP() {
       </section>
 
       {/* OBJEÇÕES */}
-      {/* 🛑 A COR FOI AJUSTADA AQUI: A secção termina em #0A051A para ligar com a próxima 🛑 */}
       <section className="py-24 relative z-10 bg-gradient-to-b from-[#02000A] to-[#0A051A] obj-section">
         <div className="max-w-7xl mx-auto px-6">
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-center">
@@ -287,19 +296,14 @@ export default function PosicioneSeLP() {
         </div>
       </section>
 
-      {/* BOA NOTÍCIA (COM DEGRADÊS DUPLOS NO TOPO E NA BASE) */}
+      {/* BOA NOTÍCIA */}
       <section className="relative z-10 min-h-[500px] md:min-h-[600px] flex items-center py-24 boa-noticia-section overflow-hidden bg-[#0A051A]">
         <div className="absolute inset-0 z-0">
             <img src="/posicionese-pegada.png" alt="Pegada na Lua" className="w-full h-full object-cover object-center md:object-right opacity-90" />
         </div>
         
-        {/* Degradê horizontal da esquerda para a direita (esconde o fundo da imagem sob o texto) */}
         <div className="absolute inset-0 z-10 bg-gradient-to-r from-[#0A051A] via-[#0A051A]/95 via-50% md:via-40% to-transparent" />
-        
-        {/* 🛑 ESMAECIMENTO SUPERIOR: Mistura perfeitamente com a secção de objeções acima 🛑 */}
         <div className="absolute top-0 left-0 w-full h-32 md:h-48 bg-gradient-to-b from-[#0A051A] via-[#0A051A]/80 to-transparent z-10 pointer-events-none" />
-        
-        {/* 🛑 ESMAECIMENTO INFERIOR: Mergulha no preto #02000A da Ponte da Lua abaixo 🛑 */}
         <div className="absolute bottom-0 left-0 w-full h-32 md:h-48 bg-gradient-to-t from-[#02000A] via-[#02000A]/80 to-transparent z-10 pointer-events-none" />
 
         <div className="max-w-7xl mx-auto px-6 relative z-20 w-full">
@@ -313,11 +317,11 @@ export default function PosicioneSeLP() {
                 <div className="space-y-5 mb-10">
                     <div className="flex items-start gap-4">
                         <div className="bg-red-500/10 p-2 rounded-lg shrink-0 mt-1"><X className="text-red-500" size={20} /></div>
-                        <p className="text-gray-300 text-lg leading-relaxed">Sem fórmula mágica, dancinhas constrangedoras ou teorias de palco que não funcionam na vida real.</p>
+                        <p className="text-gray-300 text-lg leading-relaxed">Sem formula mágica, dancinhas constrangedoras ou teorias de palco que não funcionam na vida real.</p>
                     </div>
                     <div className="flex items-start gap-4">
                         <div className="bg-green-500/10 p-2 rounded-lg shrink-0 mt-1"><CheckCircle2 className="text-[#00D775]" size={20} /></div>
-                        <p className="text-gray-300 text-lg leading-relaxed">Com posicionamento intencional, execução validada (MVP) e a bagagem de quem já construiu marcas fortes no mercado local.</p>
+                        <p className="text-gray-300 text-lg leading-relaxed">Com posicionamento intencional, execution validada (MVP) e a bagagem de quem já construiu marcas fortes no mercado local.</p>
                     </div>
                 </div>
                 <button onClick={openModal} className="w-full sm:w-auto bg-[#00D775] hover:bg-[#00c068] text-[#002f1a] font-black text-lg py-4 px-10 rounded-full shadow-[0_0_20px_rgba(0,215,117,0.3)] transition-transform hover:scale-105 flex items-center justify-center gap-3">
@@ -327,17 +331,13 @@ export default function PosicioneSeLP() {
         </div>
       </section>
 
-      {/* 👇 A PONTE DE TRANSIÇÃO (AGORA MAIS ALTA E COM VIGNETTE GIGANTE) 👇 */}
-      {/* 🛑 Aumentei para h-[80vh] para tirar o zoom e revelar o topo da imagem 🛑 */}
+      {/* A PONTE DE TRANSIÇÃO */}
       <section className="relative w-full h-[50vh] md:h-[80vh] min-h-[400px] z-10 bg-[#02000A] overflow-hidden flex items-end">
         <div className="absolute inset-0 z-0">
             <img src="/posicionese-agora-Lua.jpg" alt="Posicione-se Agora na Lua" className="w-full h-full object-cover object-center" />
         </div>
         
-        {/* 🛑 FADE GIGANTE NO TOPO (Ocupa 50% da altura da secção) 🛑 */}
         <div className="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b from-[#02000A] via-[#02000A]/80 to-transparent z-10 pointer-events-none" />
-        
-        {/* 🛑 FADE GIGANTE NA BASE (Mergulha a lua no infinito para os Módulos) 🛑 */}
         <div className="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-[#02000A] via-[#02000A]/95 to-transparent z-10 pointer-events-none" />
       </section>
 
