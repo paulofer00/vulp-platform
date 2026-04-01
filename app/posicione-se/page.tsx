@@ -24,7 +24,7 @@ if (typeof window !== "undefined") {
 const CHECKOUT_CONFIG = {
     infiniteTag: "upeup", 
     productName: "Curso Posicione-se Agora",
-    price: 9700, 
+    price:100, 
 };
 
 const astronauts = [
@@ -34,9 +34,53 @@ const astronauts = [
 ];
 
 const courseModules = [
-  { id: "01", title: "Mentalidade e Coragem", subtitle: "Quebra de Bloqueio com Beatriz Fernandes", description: "Supere a vergonha de aparecer, organize seu conteúdo e posicione-se de forma prática usando storytelling e roteirização simples.", color: "from-pink-500 to-purple-500", iconColor: "text-pink-400", lessons: ["Aula 1: Começar sem estar pronto", "Aula 2: Perdendo a vergonha", "Aula 3: Mostrar o que você faz", "Aula 4: Constância e Calendário de Postagens", "Aula 5: Criando Conexão e Interação"] },
-  { id: "02", title: "Transformando Imagem em Negócio", subtitle: "Visão Prática com Alarico Neto", description: "Saia do 'eu queria' para o 'eu comecei'. Conecte propósito, valide seu negócio gastando pouco (MVP) e construa uma comunidade forte.", color: "from-blue-500 to-cyan-500", iconColor: "text-cyan-400", lessons: ["Aula 1: Você já está conectado com seu objetivo?", "Aula 2: Não tenho estrutura, como começo? (MVP)", "Aula 3: Oportunidade: buscando quem financie seu sonho", "Aula 4: Valor da marca: conexão com a comunidade", "Aula 5: Mantenha-se firme: criando raízes", "Bônus: Missão, Visão e Valores na Prática"] },
-  { id: "03", title: "Execução e Operação", subtitle: "Estrutura e Escala com Nelson Jr.", description: "Trate o seu posicionamento como parte real do trabalho. Entenda onde investir e como medir resultados concretos.", color: "from-purple-500 to-indigo-500", iconColor: "text-indigo-400", lessons: ["Aula 1: Sair do anonimato: o custo de não aparecer", "Aula 2: Tratar posicionamento como parte do trabalho", "Aula 3: Não burocratizar a operation antes do resultado", "Aula 4: Quais investimentos realmente fazem sentido", "Aula 5: Como metrificar resultados do posicionamento"] }
+  { 
+    id: "01", 
+    title: "Mentalidade e Coragem", 
+    subtitle: "Quebra de Bloqueio com Beatriz Fernandes", 
+    description: "Supere a vergonha de aparecer, organize seu conteúdo e posicione-se de forma prática usando storytelling e roteirização simples.", 
+    color: "from-pink-500 to-purple-500", 
+    iconColor: "text-pink-400", 
+    lessons: [
+        "Aula 1: Começar sem estar pronto", 
+        "Aula 2: Perdendo a vergonha", 
+        "Aula 3: Mostrar o que você faz", 
+        "Aula 4: Constância e Calendário de Postagens", 
+        "Aula 5: Criando Conexão e Interação",
+        "Bônus: Método Raiz" // 👈 AULA BÔNUS ADICIONADA AQUI!
+    ] 
+  },
+  { 
+    id: "02", 
+    title: "Transformando Imagem em Negócio", 
+    subtitle: "Visão Prática com Alarico Neto", 
+    description: "Saia do 'eu queria' para o 'eu comecei'. Conecte propósito, valide seu negócio gastando pouco (MVP) e construa uma comunidade forte.", 
+    color: "from-blue-500 to-cyan-500", 
+    iconColor: "text-cyan-400", 
+    lessons: [
+        "Aula 1: Você já está conectado com seu objetivo?", 
+        "Aula 2: Não tenho estrutura, como começo? (MVP)", 
+        "Aula 3: Oportunidade: buscando quem financie seu sonho", 
+        "Aula 4: Valor da marca: conexão com a comunidade", 
+        "Aula 5: Mantenha-se firme: criando raízes", 
+        "Bônus: Missão, Visão e Valores na Prática"
+    ] 
+  },
+  { 
+    id: "03", 
+    title: "Execução e Operação", 
+    subtitle: "Estrutura e Escala com Nelson Jr.", 
+    description: "Trate o seu posicionamento como parte real do trabalho. Entenda onde investir e como medir resultados concretos.", 
+    color: "from-purple-500 to-indigo-500", 
+    iconColor: "text-indigo-400", 
+    lessons: [
+        "Aula 1: Sair do anonimato: o custo de não aparecer", 
+        "Aula 2: Tratar posicionamento como parte do trabalho", 
+        "Aula 3: Não burocratizar a operation antes do resultado", 
+        "Aula 4: Quais investimentos realmente fazem sentido", 
+        "Aula 5: Como metrificar resultados do posicionamento"
+    ] 
+  }
 ];
 
 const objections = [
@@ -47,11 +91,12 @@ const objections = [
   { num: "05", text: "Sinto que o posicionamento é perda de tempo, pois não sei metrificar os resultados." }
 ];
 
+// 🛑 FAQs ATUALIZADOS AQUI 👇
 const faqs = [
-    { q: "O curso é online ou presencial?", a: "O formato da VULP é presencial. Acreditamos que o networking olho no olho e a energia da sala de aula forçam a sua evolution de forma muito mais rápida que vídeos gravados." },
+    { q: "O curso é online ou presencial?", a: "Esse curso é somente online através da nossa plataforma, com todas as aulas já disponíveis para você assistir quando e onde quiser." },
     { q: "Preciso já ter uma empresa estruturada?", a: "Não. No Módulo 2, o Alarico vai te ensinar exatamente como começar do zero testando um Produto Mínimo Viável (MVP) com pouquíssimo ou nenhum investment." },
     { q: "E se eu tiver muita vergonha de aparecer?", a: "O Módulo 1 inteiro, comandado pela Beatriz Fernandes, é dedicado a destravar esse medo. Você aprenderá técnicas de roteirização e gravação em partes para perder a inibição sem pressão." },
-    { q: "Quais as formas de pagamento?", a: "Você pode parcelar o valor em até 12x no cartão de crédito através do nosso checkout 100% seguro pela InfinitePay. Também aceitamos Pix." }
+    { q: "Quais as formas de pagamento?", a: "Você pode pagar à vista, no Pix ou no cartão de crédito em até 12x, e receba seu acesso do curso imediatamente." }
 ];
 
 function FloatingObjections() {
@@ -248,24 +293,16 @@ export default function PosicioneSeLP() {
         </div>
       </nav>
 
-      {/* 🛑 MODIFICAÇÃO DE ELITE AQUI 👇 */}
-      {/* 1. Mudei 'h-[100svh]' para 'min-h-[130svh]' -> A nave está mais alta para mostrar os pés! */}
       <header className="relative w-full h-[100svh] min-h-[130svh] md:min-h-[130svh] flex flex-col items-center justify-end pb-16 md:pb-14 z-10">
         <div className="absolute inset-0 z-0 hero-bg">
             <img src="/capa-curso-lp-posicionese.jpg" alt="Desktop" className="hidden md:block w-full h-full object-cover object-top" />
             <img src="/capa-curso-lp-posicionese-vertical.jpg" alt="Mobile" className="block md:hidden w-full h-full object-cover object-top" />
             
-            {/* 🛑 CALIBRAÇÃO DOS DEGRADÊS AQUI 👇 */}
-            
-            {/* Degradê SUPERIOR: Mistura suave no topo para leitura do Nav */}
             <div className="absolute top-0 left-0 w-full h-1/4 bg-gradient-to-b from-[#02000A]/80 via-transparent via-80% to-transparent pointer-events-none" />
-
-            {/* Degradê INFERIOR: Mergulho profundo no preto, que começa BEM BAIXO para não cobrir a imagem! */}
             <div className="absolute bottom-0 left-0 w-full h-1/4 bg-gradient-to-t from-[#02000A] to-transparent pointer-events-none" />
         </div>
 
         <div className="relative z-20 flex flex-col items-center w-full px-6 md:px-0 hero-button">
-            {/* O botão rebaixou naturalmente porque o header está mais alto e usamos 'justify-end' */}
             <button onClick={openModal} className="bg-white text-black hover:bg-gray-200 font-black py-4 px-8 md:py-5 md:px-12 rounded-full text-lg md:text-xl transition-all duration-300 transform hover:scale-110 shadow-[0_0_50px_rgba(255,255,255,0.3)] flex items-center justify-center gap-3 w-full md:w-auto">
                 Quero me Posicionar <ArrowRight size={24} />
             </button>
@@ -474,10 +511,10 @@ export default function PosicioneSeLP() {
                     <div className="flex flex-col items-center justify-center text-center py-6 animate-in slide-in-from-bottom-4 duration-500">
                         <div className="w-20 h-20 bg-green-500/10 rounded-full flex items-center justify-center mb-6 border border-green-500/20"><CheckCircle2 size={40} className="text-green-500 drop-shadow-[0_0_10px_rgba(34,197,94,0.5)]" /></div>
                         <h3 className="text-2xl font-bold text-white mb-2">Registo Concluído!</h3>
-                        <p className="text-gray-400 leading-relaxed mb-6">Para garantir sua vaga, finalize o pagamento seguro através da InfinitePay.</p>
+                        <p className="text-gray-400 leading-relaxed mb-6">Para garantir sua vaga, finalize o pagamento seguro através da plataforma.</p>
                         {paymentLink && (
                             <Link href={paymentLink} target="_self" className="w-full bg-[#00D775] hover:bg-[#00c068] text-[#002f1a] font-black text-lg py-4 px-6 rounded-xl shadow-lg flex items-center justify-center gap-2 transition-transform hover:scale-105 mb-4">
-                                <CreditCard size={20} /> Pagar com InfinitePay
+                                <CreditCard size={20} /> Pagar de Forma Segura
                             </Link>
                         )}
                         <div className="flex items-center justify-center gap-2 text-xs text-gray-500"><Lock size={12} /> Ambiente seguro e criptografado</div>
