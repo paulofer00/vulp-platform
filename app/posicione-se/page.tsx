@@ -24,7 +24,7 @@ if (typeof window !== "undefined") {
 const CHECKOUT_CONFIG = {
     infiniteTag: "upeup", 
     productName: "Curso Posicione-se Agora",
-    price:100, 
+    price:9700, 
 };
 
 const astronauts = [
@@ -249,7 +249,15 @@ export default function PosicioneSeLP() {
   const generateCheckoutUrl = (leadId: string) => {
     const baseUrl = typeof window !== "undefined" ? window.location.origin : "https://vulp.vc";
     const items = JSON.stringify([{ name: CHECKOUT_CONFIG.productName, price: CHECKOUT_CONFIG.price, quantity: 1 }]);
-    const params = new URLSearchParams({ items: items, order_nsu: leadId, redirect_url: `${baseUrl}/obrigado` });
+    
+    // 👇 A MÁGICA ACONTECE AQUI: Injetamos o webhook direto no link!
+    const params = new URLSearchParams({ 
+        items: items, 
+        order_nsu: leadId, 
+        redirect_url: `${baseUrl}/obrigado`,
+        webhook_url: "https://vulp.vc/api/webhooks/infinitepay?secret=raposa_secret_vulp_1973"
+    });
+    
     return `https://checkout.infinitepay.io/${CHECKOUT_CONFIG.infiniteTag}?${params.toString()}`;
   };
 
@@ -266,10 +274,24 @@ export default function PosicioneSeLP() {
     };
 
     let leadId = `temp_${Date.now()}`;
+    
     try {
-        const { data: lead, error } = await supabase.from("leads").insert(data).select().single();
-        if (!error && lead) { leadId = lead.id; }
-    } catch (err) { console.error("Erro ao salvar", err); }
+        // 👇 A MÁGICA ESTÁ AQUI: Ele manda para o NOSSO backend que tem poderes de Admin!
+        const response = await fetch("/api/leads", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data)
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            if (result.id) {
+                leadId = String(result.id); // Pega o ID real numérico do Supabase!
+            }
+        }
+    } catch (err) { 
+        console.error("Erro ao salvar", err); 
+    }
 
     const link = generateCheckoutUrl(leadId);
     setPaymentLink(link);

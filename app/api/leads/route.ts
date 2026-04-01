@@ -3,26 +3,35 @@ import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
   try {
-    const { email } = await request.json();
+    const body = await request.json();
 
-    if (!email || !email.includes("@")) {
-      return NextResponse.json({ error: "Email inválido" }, { status: 400 });
-    }
-
-    // Tenta salvar no Supabase
-    const { error } = await supabaseAdmin
+    // 1. Tenta inserir TODOS os dados (Nome, Email, Phone, Origin)
+    const { data, error } = await supabaseAdmin
       .from("leads")
-      .insert({ email });
+      .insert(body)
+      .select() // 👈 ISSO É VITAL: Obriga o Supabase a devolver a linha criada!
+      .single();
 
     if (error) {
-      // Se der erro de duplicidade (código 23505), finge que deu certo pro usuário não saber
+      // 2. A SUA SACADA GENIAL: Se o e-mail já existe (erro 23505)...
       if (error.code === '23505') {
-        return NextResponse.json({ message: "Email já cadastrado!" });
+        // ...nós buscamos o aluno que já estava no banco para pegar o ID dele!
+        const { data: existingLead } = await supabaseAdmin
+            .from("leads")
+            .select("id")
+            .eq("email", body.email)
+            .single();
+            
+        if (existingLead) {
+             // Devolve o ID antigo para ele poder pagar a mesma!
+             return NextResponse.json({ id: existingLead.id });
+        }
       }
       throw error;
     }
 
-    return NextResponse.json({ message: "Cadastrado com sucesso!" });
+    // 3. Devolve o ID novo fresquinho para a Landing Page mandar para a InfinitePay
+    return NextResponse.json({ id: data.id });
 
   } catch (error) {
     console.error("Erro ao salvar lead:", error);
