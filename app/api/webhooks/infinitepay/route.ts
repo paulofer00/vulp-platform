@@ -22,7 +22,7 @@ export async function POST(request: Request) {
 
     // --- PROCESSAMENTO DO PEDIDO ---
     const body = await request.json();
-    console.log("🔔 Webhook InfinitePay Recebido:", body);
+    console.log("🔔 Webhook InfinitePay Recebido");
 
     const status = body.status || body.data?.status; 
 
@@ -30,6 +30,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: "Status ignorado (não pago)" });
     }
 
+    // 🔴 AQUI ESTÁ A MÁGICA ANTIGA: Ele pega o ID exato que a sua Landing Page gerou!
     const leadId = body.order_nsu || body.metadata?.leadId || body.order_id;
 
     if (!leadId) {
@@ -37,7 +38,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Lead ID missing" }, { status: 400 });
     }
 
-    // Busca o Lead no Banco
+    // Busca o Lead no Banco (que foi salvo lá no formulário da LP)
     const { data: lead } = await supabaseAdmin
       .from("leads")
       .select("*")
@@ -50,14 +51,10 @@ export async function POST(request: Request) {
     }
 
     // --- 2. LÓGICA DE ESCOLHA DO CURSO ---
-    console.log(`🦊 Lead Encontrado (${lead.name}) vindo de: ${lead.origin}`);
+    console.log(`🦊 Lead Encontrado (${lead.name} - ${lead.email}) vindo de: ${lead.origin}`);
 
     const courseIdToEnroll = ORIGIN_TO_COURSE_ID[lead.origin];
     const courseIds = courseIdToEnroll ? [courseIdToEnroll] : [];
-
-    if (!courseIdToEnroll) {
-        console.warn("⚠️ Nenhum ID de curso mapeado para esta origem:", lead.origin);
-    }
 
     // --- 3. CRIAÇÃO NA CADEMI COM O CURSO CERTO ---
     const cademiResult = await createCademiStudent({
@@ -67,14 +64,12 @@ export async function POST(request: Request) {
       courseIds: courseIds 
     });
 
-    // 👇 AQUI ESTÁ A CORREÇÃO PRINCIPAL 👇
     if (cademiResult.success) {
       console.log(`✅ Aluno matriculado: ${lead.email}`);
       
-      // Se a Cademi não mandar a senha (porque o aluno já tinha cadastro), mandamos essa mensagem no lugar:
       const passwordToSend = cademiResult.password || "Você já possui cadastro na VULP! Use a sua senha antiga ou clique em 'Esqueci minha senha' na página de login.";
 
-      // --- 4. ENVIAR E-MAIL (AGORA ENVIA SEMPRE!) ---
+      // --- 4. ENVIAR E-MAIL ---
       await sendWelcomeEmail(lead.email, lead.name, passwordToSend);
       console.log(`📧 E-mail de acesso enviado para: ${lead.email}`);
 

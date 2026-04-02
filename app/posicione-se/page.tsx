@@ -21,12 +21,6 @@ if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger, useGSAP);
 }
 
-const CHECKOUT_CONFIG = {
-    infiniteTag: "upeup", 
-    productName: "Curso Posicione-se Agora",
-    price:9700, 
-};
-
 const astronauts = [
   { id: 1, name: "Beatriz Fernandes", title: "A Voz do Engajamento", role: "Influenciadora (+70k)", description: "Sabe exatamente como prender a attention e transformar seguidores engajados numa comunidade fiel e compradora.", image: "/bea.png", color: "from-pink-500 to-purple-500" },
   { id: 2, name: "Alarico Neto", title: "O Estrategista Híbrido", role: "Tapajós Skate Shop", description: "Transformou a maior loja da região numa máquina de vendas presenciais usando o poder massivo do posicionamento online.", image: "/alarico.png", color: "from-blue-500 to-cyan-500" },
@@ -47,7 +41,7 @@ const courseModules = [
         "Aula 3: Mostrar o que você faz", 
         "Aula 4: Constância e Calendário de Postagens", 
         "Aula 5: Criando Conexão e Interação",
-        "Bônus: Método Raiz" // 👈 AULA BÔNUS ADICIONADA AQUI!
+        "Bônus: Método Raiz"
     ] 
   },
   { 
@@ -91,7 +85,6 @@ const objections = [
   { num: "05", text: "Sinto que o posicionamento é perda de tempo, pois não sei metrificar os resultados." }
 ];
 
-// 🛑 FAQs ATUALIZADOS AQUI 👇
 const faqs = [
     { q: "O curso é online ou presencial?", a: "Esse curso é somente online através da nossa plataforma, com todas as aulas já disponíveis para você assistir quando e onde quiser." },
     { q: "Preciso já ter uma empresa estruturada?", a: "Não. No Módulo 2, o Alarico vai te ensinar exatamente como começar do zero testando um Produto Mínimo Viável (MVP) com pouquíssimo ou nenhum investment." },
@@ -246,21 +239,6 @@ export default function PosicioneSeLP() {
     gsap.from(".oferta-card", { scrollTrigger: { trigger: ".oferta-section", start: "top 70%" }, scale: 0.9, opacity: 0, duration: 1, ease: "power3.out" });
   }, { scope: mainRef });
 
-  const generateCheckoutUrl = (leadId: string) => {
-    const baseUrl = typeof window !== "undefined" ? window.location.origin : "https://vulp.vc";
-    const items = JSON.stringify([{ name: CHECKOUT_CONFIG.productName, price: CHECKOUT_CONFIG.price, quantity: 1 }]);
-    
-    // 👇 A MÁGICA ACONTECE AQUI: Injetamos o webhook direto no link!
-    const params = new URLSearchParams({ 
-        items: items, 
-        order_nsu: leadId, 
-        redirect_url: `${baseUrl}/obrigado`,
-        webhook_url: "https://vulp.vc/api/webhooks/infinitepay?secret=raposa_secret_vulp_1973"
-    });
-    
-    return `https://checkout.infinitepay.io/${CHECKOUT_CONFIG.infiniteTag}?${params.toString()}`;
-  };
-
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setIsLoading(true);
@@ -273,10 +251,8 @@ export default function PosicioneSeLP() {
         origin: "posicione-se-agora"
     };
 
-    let leadId = `temp_${Date.now()}`;
-    
     try {
-        // 👇 A MÁGICA ESTÁ AQUI: Ele manda para o NOSSO backend que tem poderes de Admin!
+        // Agora, o nosso backend trata de salvar E de criar o link na InfinitePay!
         const response = await fetch("/api/leads", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -285,18 +261,20 @@ export default function PosicioneSeLP() {
         
         if (response.ok) {
             const result = await response.json();
-            if (result.id) {
-                leadId = String(result.id); // Pega o ID real numérico do Supabase!
+            if (result.checkoutUrl) {
+                // Link oficial recebido! Abre o modal de sucesso.
+                setPaymentLink(result.checkoutUrl);
+                setIsSuccess(true);
             }
+        } else {
+            alert("A InfinitePay recusou a criação do link. Tente novamente em instantes.");
         }
     } catch (err) { 
         console.error("Erro ao salvar", err); 
+        alert("Erro de conexão. Tente novamente.");
+    } finally {
+        setIsLoading(false);
     }
-
-    const link = generateCheckoutUrl(leadId);
-    setPaymentLink(link);
-    setIsLoading(false);
-    setIsSuccess(true);
   }
 
   return (
