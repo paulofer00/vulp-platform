@@ -4,45 +4,50 @@ import { NextResponse } from "next/server";
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-
-    // 1. SALVA O LEAD NO SUPABASE E PEGA O ID OFICIAL
     let leadId;
-    const { data, error } = await supabaseAdmin
+
+    // --- 1. A PORTA INTELIGENTE (Verifica duplicidade) ---
+    const { data: existingLead } = await supabaseAdmin
       .from("leads")
-      .insert(body)
-      .select()
+      .select("id, status")
+      .eq("email", body.email)
       .single();
 
-    if (error) {
-      if (error.code === '23505') { // Se o e-mail já existir, pega o ID antigo
-        const { data: existingLead } = await supabaseAdmin
-            .from("leads")
-            .select("id")
-            .eq("email", body.email)
-            .single();
-        if (existingLead) {
-             leadId = existingLead.id;
-        } else {
-             throw error;
-        }
-      } else {
-        throw error;
-      }
+    if (existingLead) {
+      // O LEAD JÁ EXISTE NO SEU CRM!
+      leadId = existingLead.id;
+      
+      // Atualiza o nome e o telefone (caso ele tenha digitado um diferente agora)
+      // Mas MANTÉM o status que ele já tinha (Pendente ou Contatado)
+      await supabaseAdmin
+        .from("leads")
+        .update({ name: body.name, phone: body.phone })
+        .eq("id", leadId);
+        
+      console.log(`🦊 Lead Recorrente identificado! ID: ${leadId}`);
     } else {
-      leadId = data.id;
+      // É UM LEAD TOTALMENTE NOVO! Insere no banco.
+      const { data: newLead, error } = await supabaseAdmin
+        .from("leads")
+        .insert(body)
+        .select()
+        .single();
+
+      if (error) throw error;
+      leadId = newLead.id;
+      console.log(`🟢 Novo Lead criado! ID: ${leadId}`);
     }
 
-    // 2. COMUNICA COM A API PÚBLICA DA INFINITEPAY
-    // Cria o "Envelope" exatamente como a sua tela de documentação manda!
+    // --- 2. COMUNICA COM A API DA INFINITEPAY ---
     const infinitePayload = {
       handle: "upeup",
       redirect_url: "https://vulp.vc/obrigado",
       webhook_url: "https://vulp.vc/api/webhooks/infinitepay?secret=raposa_secret_vulp_1973",
-      order_nsu: String(leadId),
+      order_nsu: String(leadId), // Enviamos o ID (seja ele novo ou antigo)
       items: [
         {
           quantity: 1,
-          price: 19700, // Lembre-se, 9700 cêntimos = R$ 97,00
+          price: 19700, // Preço de R$ 97,00 (9700 cêntimos)
           description: "Curso Posicione-se Agora"
         }
       ]
@@ -59,10 +64,10 @@ export async function POST(request: Request) {
        return NextResponse.json({ error: "Erro ao gerar link de pagamento na InfinitePay" }, { status: 500 });
     }
 
-    // 3. RECEBE O LINK DE CHECKOUT ÚNICO GERADO POR ELES
+    // --- 3. RECEBE O LINK DE CHECKOUT ÚNICO ---
     const infiniteData = await infiniteResponse.json();
     
-    // Devolve o link pronto para a Landing Page!
+    // Devolve o link pronto para a Landing Page abrir o pop-up
     return NextResponse.json({ checkoutUrl: infiniteData.url });
 
   } catch (error) {

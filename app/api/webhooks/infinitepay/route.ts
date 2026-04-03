@@ -63,13 +63,27 @@ export async function POST(request: Request) {
     if (cademiResult.success) {
       console.log(`✅ Aluno matriculado: ${lead.email}`);
       
+      // 🚀 --- ATUALIZAÇÃO DO CRM (NOVA COLUNA DE STATUS) ---
+      const { error: updateError } = await supabaseAdmin
+        .from("leads")
+        .update({ status: "comprador" })
+        .eq("id", leadId);
+
+      if (updateError) {
+        console.error("⚠️ Erro ao mover o lead para 'comprador' no CRM:", updateError);
+      } else {
+        console.log(`🟢 CRM Atualizado: Lead ${lead.name} movido para a coluna COMPRADOR!`);
+      }
+      // --------------------------------------------------------
+
       const passwordToSend = cademiResult.password || "Você já possui cadastro na VULP! Use a sua senha antiga ou clique em 'Esqueci minha senha' na página de login.";
 
       // --- 4. ENVIAR E-MAIL ---
-      await sendWelcomeEmail(lead.email, lead.name, passwordToSend);
-      console.log(`📧 E-mail de acesso enviado para: ${lead.email}`);
+      // 🛑 Desativado: A própria Cademi já envia o e-mail oficial instantaneamente!
+      // await sendWelcomeEmail(lead.email, lead.name, passwordToSend);
+      // console.log(`📧 E-mail de acesso enviado para: ${lead.email}`);
 
-      return NextResponse.json({ message: "Aluno matriculado e notificado!" });
+      return NextResponse.json({ message: "Aluno matriculado e CRM atualizado!" });
     } else {
       console.error("❌ Falha na Cademi:", cademiResult.error);
       return NextResponse.json({ error: "Erro ao criar na Cademi" }, { status: 500 });
