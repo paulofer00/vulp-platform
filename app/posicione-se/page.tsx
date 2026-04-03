@@ -471,7 +471,7 @@ export default function PosicioneSeLP() {
                 <div className="absolute top-0 right-0 left-0 h-1 bg-gradient-to-r from-transparent via-indigo-500 to-transparent opacity-50"></div>
                 <p className="text-gray-400 uppercase tracking-widest text-sm font-bold mb-4">Investimento Único</p>
                 <div className="flex justify-center items-baseline gap-2 mb-8">
-                    <span className="text-6xl font-black text-white">R$ 97,00</span><span className="text-xl text-gray-500 font-medium"> à vista!</span>
+                    <span className="text-6xl font-black text-white">R$ 197,00</span><span className="text-xl text-gray-500 font-medium"> à vista!</span>
                 </div>
                 <button onClick={openModal} className="w-full md:w-auto bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold py-5 px-16 rounded-full text-xl shadow-[0_0_20px_rgba(99,102,241,0.5)] flex items-center justify-center gap-2 mx-auto transition-all hover:scale-105">
                     Garantir Vaga Agora <Rocket size={20} />
