@@ -42,7 +42,7 @@ export async function POST(request: Request) {
       items: [
         {
           quantity: 1,
-          price: 19700, // Lembre-se, 9700 cêntimos = R$ 97,00
+          price: 100, // Lembre-se, 9700 cêntimos = R$ 97,00
           description: "Curso Posicione-se Agora"
         }
       ]
