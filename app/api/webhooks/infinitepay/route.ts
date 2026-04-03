@@ -22,15 +22,11 @@ export async function POST(request: Request) {
 
     // --- PROCESSAMENTO DO PEDIDO ---
     const body = await request.json();
-    console.log("🔔 Webhook InfinitePay Recebido");
+    
+    // Agora o log vai gravar TUDO o que a InfinitePay mandar, para nunca mais ficarmos cegos!
+    console.log("🔔 Webhook InfinitePay Recebido. Dados:", JSON.stringify(body));
 
-    const status = body.status || body.data?.status; 
-
-    if (status !== "paid" && status !== "approved") {
-      return NextResponse.json({ message: "Status ignorado (não pago)" });
-    }
-
-    // 🔴 AQUI ESTÁ A MÁGICA ANTIGA: Ele pega o ID exato que a sua Landing Page gerou!
+    // 🔴 A MÁGICA: Pega o ID exato que a nossa Landing Page gerou e mandou para eles!
     const leadId = body.order_nsu || body.metadata?.leadId || body.order_id;
 
     if (!leadId) {
