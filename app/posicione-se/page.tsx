@@ -7,6 +7,7 @@ import {
   X, Target, TrendingUp, Video, CreditCard, Lock, ChevronDown
 } from "lucide-react";
 import Link from "next/link";
+import Script from "next/script"; // 🟢 IMPORTAMOS O SCRIPT DO NEXT.JS AQUI
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -252,7 +253,6 @@ export default function PosicioneSeLP() {
     };
 
     try {
-        // Agora, o nosso backend trata de salvar E de criar o link na InfinitePay!
         const response = await fetch("/api/leads", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -262,7 +262,6 @@ export default function PosicioneSeLP() {
         if (response.ok) {
             const result = await response.json();
             if (result.checkoutUrl) {
-                // Link oficial recebido! Abre o modal de sucesso.
                 setPaymentLink(result.checkoutUrl);
                 setIsSuccess(true);
             }
@@ -280,6 +279,26 @@ export default function PosicioneSeLP() {
   return (
     <div ref={mainRef} className="min-h-screen bg-[#02000A] text-white font-sans selection:bg-indigo-500/30 relative overflow-hidden">
       
+      {/* 🟢 O SEU META PIXEL COMEÇA AQUI */}
+      <Script id="meta-pixel" strategy="afterInteractive">
+        {`
+          !function(f,b,e,v,n,t,s)
+          {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+          n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+          if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+          n.queue=[];t=b.createElement(e);t.async=!0;
+          t.src=v;s=b.getElementsByTagName(e)[0];
+          s.parentNode.insertBefore(t,s)}(window, document,'script',
+          'https://connect.facebook.net/en_US/fbevents.js');
+          fbq('init', '1177262631039268');
+          fbq('track', 'PageView');
+        `}
+      </Script>
+      <noscript>
+        <img height="1" width="1" style={{ display: "none" }} src="https://www.facebook.com/tr?id=1177262631039268&ev=PageView&noscript=1" alt="Meta Pixel" />
+      </noscript>
+      {/* 🟢 O SEU META PIXEL TERMINA AQUI */}
+
       <ParticlesBackground />
 
       <nav className="fixed w-full z-40 bg-[#02000A]/80 backdrop-blur-md border-b border-white/5">
