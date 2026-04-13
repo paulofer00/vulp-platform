@@ -194,8 +194,8 @@ interface PosicioneSeLPProps {
 }
 
 export default function PosicioneSeLP({ 
-  // Insira aqui o link oficial do Vídeo 1 (Página Principal)
-  videoSrc = "https://www.youtube.com/embed/dQw4w9WgXcQ?si=0b6mXoJ4mK8-6G-w" 
+  // 👇 AQUI ESTÁ O LINK OFICIAL DA BEA PARA A PÁGINA PRINCIPAL
+  videoSrc = "https://player.scaleup.com.br/embed/1057d1fc9dda41635ccc14cc784533dd695ba71f" 
 }: PosicioneSeLPProps) {
   const [currentAstro, setCurrentAstro] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
