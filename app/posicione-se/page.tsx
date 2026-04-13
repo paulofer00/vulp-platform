@@ -7,14 +7,12 @@ import {
   X, Target, TrendingUp, Video, CreditCard, Lock, ChevronDown
 } from "lucide-react";
 import Link from "next/link";
-import Script from "next/script"; // 🟢 IMPORTAMOS O SCRIPT DO NEXT.JS AQUI
+import Script from "next/script";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import dynamic from "next/dynamic";
 import Matter from "matter-js";
-
-import VideoManifesto from "@/components/VideoManifesto"; 
 
 const VulpCoinScene = dynamic(() => import("@/components/VulpCoinScene"), { ssr: false });
 
@@ -190,7 +188,15 @@ function FloatingObjections() {
   );
 }
 
-export default function PosicioneSeLP() {
+// 🦊 MÁGICA AQUI: O componente agora aceita o link do vídeo como parâmetro!
+interface PosicioneSeLPProps {
+  videoSrc?: string;
+}
+
+export default function PosicioneSeLP({ 
+  // Insira aqui o link oficial do Vídeo 1 (Página Principal)
+  videoSrc = "https://www.youtube.com/embed/dQw4w9WgXcQ?si=0b6mXoJ4mK8-6G-w" 
+}: PosicioneSeLPProps) {
   const [currentAstro, setCurrentAstro] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -223,7 +229,7 @@ export default function PosicioneSeLP() {
 
   useGSAP(() => {
     gsap.from(".hero-bg img", { scale: 1.15, duration: 2.5, ease: "power2.out" });
-    gsap.from(".hero-button", { y: 80, opacity: 0, duration: 1.2, delay: 0.5, ease: "back.out(1.5)" });
+    // Botão removido, logo a animação dele também sai para não dar erro
     gsap.from(".boa-noticia", { scrollTrigger: { trigger: ".boa-noticia-section", start: "top 80%" }, scale: 0.95, opacity: 0, duration: 1, ease: "back.out(1.2)" });
 
     gsap.to(".timeline-progress", {
@@ -279,7 +285,7 @@ export default function PosicioneSeLP() {
   return (
     <div ref={mainRef} className="min-h-screen bg-[#02000A] text-white font-sans selection:bg-indigo-500/30 relative overflow-hidden">
       
-      {/* 🟢 O SEU META PIXEL COMEÇA AQUI */}
+      {/* 🟢 O SEU META PIXEL */}
       <Script id="meta-pixel" strategy="afterInteractive">
         {`
           !function(f,b,e,v,n,t,s)
@@ -297,7 +303,6 @@ export default function PosicioneSeLP() {
       <noscript>
         <img height="1" width="1" style={{ display: "none" }} src="https://www.facebook.com/tr?id=1177262631039268&ev=PageView&noscript=1" alt="Meta Pixel" />
       </noscript>
-      {/* 🟢 O SEU META PIXEL TERMINA AQUI */}
 
       <ParticlesBackground />
 
@@ -306,9 +311,7 @@ export default function PosicioneSeLP() {
             <Link href="/">
                 <img src="/logo-white.png" alt="VULP" className="h-8 w-auto hover:opacity-80 transition-opacity" />
             </Link>
-            <button onClick={openModal} className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold py-2 px-6 rounded-full transition-all shadow-[0_0_15px_rgba(99,102,241,0.4)] text-sm">
-                Garantir Vaga
-            </button>
+            {/* 🛑 BOTÃO DE CIMA REMOVIDO DAQUI */}
         </div>
       </nav>
 
@@ -320,17 +323,21 @@ export default function PosicioneSeLP() {
             <div className="absolute top-0 left-0 w-full h-1/4 bg-gradient-to-b from-[#02000A]/80 via-transparent via-80% to-transparent pointer-events-none" />
             <div className="absolute bottom-0 left-0 w-full h-1/4 bg-gradient-to-t from-[#02000A] to-transparent pointer-events-none" />
         </div>
-
-        <div className="relative z-20 flex flex-col items-center w-full px-6 md:px-0 hero-button">
-            <button onClick={openModal} className="bg-white text-black hover:bg-gray-200 font-black py-4 px-8 md:py-5 md:px-12 rounded-full text-lg md:text-xl transition-all duration-300 transform hover:scale-110 shadow-[0_0_50px_rgba(255,255,255,0.3)] flex items-center justify-center gap-3 w-full md:w-auto">
-                Quero me Posicionar <ArrowRight size={24} />
-            </button>
-        </div>
+        {/* 🛑 BOTÃO DE BAIXO REMOVIDO DAQUI */}
       </header>
 
+      {/* 🦊 NOVO BLOCO DE VÍDEO DINÂMICO */}
       <section className="py-24 px-6 relative z-10 bg-[#02000A]">
-        <div className="max-w-5xl mx-auto">
-            <VideoManifesto />
+        <div className="max-w-5xl mx-auto bg-[#0A051A] p-2 rounded-3xl border border-white/5 shadow-2xl relative overflow-hidden group hover:border-indigo-500/30 transition-colors">
+            <div className="relative w-full h-0 pb-[56.25%] overflow-hidden rounded-2xl">
+                <iframe 
+                    className="absolute top-0 left-0 w-full h-full border-0"
+                    src={videoSrc}
+                    title="Vídeo VULP"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                    allowFullScreen
+                ></iframe>
+            </div>
         </div>
       </section>
 
