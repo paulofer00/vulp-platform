@@ -47,7 +47,7 @@ export async function POST(request: Request) {
       items: [
         {
           quantity: 1,
-          price: 14700, // Preço de R$ 97,00 (9700 cêntimos)
+          price: 19700, // Preço de R$ 97,00 (9700 cêntimos)
           description: "Curso Posicione-se Agora"
         }
       ]
